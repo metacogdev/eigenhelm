@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eigenhelm"
+version = "0.2.0"
+description = "Software Poet Conscience — language-agnostic code aesthetic evaluation"
+readme = "public/README.md"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.11"
+authors = [{ name = "Matthew Davidson" }]
+keywords = ["code quality", "aesthetics", "pca", "static analysis", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "click>=8.1",
+    "tree-sitter>=0.25.0",
+    "tree-sitter-language-pack>=0.8.0",
+    "lizard>=1.21.2",
+    "numpy>=1.26",
+    "scipy>=1.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/metacogdev/eigenhelm"
+Repository = "https://github.com/metacogdev/eigenhelm"
+Issues = "https://github.com/metacogdev/eigenhelm/issues"
+
+[project.optional-dependencies]
+serve = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "httpx>=0.27",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+eigenhelm = "eigenhelm.cli.main:cli"
+eh = "eigenhelm.cli.main:cli"
+eigenhelm-corpus = "eigenhelm.cli.corpus:main"
+eigenhelm-train = "eigenhelm.cli.train:main"
+eigenhelm-inspect = "eigenhelm.cli.inspect:main"
+eigenhelm-evaluate = "eigenhelm.cli.evaluate:main"
+eigenhelm-serve = "eigenhelm.cli.serve:main"
+eigenhelm-harness = "eigenhelm.cli.harness:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "integration: end-to-end pipeline tests",
+    "contract: interface contract conformance tests",
+]
