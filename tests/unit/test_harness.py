@@ -120,7 +120,11 @@ class TestRunHarness:
         assert report.significant is False
 
     def test_distinct_distributions_significant(self, tmp_path):
-        """Clearly different corpora → significant and improvement."""
+        """Clearly different corpora → significant and improvement.
+
+        With corrected polarity (013): repetitive code scores higher (worse),
+        structured code scores lower (better).
+        """
         from eigenhelm.harness.runner import run_harness
 
         before_dir = tmp_path / "before"
@@ -128,7 +132,11 @@ class TestRunHarness:
         after_dir = tmp_path / "after"
         after_dir.mkdir()
 
-        # Before: structured code with higher aesthetic loss
+        # Before: repetitive code with higher aesthetic loss (corrected polarity)
+        for i in range(10):
+            (before_dir / f"simple_{i}.py").write_text(f"x_{i} = 1\n" * 50)
+
+        # After: structured code with lower aesthetic loss (corrected polarity)
         complex_code = (
             "def quicksort(arr):\n"
             "    if len(arr) <= 1:\n"
@@ -139,11 +147,7 @@ class TestRunHarness:
             "    return quicksort(left) + [pivot] + quicksort(right)\n"
         )
         for i in range(10):
-            (before_dir / f"complex_{i}.py").write_text(complex_code)
-
-        # After: simple code with lower aesthetic loss
-        for i in range(10):
-            (after_dir / f"simple_{i}.py").write_text(f"x_{i} = 1\n" * 50)
+            (after_dir / f"complex_{i}.py").write_text(complex_code)
 
         report = run_harness(before_dir, after_dir)
         assert report.significant is True

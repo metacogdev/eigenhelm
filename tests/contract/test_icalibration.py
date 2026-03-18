@@ -12,7 +12,6 @@ Covers:
 from __future__ import annotations
 
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -99,7 +98,8 @@ class TestSaveModelKeys:
         path = tmp_path / "model.npz"
         save_model(result, path)
         data = np.load(path, allow_pickle=False)
-        assert len(data.files) == 9
+        # 9 original + up to 5 exemplar keys (n_exemplars always present)
+        assert len(data.files) >= 10  # at least 9 original + n_exemplars
 
     def test_new_calibration_keys_present(self, corpus_dir, tmp_path):
         result = train_eigenspace(corpus_dir)
@@ -188,42 +188,55 @@ class TestInspectModelSigmaKeys:
 
 @pytest.mark.contract
 class TestLoadModelBackwardsCompat:
-    _BASELINE_PATH = Path("models/baseline.npz")
-
     @pytest.fixture
-    def baseline_path(self):
-        if not self._BASELINE_PATH.exists():
-            pytest.skip("models/baseline.npz not present in workspace")
-        return self._BASELINE_PATH
+    def pre_calibration_model_path(self, tmp_path):
+        """Create a synthetic pre-calibration .npz (no sigma keys)."""
+        import numpy as np
 
-    def test_load_old_model_no_exception(self, baseline_path):
+        n_features = 69
+        n_components = 5
+        path = tmp_path / "pre_calibration.npz"
+        rng = np.random.default_rng(42)
+        np.savez(
+            path,
+            projection_matrix=rng.standard_normal((n_features, n_components)),
+            mean=np.zeros(n_features),
+            std=np.ones(n_features),
+            explained_variance_ratio=np.full(n_components, 1.0 / n_components),
+            n_components=np.array(n_components),
+            version="0.1.0",
+            corpus_hash="abc123",
+        )
+        return path
+
+    def test_load_old_model_no_exception(self, pre_calibration_model_path):
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            model = load_model(baseline_path)
+            model = load_model(pre_calibration_model_path)
         assert model is not None
 
-    def test_load_old_model_emits_exactly_one_warning(self, baseline_path):
+    def test_load_old_model_emits_exactly_one_warning(self, pre_calibration_model_path):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            load_model(baseline_path)
+            load_model(pre_calibration_model_path)
         assert len(caught) == 1
 
-    def test_load_old_model_warning_mentions_calibration(self, baseline_path):
+    def test_load_old_model_warning_mentions_calibration(self, pre_calibration_model_path):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            load_model(baseline_path)
+            load_model(pre_calibration_model_path)
         assert "calibration" in str(caught[0].message).lower()
 
-    def test_load_old_model_warning_mentions_path(self, baseline_path):
+    def test_load_old_model_warning_mentions_path(self, pre_calibration_model_path):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            load_model(baseline_path)
-        assert "baseline.npz" in str(caught[0].message)
+            load_model(pre_calibration_model_path)
+        assert "pre_calibration.npz" in str(caught[0].message)
 
-    def test_load_old_model_sigma_defaults_to_one(self, baseline_path):
+    def test_load_old_model_sigma_defaults_to_one(self, pre_calibration_model_path):
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            model = load_model(baseline_path)
+            model = load_model(pre_calibration_model_path)
         assert model.sigma_drift == 1.0
         assert model.sigma_virtue == 1.0
 

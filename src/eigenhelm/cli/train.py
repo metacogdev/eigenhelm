@@ -28,9 +28,14 @@ def format_training_report(
 
     per_pc = "  ".join(f"PC{i + 1}: {v * 100:.1f}%" for i, v in enumerate(evr))
 
+    lang_label = model.language or "unknown"
+    class_label = model.corpus_class or "unknown"
+
     lines = [
         "eigenhelm-train: Training complete",
         f"  Corpus:     {corpus_dir}",
+        f"  Language:   {lang_label}",
+        f"  Class:      {class_label}",
         f"  Files:      {result.n_files_processed} processed, {result.n_files_skipped} skipped",
         f"  Code units: {result.n_units_extracted} extracted, "
         f"{result.n_vectors_excluded} excluded (NaN/Inf)",
@@ -48,6 +53,26 @@ def format_training_report(
             f"  Calibration:  sigma_drift={cal.sigma_drift:.4f}"
             f"  sigma_virtue={cal.sigma_virtue:.4f}"
             f"  (p{cal.percentile:.0f} of {cal.n_projections} training projections)"
+        )
+
+    if result.exemplars is not None:
+        lines.append(f"  Exemplars selected: {len(result.exemplars)}")
+
+    if result.score_distribution is not None:
+        sd = result.score_distribution
+        lines.append(
+            f"  Score dist:   min={sd.min:.3f}  p10={sd.p10:.3f}  "
+            f"p25={sd.p25:.3f}  median={sd.median:.3f}  "
+            f"p75={sd.p75:.3f}  p90={sd.p90:.3f}  max={sd.max:.3f}"
+        )
+        if model.calibrated_accept is not None and model.calibrated_reject is not None:
+            lines.append(
+                f"  Thresholds:   accept < {model.calibrated_accept:.4f} (p25)  "
+                f"reject > {model.calibrated_reject:.4f} (p75)"
+            )
+    elif result.calibration_skip_reason is not None:
+        lines.append(
+            f"  Threshold calibration skipped: {result.calibration_skip_reason}"
         )
 
     return "\n".join(lines)
@@ -100,12 +125,36 @@ def main(argv: list[str] | None = None) -> None:
         help="Model version string (default: package version)",
     )
     parser.add_argument(
+        "--language",
+        required=True,
+        metavar="LANG",
+        help="Training language key (e.g., 'javascript', 'go', 'multi' for Class B)",
+    )
+    parser.add_argument(
+        "--corpus-class",
+        default="A",
+        choices=["A", "B"],
+        metavar="CLASS",
+        help="Corpus class: A (single-language) or B (cross-language pattern) (default: A)",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Overwrite existing output file",
     )
 
     args = parser.parse_args(argv)
+
+    # Validate --language against known languages
+    from eigenhelm.parsers.language_map import LANGUAGE_MAP
+
+    valid_languages = set(LANGUAGE_MAP.keys()) | {"multi"}
+    lang = args.language.lower()
+    if lang not in valid_languages:
+        parser.error(
+            f"Unknown language: {args.language!r}. "
+            f"Valid options: {', '.join(sorted(valid_languages))}"
+        )
 
     from eigenhelm.training import save_model, train_eigenspace
 
@@ -115,6 +164,9 @@ def main(argv: list[str] | None = None) -> None:
             n_components=args.n_components,
             variance_threshold=args.variance_threshold,
             version=args.version,
+            language=lang,
+            corpus_class=args.corpus_class,
+            min_files=10,
         )
     except (FileNotFoundError, ValueError) as exc:
         print(f"eigenhelm-train: error: {exc}", file=sys.stderr)

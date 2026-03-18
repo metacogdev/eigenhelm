@@ -27,13 +27,13 @@ uv tool install "eigenhelm[serve]"
 ### Evaluate a file
 
 ```bash
-eigenhelm-evaluate path/to/file.py --model models/demo-python-v0.npz
+eh evaluate path/to/file.py --model models/demo-python-v0.npz
 ```
 
 ### Run the scoring server
 
 ```bash
-eigenhelm-serve --model models/demo-python-v0.npz --host 0.0.0.0 --port 8080
+eh serve --model models/demo-python-v0.npz --host 0.0.0.0 --port 8080
 ```
 
 ### API example
@@ -48,13 +48,18 @@ curl -X POST http://localhost:8080/evaluate \
 
 ## CLI Reference
 
+All commands are available as `eigenhelm <command>` or `eh <command>`:
+
 | Command | Description |
 |---------|-------------|
-| `eigenhelm-evaluate` | Evaluate a source file against an eigenspace model |
-| `eigenhelm-train` | Train a new eigenspace model from a corpus directory |
-| `eigenhelm-inspect` | Inspect a saved model's metadata |
-| `eigenhelm-serve` | Run the evaluation HTTP server |
-| `eigenhelm-harness` | Run a statistical comparison harness across two code sets |
+| `eh evaluate` | Evaluate source files against an eigenspace model |
+| `eh train` | Train a new eigenspace model from a corpus directory |
+| `eh inspect` | Inspect a saved model's metadata |
+| `eh serve` | Run the evaluation HTTP server |
+| `eh harness` | Run a statistical comparison harness across two code sets |
+| `eh corpus` | Manage training corpora (sync from manifest) |
+
+Run `eh --help` or `eh <command> --help` for details.
 
 ---
 
@@ -122,6 +127,15 @@ eigenhelm/
 ├── helm.py               — DynamicHelm: PID-controlled inference steering
 └── serve.py              — FastAPI HTTP evaluation server
 ```
+
+---
+
+## Current Status
+
+- **5-dim scoring**: manifold drift, alignment, entropy, compression, NCD exemplar distance
+- **5 languages**: Python, JavaScript, TypeScript, Go, Rust — all discriminating (Cohen's d > 0.5)
+- **Human correlation**: Spearman rho = 0.56 (p < 0.0001, n = 52)
+- **Calibrated thresholds**: Models store empirical score distribution; accept/reject boundaries derived from training corpus percentiles (p25/p75)
 
 ---
 

@@ -261,6 +261,32 @@ class TestEvaluateBatch:
         assert resp.status_code == 200
         assert resp.json()["summary"]["total_files"] == 3
 
+    def test_batch_accepts_attribution_options(self, client):
+        """Batch entries can override attribution controls per file."""
+        files = [
+            {
+                "source": "def f(x):\n    return x + 1\n",
+                "language": "python",
+                "file_path": "a.py",
+                "top_n": 1,
+                "directive_threshold": 0.9,
+            },
+            {
+                "source": "def g(x):\n    return x * 2\n",
+                "language": "python",
+                "file_path": "b.py",
+                "top_n": 5,
+                "directive_threshold": 0.1,
+            },
+        ]
+        resp = client.post("/v1/evaluate/batch", json={"files": files})
+        assert resp.status_code == 200
+        results = resp.json()["results"]
+        assert results[0]["attribution"]["top_n"] == 1
+        assert results[0]["attribution"]["directive_threshold"] == 0.9
+        assert results[1]["attribution"]["top_n"] == 5
+        assert results[1]["attribution"]["directive_threshold"] == 0.1
+
     def test_batch_sequential_order(self, client):
         """Invariant 14: Results maintain input order."""
         files = [
@@ -355,10 +381,17 @@ class TestHarnessContracts:
         # Verify invariant: significant iff p_value < 0.05
         assert report.significant == (report.p_value < 0.05)
         # Verify invariant: improvement iff significant and delta < 0
-        assert report.improvement == (report.significant and report.delta_mean_score < 0.0)
+        assert report.improvement == (
+            report.significant and report.delta_mean_score < 0.0
+        )
 
     def test_cli_evaluate_exit_code_2_on_error(self, tmp_path):
-        """Invariant 16: extraction failure → exit code 2."""
+        """Invariant 16: extraction failure → exit code 3 (runtime error).
+
+        NOTE: Exit code semantics changed in feature 012-governance-surface:
+          Old: 0=accept/warn, 1=reject, 2=runtime error
+          New: 0=accept, 1=warn, 2=reject, 3=runtime error
+        """
         from unittest.mock import patch
 
         from eigenhelm.cli.evaluate import main
@@ -368,4 +401,4 @@ class TestHarnessContracts:
         with patch("eigenhelm.cli.evaluate.DynamicHelm") as mock_cls:
             mock_cls.return_value.evaluate.side_effect = RuntimeError("boom")
             result = main([str(tmp_path / "test.py")])
-            assert result == 2
+            assert result == 3

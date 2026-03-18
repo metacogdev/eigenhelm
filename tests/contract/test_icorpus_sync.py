@@ -402,3 +402,249 @@ def test_path_traversal_protection(tmp_path):
     assert result.failed == []
     assert not (tmp_path / "escaping.py").exists()
     assert any("potential path traversal" in str(w.message) for w in caught)
+
+
+# ---------------------------------------------------------------------------
+# Bulk sync: discover_manifests
+# ---------------------------------------------------------------------------
+
+
+def _write_corpus_toml(directory, name, target_name="lib"):
+    """Write a minimal valid corpus manifest."""
+    content = textwrap.dedent(f"""\
+        [corpus]
+        name = "{name}"
+        version = "1.0.0"
+        class = "B"
+        created = "2026-03-06"
+
+        [[target]]
+        name = "{target_name}"
+        url = "https://github.com/example/{target_name}"
+        ref = "1.0.0"
+        include = ["lib/**/*.py"]
+        description = "Test target."
+    """)
+    path = directory / f"{name}.toml"
+    path.write_text(content)
+    return path
+
+
+def _write_composition_toml(directory, name, sources):
+    """Write a minimal valid composition manifest."""
+    src_list = ", ".join(f'"{s}"' for s in sources)
+    content = textwrap.dedent(f"""\
+        [composition]
+        name = "{name}"
+        version = "1.0.0"
+        created = "2026-03-06"
+        sources = [{src_list}]
+    """)
+    path = directory / f"{name}.toml"
+    path.write_text(content)
+    return path
+
+
+@pytest.mark.contract
+def test_discover_manifests_finds_corpus_toml(tmp_path):
+    from eigenhelm.corpus.sync import discover_manifests
+
+    _write_corpus_toml(tmp_path, "lang-python", "httpx")
+    _write_corpus_toml(tmp_path, "lang-go", "gjson")
+
+    paths = discover_manifests(tmp_path)
+    names = [p.name for p in paths]
+    assert "lang-python.toml" in names
+    assert "lang-go.toml" in names
+
+
+@pytest.mark.contract
+def test_discover_manifests_skips_composition(tmp_path):
+    import warnings
+
+    from eigenhelm.corpus.sync import discover_manifests
+
+    _write_corpus_toml(tmp_path, "lang-python", "httpx")
+    _write_composition_toml(tmp_path, "training", ["lang-python.toml"])
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        paths = discover_manifests(tmp_path)
+
+    names = [p.name for p in paths]
+    assert "lang-python.toml" in names
+    assert "training.toml" not in names
+    assert any("composition" in str(w.message) for w in caught)
+
+
+@pytest.mark.contract
+def test_discover_manifests_skips_non_manifest(tmp_path):
+    import warnings
+
+    from eigenhelm.corpus.sync import discover_manifests
+
+    _write_corpus_toml(tmp_path, "lang-python", "httpx")
+    (tmp_path / "garbage.toml").write_text("not valid [[[ toml stuff")
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        paths = discover_manifests(tmp_path)
+
+    names = [p.name for p in paths]
+    assert "lang-python.toml" in names
+    assert "garbage.toml" not in names
+    assert any("unparseable" in str(w.message) for w in caught)
+
+
+# ---------------------------------------------------------------------------
+# Bulk sync: sync_all_manifests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.contract
+def test_sync_all_manifests_syncs_multiple(tmp_path):
+    from eigenhelm.corpus.sync import sync_all_manifests
+
+    corpora_dir = tmp_path / "corpora"
+    corpora_dir.mkdir()
+    _write_corpus_toml(corpora_dir, "lang-a", "alpha")
+    _write_corpus_toml(corpora_dir, "lang-b", "beta")
+
+    tarball_a = _make_tarball({"lib/a.py": b"# alpha"})
+    tarball_b = _make_tarball({"lib/b.py": b"# beta"})
+
+    def selective_urlopen(req):
+        if "alpha" in req.full_url:
+            return io.BytesIO(tarball_a)
+        return io.BytesIO(tarball_b)
+
+    out = tmp_path / "output"
+    with patch(
+        "eigenhelm.corpus.sync.urllib.request.urlopen",
+        side_effect=selective_urlopen,
+    ):
+        bulk = sync_all_manifests(corpora_dir, out)
+
+    assert len(bulk.per_manifest) == 2
+    assert not bulk.any_failed
+
+
+@pytest.mark.contract
+def test_sync_all_idempotent(tmp_path):
+    from eigenhelm.corpus.sync import sync_all_manifests
+
+    corpora_dir = tmp_path / "corpora"
+    corpora_dir.mkdir()
+    _write_corpus_toml(corpora_dir, "lang-a", "alpha")
+
+    tarball = _make_tarball({"lib/a.py": b"# alpha"})
+    out = tmp_path / "output"
+
+    with _serve(tarball):
+        sync_all_manifests(corpora_dir, out)
+
+    # Second run — should skip
+    with patch("eigenhelm.corpus.sync.urllib.request.urlopen") as mock_open:
+        bulk = sync_all_manifests(corpora_dir, out)
+
+    mock_open.assert_not_called()
+    for sr in bulk.per_manifest.values():
+        assert sr.synced == []
+        assert sr.skipped == ["alpha"]
+
+
+@pytest.mark.contract
+def test_sync_all_partial_failure(tmp_path):
+    import urllib.error
+
+    from eigenhelm.corpus.sync import sync_all_manifests
+
+    corpora_dir = tmp_path / "corpora"
+    corpora_dir.mkdir()
+    _write_corpus_toml(corpora_dir, "lang-a", "alpha")
+    # Write a valid manifest but make its target URL fail
+    _write_corpus_toml(corpora_dir, "lang-b", "broken")
+
+    tarball = _make_tarball({"lib/a.py": b"# alpha"})
+
+    def selective_urlopen(req):
+        if "broken" in req.full_url:
+            raise urllib.error.URLError("connection refused")
+        return io.BytesIO(tarball)
+
+    out = tmp_path / "output"
+    with patch(
+        "eigenhelm.corpus.sync.urllib.request.urlopen",
+        side_effect=selective_urlopen,
+    ):
+        bulk = sync_all_manifests(corpora_dir, out)
+
+    assert bulk.any_failed
+    # lang-a should succeed
+    assert "lang-a" in bulk.per_manifest
+    assert bulk.per_manifest["lang-a"].synced == ["alpha"]
+
+
+# ---------------------------------------------------------------------------
+# Composition sync
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.contract
+def test_sync_composition_materializes_sources(tmp_path):
+    from eigenhelm.corpus.manifest import CompositionManifest
+    from eigenhelm.corpus.sync import sync_composition
+
+    corpora_dir = tmp_path / "corpora"
+    corpora_dir.mkdir()
+    _write_corpus_toml(corpora_dir, "lang-a", "alpha")
+    _write_corpus_toml(corpora_dir, "lang-b", "beta")
+
+    comp = CompositionManifest(
+        name="training",
+        version="1.0.0",
+        created="2026-03-06",
+        sources=("lang-a.toml", "lang-b.toml"),
+    )
+
+    tarball_a = _make_tarball({"lib/a.py": b"# alpha"})
+    tarball_b = _make_tarball({"lib/b.py": b"# beta"})
+
+    def selective_urlopen(req):
+        if "alpha" in req.full_url:
+            return io.BytesIO(tarball_a)
+        return io.BytesIO(tarball_b)
+
+    out = tmp_path / "output"
+    with patch(
+        "eigenhelm.corpus.sync.urllib.request.urlopen",
+        side_effect=selective_urlopen,
+    ):
+        bulk = sync_composition(comp, corpora_dir, out)
+
+    assert "lang-a" in bulk.per_manifest
+    assert "lang-b" in bulk.per_manifest
+    assert not bulk.any_failed
+    # Each source gets own subdirectory
+    assert (out / "lang-a").exists()
+    assert (out / "lang-b").exists()
+
+
+@pytest.mark.contract
+def test_sync_composition_missing_source(tmp_path):
+    from eigenhelm.corpus.manifest import CompositionManifest
+    from eigenhelm.corpus.sync import sync_composition
+
+    corpora_dir = tmp_path / "corpora"
+    corpora_dir.mkdir()
+
+    comp = CompositionManifest(
+        name="training",
+        version="1.0.0",
+        created="2026-03-06",
+        sources=("missing.toml",),
+    )
+
+    out = tmp_path / "output"
+    with pytest.raises(FileNotFoundError, match="missing.toml"):
+        sync_composition(comp, corpora_dir, out)

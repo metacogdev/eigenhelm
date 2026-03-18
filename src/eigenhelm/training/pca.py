@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from eigenhelm.models import CalibrationStats
+    from eigenhelm.models import CalibrationStats, ExemplarRef
 
 
 def standardize(
@@ -133,3 +133,78 @@ def compute_calibration(
         n_projections=len(X),
         percentile=percentile,
     )
+
+
+def select_exemplars(
+    X: np.ndarray,
+    W: np.ndarray,
+    mean: np.ndarray,
+    std: np.ndarray,
+    source_contents: list[bytes],
+    *,
+    k: int | None = None,
+) -> list[ExemplarRef]:
+    """Select k exemplar files from training corpus (medoid per PCA cluster).
+
+    Uses PCA-axis assignment: each vector belongs to the principal component
+    axis it has the highest absolute loading on. The medoid within each cluster
+    is the vector closest to the cluster mean in PC-space (L2).
+
+    Args:
+        X: Design matrix, shape (N, 69).
+        W: Projection matrix, shape (69, k_components).
+        mean: Column means from standardize().
+        std: Column stds from standardize().
+        source_contents: UTF-8-encoded source bytes for each row of X.
+        k: Number of exemplars. Defaults to W.shape[1] (n_components).
+
+    Returns:
+        List of ExemplarRef dataclasses, one per non-empty cluster.
+    """
+    import hashlib
+    import zlib
+
+    from eigenhelm.models import ExemplarRef
+
+    n_components = W.shape[1]
+    if k is None:
+        k = n_components
+
+    # Project into PC space
+    safe_std = std.copy()
+    safe_std[safe_std < 1e-10] = 1.0
+    X_std = (X - mean) / safe_std
+    Z = X_std @ W  # shape (N, k_components)
+
+    # Assign each vector to the PC axis with highest absolute loading
+    assignments = np.argmax(np.abs(Z[:, :k]), axis=1)
+
+    exemplars: list[ExemplarRef] = []
+    for cluster_id in range(k):
+        mask = assignments == cluster_id
+        if not np.any(mask):
+            continue
+
+        cluster_indices = np.where(mask)[0]
+        cluster_Z = Z[cluster_indices]
+        cluster_mean = cluster_Z.mean(axis=0)
+
+        # Find medoid: closest to cluster mean
+        distances = np.linalg.norm(cluster_Z - cluster_mean, axis=1)
+        medoid_local = int(np.argmin(distances))
+        medoid_global = int(cluster_indices[medoid_local])
+
+        content = source_contents[medoid_global]
+        compressed = zlib.compress(content, level=9)
+        content_hash = hashlib.sha256(content).hexdigest()
+
+        exemplars.append(
+            ExemplarRef(
+                index=medoid_global,
+                cluster=cluster_id,
+                compressed_content=compressed,
+                content_hash=content_hash,
+            )
+        )
+
+    return exemplars

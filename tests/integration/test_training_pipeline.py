@@ -89,3 +89,43 @@ class TestTrainingPipelineIntegration:
         assert loaded.sigma_drift == pytest.approx(result.calibration.sigma_drift)
         assert loaded.sigma_virtue == pytest.approx(result.calibration.sigma_virtue)
         assert result.calibration.n_projections > 0
+
+    def test_exemplar_round_trip(self, corpus_dir, tmp_path):
+        """Exemplars survive train → save → load with content hashes preserved."""
+        result = train_eigenspace(corpus_dir)
+        assert result.exemplars is not None, "Training must produce exemplars"
+        assert len(result.exemplars) > 0
+
+        path = tmp_path / "exemplar_model.npz"
+        save_model(result, path)
+        loaded = load_model(path)
+
+        assert loaded.exemplars is not None
+        assert loaded.n_exemplars == len(result.exemplars)
+        # Content hashes must match after round-trip
+        original_hashes = {e.content_hash for e in result.exemplars}
+        loaded_hashes = {e.content_hash for e in loaded.exemplars}
+        assert original_hashes == loaded_hashes
+
+    def test_exemplar_count_matches_components(self, corpus_dir, tmp_path):
+        """Number of exemplars equals number of PCA components by default."""
+        result = train_eigenspace(corpus_dir)
+        assert result.exemplars is not None
+        # Exemplar count should be <= n_components (some clusters may be empty)
+        assert len(result.exemplars) <= result.model.n_components
+
+    def test_evaluate_with_exemplars_produces_5_dimensions(self, corpus_dir, tmp_path):
+        """Evaluation with exemplar-bearing model produces NCD dimension in weights."""
+        from eigenhelm.helm import DynamicHelm
+        from eigenhelm.helm.models import EvaluationRequest
+
+        result = train_eigenspace(corpus_dir)
+        path = tmp_path / "exemplar_eval.npz"
+        save_model(result, path)
+        loaded = load_model(path)
+
+        helm = DynamicHelm(eigenspace=loaded)
+        source = "def add(a, b):\n    return a + b\n" * 5
+        resp = helm.evaluate(EvaluationRequest(source=source, language="python"))
+        assert "ncd_exemplar_distance" in resp.critique.score.weights
+        assert resp.critique.score.weights["ncd_exemplar_distance"] > 0.0

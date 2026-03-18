@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eigenhelm"
-version = "0.2.0"
+version = "0.3.0"
 description = "Software Poet Conscience — language-agnostic code aesthetic evaluation"
-readme = "public/README.md"
+readme = "README.md"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
 authors = [{ name = "Matthew Davidson" }]
@@ -56,9 +56,14 @@ eigenhelm-inspect = "eigenhelm.cli.inspect:main"
 eigenhelm-evaluate = "eigenhelm.cli.evaluate:main"
 eigenhelm-serve = "eigenhelm.cli.serve:main"
 eigenhelm-harness = "eigenhelm.cli.harness:main"
+eigenhelm-benchmark = "eigenhelm.cli.benchmark:main"
+eigenhelm-check = "eigenhelm.cli.precommit:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"eigenhelm.trained_models" = ["*.npz"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -68,4 +73,10 @@ python_functions = ["test_*"]
 markers = [
     "integration: end-to-end pipeline tests",
     "contract: interface contract conformance tests",
+    "github: tests requiring a live GitHub Actions environment (skipped in normal CI)",
+    "requires_model: tests requiring trained .npz models in models/ (skipped when absent)",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/fixtures/benchmark/samples/*" = ["F401", "E501", "E722", "I001", "C901", "S105", "S303", "SIM", "UP"]
+"tests/fixtures/discrimination/**/*.py" = ["F401", "E501", "E712", "E722", "E741", "I001", "C901", "SIM", "UP"]

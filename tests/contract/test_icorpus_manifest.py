@@ -392,3 +392,88 @@ def test_targets_immutable_tuple(tmp_path):
     assert isinstance(manifest.targets, tuple)
     assert isinstance(manifest.targets[0].include, tuple)
     assert isinstance(manifest.targets[0].exclude, tuple)
+
+
+# ---------------------------------------------------------------------------
+# Composition manifest contract tests
+# ---------------------------------------------------------------------------
+
+VALID_COMPOSITION_TOML = textwrap.dedent("""\
+    [composition]
+    name = "training"
+    version = "1.0.0"
+    created = "2026-03-06"
+    sources = ["corpus-a.toml", "corpus-b.toml"]
+""")
+
+
+@pytest.mark.contract
+def test_composition_round_trip(tmp_path):
+    from eigenhelm.corpus.manifest import CompositionManifest, load_composition
+
+    path = write_toml(tmp_path, VALID_COMPOSITION_TOML)
+    comp = load_composition(path)
+
+    assert isinstance(comp, CompositionManifest)
+    assert comp.name == "training"
+    assert comp.version == "1.0.0"
+    assert comp.sources == ("corpus-a.toml", "corpus-b.toml")
+
+
+@pytest.mark.contract
+def test_composition_missing_name_raises(tmp_path):
+    from eigenhelm.corpus.manifest import load_composition
+
+    toml = textwrap.dedent("""\
+        [composition]
+        version = "1.0.0"
+        created = "2026-03-06"
+        sources = ["a.toml"]
+    """)
+    path = write_toml(tmp_path, toml)
+    with pytest.raises(ValueError, match="name"):
+        load_composition(path)
+
+
+@pytest.mark.contract
+def test_composition_missing_sources_raises(tmp_path):
+    from eigenhelm.corpus.manifest import load_composition
+
+    toml = textwrap.dedent("""\
+        [composition]
+        name = "test"
+        version = "1.0.0"
+        created = "2026-03-06"
+    """)
+    path = write_toml(tmp_path, toml)
+    with pytest.raises(ValueError, match="sources"):
+        load_composition(path)
+
+
+@pytest.mark.contract
+def test_composition_resolve_missing_source(tmp_path):
+    from eigenhelm.corpus.manifest import CompositionManifest
+
+    comp = CompositionManifest(
+        name="test", version="1", created="2026", sources=("missing.toml",)
+    )
+    with pytest.raises(FileNotFoundError, match="missing.toml"):
+        comp.resolve(tmp_path)
+
+
+@pytest.mark.contract
+def test_load_any_manifest_dispatches_correctly(tmp_path):
+    from eigenhelm.corpus.manifest import (
+        CompositionManifest,
+        CorpusManifest,
+        load_any_manifest,
+    )
+
+    # Corpus manifest
+    corpus_path = write_toml(tmp_path, VALID_TWO_TARGET_TOML)
+    assert isinstance(load_any_manifest(corpus_path), CorpusManifest)
+
+    # Composition manifest
+    comp_path = tmp_path / "comp.toml"
+    comp_path.write_text(VALID_COMPOSITION_TOML)
+    assert isinstance(load_any_manifest(comp_path), CompositionManifest)

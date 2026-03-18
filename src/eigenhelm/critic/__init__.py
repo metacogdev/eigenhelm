@@ -12,10 +12,13 @@ Exports:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    import numpy as np
+
+    from eigenhelm.critic.anti_patterns import AntiPatternViolation
     from eigenhelm.models import ProjectionResult
 
 
@@ -54,6 +57,7 @@ class Violation:
     raw_value  — original metric value before normalization
     normalized_value — value normalized to [0, 1]
     contribution     — share of total loss: (norm_val * weight) / total_loss
+    weighted_contribution — absolute: normalized_value * weight (013)
     """
 
     dimension: Literal[
@@ -61,10 +65,12 @@ class Violation:
         "manifold_alignment",
         "token_entropy",
         "compression_structure",
+        "ncd_exemplar_distance",
     ]
     raw_value: float
     normalized_value: float
     contribution: float
+    weighted_contribution: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -74,11 +80,14 @@ class AestheticScore:
     value                — loss ∈ [0.0, 1.0]. Lower is better (0 = ideal).
     structural_confidence — "high" when projection provided; "low" otherwise
     weights              — effective per-dimension weights summing to 1.0
+    contributions        — per-dimension weighted contribution (normalized * weight) (013)
     """
 
     value: float
     structural_confidence: Literal["high", "low"]
     weights: dict[str, float]
+    contributions: dict[str, float] = field(default_factory=dict)
+    normalized_values: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -90,6 +99,7 @@ class Critique:
     violations         — top-N dimensions by contribution, sorted desc
     metrics            — raw information-theoretic values for transparency
     top_n              — number of violations returned (default: 3)
+    anti_patterns      — named anti-pattern violations (empty list if none detected)
     """
 
     score: AestheticScore
@@ -97,6 +107,8 @@ class Critique:
     violations: list[Violation]
     metrics: AestheticMetrics
     top_n: int = 3
+    anti_patterns: list[AntiPatternViolation] = field(default_factory=list)
+    nearest_exemplar_id: str | None = None  # 017: nearest NCD exemplar identity
 
 
 # ---------------------------------------------------------------------------
@@ -128,11 +140,13 @@ class IAestheticCritic(ABC):
         language: str,
         projection: ProjectionResult | None = None,
         top_n: int = 3,
+        feature_vector: np.ndarray | None = None,
     ) -> Critique:
         """Evaluate source code and return a full structured Critique.
 
         Always returns a Critique — never raises on empty source or
         unsupported language (graceful degradation per contract inv 7-8).
+        feature_vector: optional FeatureVector.values for anti-pattern detection.
         """
         ...
 
@@ -154,6 +168,7 @@ class IAestheticCritic(ABC):
 # Public re-exports (populated after AestheticCritic is defined)
 # ---------------------------------------------------------------------------
 from eigenhelm.critic.aesthetic_critic import AestheticCritic  # noqa: E402
+from eigenhelm.critic.anti_patterns import AntiPatternViolation  # noqa: E402
 
 __all__ = [
     "IAestheticCritic",
@@ -162,4 +177,5 @@ __all__ = [
     "AestheticScore",
     "Violation",
     "Critique",
+    "AntiPatternViolation",
 ]

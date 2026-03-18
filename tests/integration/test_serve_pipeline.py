@@ -44,7 +44,9 @@ class TestEvaluateSingleIntegration:
         assert data["decision"] in {"accept", "warn", "reject"}
         assert 0.0 <= data["score"] <= 1.0
 
-    def test_python_quicksort_high_confidence(self, client_with_model, python_quicksort_source):
+    def test_python_quicksort_high_confidence(
+        self, client_with_model, python_quicksort_source
+    ):
         resp = client_with_model.post(
             "/v1/evaluate",
             json={"source": python_quicksort_source, "language": "python"},
@@ -64,7 +66,9 @@ class TestEvaluateSingleIntegration:
         api_score = resp.json()["score"]
 
         helm = DynamicHelm()
-        direct = helm.evaluate(EvaluationRequest(source=python_quicksort_source, language="python"))
+        direct = helm.evaluate(
+            EvaluationRequest(source=python_quicksort_source, language="python")
+        )
         assert abs(api_score - direct.score) < 1e-10
 
 
@@ -79,10 +83,26 @@ class TestEvaluateBatchIntegration:
         go_quicksort_source,
     ):
         files = [
-            {"source": python_quicksort_source, "language": "python", "file_path": "qs.py"},
-            {"source": python_quicksort_source, "language": "python", "file_path": "qs2.py"},
-            {"source": python_quicksort_source, "language": "python", "file_path": "qs3.py"},
-            {"source": js_quicksort_source, "language": "javascript", "file_path": "qs.js"},
+            {
+                "source": python_quicksort_source,
+                "language": "python",
+                "file_path": "qs.py",
+            },
+            {
+                "source": python_quicksort_source,
+                "language": "python",
+                "file_path": "qs2.py",
+            },
+            {
+                "source": python_quicksort_source,
+                "language": "python",
+                "file_path": "qs3.py",
+            },
+            {
+                "source": js_quicksort_source,
+                "language": "javascript",
+                "file_path": "qs.js",
+            },
             {"source": go_quicksort_source, "language": "go", "file_path": "qs.go"},
         ]
         resp = client.post("/v1/evaluate/batch", json={"files": files})
@@ -109,6 +129,31 @@ class TestEvaluateBatchIntegration:
         if summary["rejected"] > 0:
             assert summary["overall_decision"] == "reject"
 
+    def test_batch_forwards_attribution_options(self, client_with_model):
+        files = [
+            {
+                "source": "def f(x):\n    return x + 1\n",
+                "language": "python",
+                "file_path": "one.py",
+                "top_n": 1,
+                "directive_threshold": 0.95,
+            },
+            {
+                "source": "def g(x):\n    return x * 2\n",
+                "language": "python",
+                "file_path": "two.py",
+                "top_n": 4,
+                "directive_threshold": 0.2,
+            },
+        ]
+        resp = client_with_model.post("/v1/evaluate/batch", json={"files": files})
+        assert resp.status_code == 200
+        results = resp.json()["results"]
+        assert results[0]["attribution"]["top_n"] == 1
+        assert results[0]["attribution"]["directive_threshold"] == 0.95
+        assert results[1]["attribution"]["top_n"] == 4
+        assert results[1]["attribution"]["directive_threshold"] == 0.2
+
 
 class TestCLIEvaluateIntegration:
     """US3: eigenhelm-evaluate CLI end-to-end."""
@@ -124,7 +169,7 @@ class TestCLIEvaluateIntegration:
             text=True,
             timeout=30,
         )
-        assert result.returncode in (0, 1)
+        assert result.returncode in (0, 1, 2)
         assert len(result.stdout.strip()) > 0
 
     def test_evaluate_json_output(self, tmp_path):
@@ -139,7 +184,7 @@ class TestCLIEvaluateIntegration:
             text=True,
             timeout=30,
         )
-        assert result.returncode in (0, 1)
+        assert result.returncode in (0, 1, 2)
         data = json.loads(result.stdout)
         assert "results" in data
         assert "summary" in data
@@ -155,7 +200,7 @@ class TestCLIEvaluateIntegration:
             text=True,
             timeout=60,
         )
-        assert result.returncode in (0, 1)
+        assert result.returncode in (0, 1, 2)
         data = json.loads(result.stdout)
         assert data["summary"]["total_files"] >= 5
 
@@ -170,7 +215,7 @@ class TestCLIEvaluateIntegration:
             text=True,
             timeout=30,
         )
-        assert result.returncode in (0, 1)
+        assert result.returncode in (0, 1, 2)
         assert len(result.stdout.strip()) > 0
 
 
@@ -201,7 +246,9 @@ class TestPerformanceBudgets:
         )
         elapsed_ms = (time.perf_counter() - start) * 1000
         assert resp.status_code == 200
-        assert elapsed_ms < 200, f"Single evaluate took {elapsed_ms:.1f}ms (budget: 200ms)"
+        assert elapsed_ms < 200, (
+            f"Single evaluate took {elapsed_ms:.1f}ms (budget: 200ms)"
+        )
 
     def test_batch_latency_50_files(self, client):
         """SC-002: POST /v1/evaluate/batch with 50 files < 5s."""

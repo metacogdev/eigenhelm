@@ -48,14 +48,49 @@ class TestDiscoverFiles:
 
 
 class TestFormatResultHuman:
-    def test_output_contains_decision_and_score(self):
+    def test_default_mode_shows_percentile_and_contributions(self):
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()
         resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
         output = format_result_human(Path("test.py"), resp)
+        # Default mode: no decision label, has score + percentile info
+        assert "score:" in output
+        assert "confidence:" in output
+        assert "contributions:" in output
+        # Default mode should NOT show decision label
+        assert "decision:" not in output
+
+    def test_default_mode_without_model_shows_unavailable(self):
+        from eigenhelm.helm import DynamicHelm, EvaluationRequest
+
+        helm = DynamicHelm()  # No model → no score distribution
+        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        output = format_result_human(Path("test.py"), resp)
+        assert "percentile unavailable" in output
+
+    def test_classify_mode_shows_decision(self):
+        from eigenhelm.helm import DynamicHelm, EvaluationRequest
+
+        helm = DynamicHelm()
+        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        output = format_result_human(Path("test.py"), resp, classify=True)
         assert "decision:" in output
         assert "score:" in output
+
+    def test_classify_mode_uses_marginal_vocabulary(self):
+        """Machine 'warn' should display as 'marginal' in human CLI."""
+        from dataclasses import replace
+
+        from eigenhelm.helm import DynamicHelm, EvaluationRequest
+
+        helm = DynamicHelm()
+        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        # Force decision to 'warn' to test vocabulary mapping
+        resp = replace(resp, decision="warn")
+        output = format_result_human(Path("test.py"), resp, classify=True)
+        assert "decision: marginal" in output
+        assert "decision: warn" not in output
 
 
 class TestFormatResultsJson:

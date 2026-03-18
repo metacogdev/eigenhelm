@@ -119,6 +119,7 @@ class TestWeightsSumToOne:
             "manifold_alignment",
             "token_entropy",
             "compression_structure",
+            "ncd_exemplar_distance",
         }
         assert set(c.score.weights.keys()) == expected_dims
 
@@ -155,28 +156,28 @@ class TestViolationOrdering:
 class TestViolationRawValues:
     def test_token_entropy_raw_value_is_bits_not_normalized(self, critic):
         # raw_value for token_entropy must be the entropy in bits/byte (0–8 range),
-        # not the normalized entropy/8.0 value (0–1 range).
+        # not the normalized 1.0 - entropy/8.0 value (0–1 range).
         c = critic.evaluate(PYTHON_SOURCE, "python")
         entropy_violations = [v for v in c.violations if v.dimension == "token_entropy"]
         if entropy_violations:
             v = entropy_violations[0]
             # raw bits/byte ∈ [0, 8], normalized ∈ [0, 1]
             assert v.raw_value > 1.0 or (
-                v.raw_value < 1.0 and abs(v.raw_value - v.normalized_value * 8.0) < 1e-9
+                v.raw_value < 1.0 and abs(v.normalized_value - (1.0 - v.raw_value / 8.0)) < 1e-9
             ), "raw_value should be entropy in bits/byte"
             # The critical check: raw != normalized when entropy > 1 bit/byte
             if v.raw_value > 1.0:
                 assert v.raw_value != v.normalized_value
 
     def test_token_entropy_raw_normalized_relationship(self, critic):
-        # normalized_value must equal raw_value / 8.0 for token_entropy.
+        # normalized_value must equal 1.0 - raw_value / 8.0 for token_entropy (013 polarity fix).
         c = critic.evaluate(REPETITIVE_SOURCE, "python")
         for v in c.violations:
             if v.dimension == "token_entropy":
-                assert abs(v.normalized_value - v.raw_value / 8.0) < 1e-9
+                assert abs(v.normalized_value - (1.0 - v.raw_value / 8.0)) < 1e-9
 
-    def test_compression_structure_raw_value_is_penalty(self, critic):
-        # raw_value for compression_structure is (1 - birkhoff_measure),
+    def test_compression_structure_raw_value_is_birkhoff(self, critic):
+        # raw_value for compression_structure is birkhoff_measure directly (013 polarity fix),
         # same as normalized_value since it's already in [0, 1].
         c = critic.evaluate(PYTHON_SOURCE, "python")
         for v in c.violations:
@@ -356,3 +357,84 @@ class TestSigmaVirtue:
         assert critic_explicit.score(PYTHON_SOURCE, "python", proj) == pytest.approx(
             critic_default.score(PYTHON_SOURCE, "python", proj)
         )
+
+
+# ---------------------------------------------------------------------------
+# 010: Exemplar-based NCD dimension weights (T012)
+# ---------------------------------------------------------------------------
+
+
+class TestExemplarWeights:
+    """Contract: weights sum to 1.0 in all exemplar configurations."""
+
+    def _make_exemplar_bytes(self) -> list[bytes]:
+        return [
+            b"def quicksort(arr):\n    if len(arr) <= 1:\n"
+            b"        return arr\n    pivot = arr[0]\n"
+            b"    left = [x for x in arr[1:] if x <= pivot]\n"
+            b"    right = [x for x in arr[1:] if x > pivot]\n"
+            b"    return quicksort(left) + [pivot] + quicksort(right)\n",
+        ]
+
+    def test_5_dim_weights_sum_to_1_with_exemplars(self):
+        """5-dimension weights sum to 1.0 when projection + exemplars provided."""
+        import numpy as np
+
+        from eigenhelm.models import ProjectionResult
+
+        proj = ProjectionResult(
+            coordinates=np.zeros(3),
+            l_drift=0.3,
+            l_virtue=0.5,
+            quality_flag="nominal",
+        )
+        critic = AestheticCritic(exemplars=self._make_exemplar_bytes())
+        c = critic.evaluate(PYTHON_SOURCE, "python", projection=proj)
+        assert abs(sum(c.score.weights.values()) - 1.0) < 1e-9
+        assert "ncd_exemplar_distance" in c.score.weights
+        assert c.score.weights["ncd_exemplar_distance"] > 0.0
+
+    def test_4_dim_weights_sum_to_1_without_exemplars(self):
+        """4-dimension weights sum to 1.0 when projection only (backward compat)."""
+        import numpy as np
+
+        from eigenhelm.models import ProjectionResult
+
+        proj = ProjectionResult(
+            coordinates=np.zeros(3),
+            l_drift=0.3,
+            l_virtue=0.5,
+            quality_flag="nominal",
+        )
+        critic = AestheticCritic()
+        c = critic.evaluate(PYTHON_SOURCE, "python", projection=proj)
+        assert abs(sum(c.score.weights.values()) - 1.0) < 1e-9
+
+    def test_ncd_zero_weight_when_no_exemplars(self):
+        """NCD dimension gets zero weight when no exemplars provided."""
+        import numpy as np
+
+        from eigenhelm.models import ProjectionResult
+
+        proj = ProjectionResult(
+            coordinates=np.zeros(3),
+            l_drift=0.3,
+            l_virtue=0.5,
+            quality_flag="nominal",
+        )
+        critic = AestheticCritic()
+        c = critic.evaluate(PYTHON_SOURCE, "python", projection=proj)
+        assert c.score.weights.get("ncd_exemplar_distance", 0.0) == 0.0
+
+    def test_3_dim_exemplars_only_weights_sum_to_1(self):
+        """3-dimension weights sum to 1.0 when exemplars but no projection."""
+        critic = AestheticCritic(exemplars=self._make_exemplar_bytes())
+        c = critic.evaluate(PYTHON_SOURCE, "python")
+        assert abs(sum(c.score.weights.values()) - 1.0) < 1e-9
+        assert c.score.weights.get("ncd_exemplar_distance", 0.0) > 0.0
+
+    def test_2_dim_fallback_weights_sum_to_1(self):
+        """2-dimension fallback weights sum to 1.0 when neither projection nor exemplars."""
+        critic = AestheticCritic()
+        c = critic.evaluate(PYTHON_SOURCE, "python")
+        assert abs(sum(c.score.weights.values()) - 1.0) < 1e-9

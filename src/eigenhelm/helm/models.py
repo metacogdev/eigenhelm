@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    from eigenhelm.attribution.models import AttributionResult
     from eigenhelm.critic import Critique
+    from eigenhelm.output.percentile import DimensionContribution
 
 
 @dataclass(frozen=True)
@@ -16,6 +18,16 @@ class EvaluationRequest:
     source: str
     language: str  # Canonical lowercase key from language_map.LANGUAGE_MAP
     file_path: str | None = None  # Passed through to VirtueExtractor.extract()
+    top_n: int = 3  # 017: top features per PCA dimension in attribution
+    directive_threshold: float = 0.3  # 017: minimum normalized score for directives
+
+    def __post_init__(self) -> None:
+        if self.top_n < 1:
+            raise ValueError(f"top_n must be >= 1, got {self.top_n}")
+        if not (0.0 <= self.directive_threshold <= 1.0):
+            raise ValueError(
+                f"directive_threshold must be in [0.0, 1.0], got {self.directive_threshold}"
+            )
 
 
 @dataclass(frozen=True)
@@ -27,6 +39,10 @@ class EvaluationResponse:
     structural_confidence: Literal["high", "low"]  # Always critique.score.structural_confidence
     critique: Critique  # Full Stage 2 output
     warning: str | None = None  # Machine-parseable warning per R-010
+    percentile: float | None = None  # Quality percentile 0-100 (higher = better), None if unavailable
+    percentile_available: bool = False  # True when model has ScoreDistribution
+    contributions: tuple[DimensionContribution, ...] = ()  # Per-dimension breakdown (016)
+    attribution: AttributionResult | None = None  # Score attribution (017)
 
 
 @dataclass

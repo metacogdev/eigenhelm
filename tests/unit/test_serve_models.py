@@ -93,6 +93,26 @@ class TestFileEvalUnit:
     def test_valid(self):
         f = FileEvalUnit(source="x = 1", language="python")
         assert f.file_path is None
+        assert f.top_n == 3
+        assert f.directive_threshold == 0.3
+
+    def test_with_attribution_options(self):
+        f = FileEvalUnit(
+            source="x = 1",
+            language="python",
+            top_n=5,
+            directive_threshold=0.6,
+        )
+        assert f.top_n == 5
+        assert f.directive_threshold == 0.6
+
+    def test_rejects_invalid_top_n(self):
+        with pytest.raises(ValidationError):
+            FileEvalUnit(source="x = 1", language="python", top_n=0)
+
+    def test_rejects_invalid_directive_threshold(self):
+        with pytest.raises(ValidationError):
+            FileEvalUnit(source="x = 1", language="python", directive_threshold=1.1)
 
 
 class TestBatchRequest:

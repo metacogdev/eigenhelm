@@ -44,7 +44,7 @@ class TestStage1To2Pipeline:
         assert critique.score.structural_confidence == "high"
 
     def test_all_four_dimensions_active_with_projection(self, synthetic_model):
-        """All four canonical dimensions present in weights when projection provided."""
+        """All five canonical dimensions present in weights when projection provided."""
         from eigenhelm.virtue_extractor import VirtueExtractor
 
         extractor = VirtueExtractor()
@@ -59,11 +59,12 @@ class TestStage1To2Pipeline:
             "manifold_alignment",
             "token_entropy",
             "compression_structure",
+            "ncd_exemplar_distance",
         }
         assert set(critique.score.weights.keys()) == expected_dims
 
     def test_high_confidence_weights_all_nonzero(self, synthetic_model):
-        """High-confidence weights are 0.25 each."""
+        """High-confidence weights favor structural dims (no exemplars → 4 active dims)."""
         from eigenhelm.virtue_extractor import VirtueExtractor
 
         extractor = VirtueExtractor()
@@ -73,8 +74,15 @@ class TestStage1To2Pipeline:
         critic = AestheticCritic()
         critique = critic.evaluate(PYTHON_SOURCE, "python", projection=projection)
 
+        expected = {
+            "manifold_drift": 0.35,
+            "manifold_alignment": 0.35,
+            "token_entropy": 0.15,
+            "compression_structure": 0.15,
+            "ncd_exemplar_distance": 0.0,
+        }
         for dim, w in critique.score.weights.items():
-            assert w == 0.25, f"Expected 0.25 for {dim}, got {w}"
+            assert w == expected[dim], f"Expected {expected[dim]} for {dim}, got {w}"
 
     def test_score_bounded_with_projection(self, synthetic_model):
         """score.value ∈ [0, 1] when ProjectionResult provided."""

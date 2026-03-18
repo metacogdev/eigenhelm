@@ -11,7 +11,11 @@ class TestHarnessPipeline:
     """SC-004: Harness correctly discriminates known-good from known-bad code."""
 
     def test_high_vs_low_scoring_corpus(self, tmp_path):
-        """Higher-scoring corpus (before) vs lower-scoring (after) → improvement detected."""
+        """Worse corpus (before) vs better corpus (after) → improvement detected.
+
+        With corrected polarity (013): repetitive code scores higher (worse),
+        structured code scores lower (better).
+        """
         from eigenhelm.harness.runner import run_harness
 
         before_dir = tmp_path / "before"
@@ -19,7 +23,11 @@ class TestHarnessPipeline:
         after_dir = tmp_path / "after"
         after_dir.mkdir()
 
-        # Before: quicksort code scores higher (~0.33 aesthetic loss)
+        # Before: repetitive code scores higher (worse) with corrected polarity
+        for i in range(10):
+            (before_dir / f"simple_{i}.py").write_text(f"x_{i} = 1\n" * 50)
+
+        # After: structured quicksort code scores lower (better) with corrected polarity
         complex_code = (
             "def quicksort(arr):\n"
             "    if len(arr) <= 1:\n"
@@ -30,11 +38,7 @@ class TestHarnessPipeline:
             "    return quicksort(left) + [pivot] + quicksort(right)\n"
         )
         for i in range(10):
-            (before_dir / f"complex_{i}.py").write_text(complex_code)
-
-        # After: simple repetitive code scores lower (~0.17 aesthetic loss)
-        for i in range(10):
-            (after_dir / f"simple_{i}.py").write_text(f"x_{i} = 1\n" * 50)
+            (after_dir / f"complex_{i}.py").write_text(complex_code)
 
         report = run_harness(before_dir, after_dir)
 

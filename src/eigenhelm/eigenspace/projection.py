@@ -76,6 +76,8 @@ def project(vector: FeatureVector, model: EigenspaceModel) -> ProjectionResult:
         l_drift=l_drift,
         l_virtue=l_virtue,
         quality_flag=quality_flag,
+        x_norm=x_norm,
+        x_rec=x_rec,
     )
 
 

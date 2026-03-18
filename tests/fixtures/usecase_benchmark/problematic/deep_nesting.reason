@@ -1,0 +1,1 @@
+Deep nesting: process_data has 10+ levels of indentation. Should use early returns, guard clauses, or extract helper functions.

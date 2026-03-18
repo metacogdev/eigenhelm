@@ -1,0 +1,1 @@
+God class: ApplicationManager handles config, auth, caching, email, logging, metrics, and user management in a single class. Should be decomposed into separate services.

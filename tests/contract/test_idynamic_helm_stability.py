@@ -39,11 +39,11 @@ def quicksort(arr):
     return quicksort(left) + mid + quicksort(right)
 """
 
-# High-entropy source (high aesthetic loss ≈ 0.45-0.55)
+# High-entropy source (low aesthetic loss after 013 polarity fix — diverse bytes = low penalty)
 _raw = os.urandom(300)
 HIGH_ENTROPY_SOURCE = "".join(chr(0x21 + (b % 94)) for b in _raw) + "\n"
 
-# Low-error source: repetitive code (low entropy, low aesthetic loss ≈ 0.16)
+# Repetitive source (high aesthetic loss after 013 polarity fix — low entropy + high Birkhoff)
 REPETITIVE_SOURCE = "x = 1\n" * 30
 
 
@@ -69,9 +69,12 @@ class TestStability100Steps:
     def test_error_does_not_increase_over_100_steps(self):
         """Mean error in final 50 steps ≤ mean error in first 50 steps.
 
-        Uses two-phase source: high-entropy (steps 1-30) then repetitive
-        (steps 31-100), simulating a generation session where code quality
-        improves. The PID should not amplify errors over time.
+        Uses two-phase source: repetitive (steps 1-30, high loss) then
+        high-entropy (steps 31-100, low loss), simulating a generation session
+        where code quality improves. The PID should not amplify errors over time.
+
+        Note: After 013 polarity fix, repetitive code has HIGH loss (bad) and
+        diverse/high-entropy code has LOW loss (good).
         """
         helm = DynamicHelm()
         session = helm.create_session()
@@ -79,7 +82,7 @@ class TestStability100Steps:
         errors = []
         tau, p = 0.8, 0.9
         for i in range(100):
-            src = HIGH_ENTROPY_SOURCE if i < 30 else REPETITIVE_SOURCE
+            src = REPETITIVE_SOURCE if i < 30 else HIGH_ENTROPY_SOURCE
             req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
             r = helm.steer(req)
             errors.append(r.error)

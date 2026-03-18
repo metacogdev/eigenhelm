@@ -1,0 +1,8 @@
+- id: eigenhelm-check
+  name: eigenhelm aesthetic check
+  description: Evaluate staged files against the eigenhelm aesthetic manifold
+  entry: eigenhelm-check
+  language: python
+  types: [python]
+  stages: [pre-commit]
+  pass_filenames: false

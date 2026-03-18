@@ -12,11 +12,18 @@ from eigenhelm.helm import DynamicHelm
 from eigenhelm.helm.models import EvaluationRequest as HelmRequest
 from eigenhelm.helm.models import EvaluationResponse as HelmResponse
 from eigenhelm.serve.models import (
+    AttributionResultOut,
     BatchRequest,
     BatchResponse,
     BatchSummary,
+    ContributionOut,
+    DimensionAttributionOut,
+    DirectAttributionOut,
+    DirectiveOut,
     EvaluateRequest,
     EvaluateResponse,
+    FeatureContributionOut,
+    SourceLocationOut,
     ViolationOut,
 )
 
@@ -37,6 +44,18 @@ def _map_response(
         )
         for v in helm_response.critique.violations
     ]
+    contributions = [
+        ContributionOut(
+            dimension=c.dimension,
+            normalized_value=c.normalized_value,
+            weight=c.weight,
+            weighted_contribution=c.weighted_contribution,
+        )
+        for c in helm_response.contributions
+    ]
+    # 017: Map attribution
+    attribution_out = _map_attribution(helm_response.attribution)
+
     return EvaluateResponse(
         decision=helm_response.decision,
         score=helm_response.score,
@@ -44,6 +63,87 @@ def _map_response(
         violations=violations,
         warning=helm_response.warning,
         file_path=file_path,
+        percentile=helm_response.percentile,
+        percentile_available=helm_response.percentile_available,
+        contributions=contributions,
+        attribution=attribution_out,
+    )
+
+
+def _map_source_location(loc) -> SourceLocationOut | None:
+    """Map attribution SourceLocation to Pydantic model."""
+    if loc is None:
+        return None
+    return SourceLocationOut(
+        code_unit_name=loc.code_unit_name,
+        start_line=loc.start_line,
+        end_line=loc.end_line,
+        file_path=loc.file_path,
+    )
+
+
+def _map_dimension(dim) -> DimensionAttributionOut:
+    """Map attribution DimensionAttribution to Pydantic model."""
+    features = [
+        FeatureContributionOut(
+            feature_index=f.feature_index,
+            feature_name=f.feature_name,
+            contribution_value=f.contribution_value,
+            contribution_magnitude=f.contribution_magnitude,
+            raw_value=f.raw_value,
+            corpus_mean=f.corpus_mean,
+            standardized_deviation=f.standardized_deviation,
+            rank=f.rank,
+        )
+        for f in dim.features
+    ]
+    direct = None
+    if dim.direct is not None:
+        direct = DirectAttributionOut(
+            metric_name=dim.direct.metric_name,
+            computed_value=dim.direct.computed_value,
+            normalization=dim.direct.normalization,
+            normalized_score=dim.direct.normalized_score,
+            exemplar_id=dim.direct.exemplar_id,
+        )
+    return DimensionAttributionOut(
+        dimension=dim.dimension,
+        normalized_score=dim.normalized_score,
+        available=dim.available,
+        method=dim.method,
+        source_location=_map_source_location(dim.source_location),
+        features=features,
+        direct=direct,
+    )
+
+
+def _map_attribution(attr) -> AttributionResultOut | None:
+    """Map AttributionResult to Pydantic model."""
+    if attr is None:
+        return None
+    dimensions = [_map_dimension(d) for d in attr.dimensions]
+    directives = [
+        DirectiveOut(
+            category=d.category,
+            dimension=d.dimension,
+            normalized_score=d.normalized_score,
+            attribution=_map_dimension(d.attribution),
+            source_location=SourceLocationOut(
+                code_unit_name=d.source_location.code_unit_name,
+                start_line=d.source_location.start_line,
+                end_line=d.source_location.end_line,
+                file_path=d.source_location.file_path,
+            ),
+            severity=d.severity,
+        )
+        for d in attr.directives
+    ]
+    return AttributionResultOut(
+        dimensions=dimensions,
+        directives=directives,
+        top_n=attr.top_n,
+        directive_threshold=attr.directive_threshold,
+        vocabulary_version=attr.vocabulary_version,
     )
 
 
@@ -81,13 +181,17 @@ def evaluate_single(payload: EvaluateRequest, request: Request) -> EvaluateRespo
             source=payload.source,
             language=payload.language,
             file_path=payload.file_path,
+            top_n=payload.top_n,
+            directive_threshold=payload.directive_threshold,
         )
     )
     return _map_response(result, file_path=payload.file_path)
 
 
 @router.post("/evaluate/batch", response_model=BatchResponse)
-def evaluate_batch(payload: BatchRequest, request: Request) -> BatchResponse | JSONResponse:
+def evaluate_batch(
+    payload: BatchRequest, request: Request
+) -> BatchResponse | JSONResponse:
     """Evaluate multiple code blocks. Sequential processing, order preserved."""
     helm: DynamicHelm = request.app.state._helm
     max_body_bytes = getattr(request.app.state, "_max_body_bytes", 1_048_576)
@@ -108,6 +212,8 @@ def evaluate_batch(payload: BatchRequest, request: Request) -> BatchResponse | J
                 source=entry.source,
                 language=entry.language,
                 file_path=entry.file_path,
+                top_n=entry.top_n,
+                directive_threshold=entry.directive_threshold,
             )
         )
         results.append(_map_response(result, file_path=entry.file_path))

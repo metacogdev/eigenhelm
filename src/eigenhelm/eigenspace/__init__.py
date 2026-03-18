@@ -66,6 +66,58 @@ def load_model(path: str | Path) -> EigenspaceModel:
         sigma_drift = 1.0
         sigma_virtue = 1.0
 
+    # Load exemplar data (010) — backward-compat: None for pre-010 models
+    exemplars = None
+    n_exemplars = 0
+    if "n_exemplars" in data and int(data["n_exemplars"]) > 0:
+        from eigenhelm.models import ExemplarRef
+
+        n_ex = int(data["n_exemplars"])
+        blob = bytes(data["exemplar_blob"])
+        offsets = data["exemplar_offsets"].astype(np.int64)
+        hashes = data["exemplar_hashes"]
+        clusters = data["exemplar_clusters"]
+
+        exemplars = []
+        for i in range(n_ex):
+            start, end = int(offsets[i]), int(offsets[i + 1])
+            compressed = blob[start:end]
+            exemplars.append(
+                ExemplarRef(
+                    index=i,
+                    cluster=int(clusters[i]),
+                    compressed_content=compressed,
+                    content_hash=str(hashes[i]),
+                )
+            )
+        n_exemplars = n_ex
+
+    # Load language metadata (009) — backward-compat: None for pre-009 models
+    language = str(data["language"]) if "language" in data else None
+    corpus_class = str(data["corpus_class"]) if "corpus_class" in data else None
+    n_training_files = int(data["n_training_files"]) if "n_training_files" in data else 0
+
+    # Load calibrated thresholds (015) — backward-compat: None for pre-015 models
+    calibrated_accept = None
+    calibrated_reject = None
+    score_distribution = None
+    if "calibrated_accept" in data:
+        calibrated_accept = float(data["calibrated_accept"])
+        calibrated_reject = float(data["calibrated_reject"])
+    if "score_dist_min" in data:
+        from eigenhelm.models import ScoreDistribution
+
+        score_distribution = ScoreDistribution(
+            min=float(data["score_dist_min"]),
+            p10=float(data["score_dist_p10"]),
+            p25=float(data["score_dist_p25"]),
+            median=float(data["score_dist_median"]),
+            p75=float(data["score_dist_p75"]),
+            p90=float(data["score_dist_p90"]),
+            max=float(data["score_dist_max"]),
+            n_scores=int(data["score_dist_n_scores"]) if "score_dist_n_scores" in data else 1,
+        )
+
     return EigenspaceModel(
         projection_matrix=data["projection_matrix"].astype(np.float64),
         mean=data["mean"].astype(np.float64),
@@ -75,6 +127,14 @@ def load_model(path: str | Path) -> EigenspaceModel:
         corpus_hash=corpus_hash,
         sigma_drift=sigma_drift,
         sigma_virtue=sigma_virtue,
+        exemplars=exemplars,
+        n_exemplars=n_exemplars,
+        language=language,
+        corpus_class=corpus_class,
+        n_training_files=n_training_files,
+        calibrated_accept=calibrated_accept,
+        calibrated_reject=calibrated_reject,
+        score_distribution=score_distribution,
     )
 
 

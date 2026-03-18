@@ -35,6 +35,9 @@ def _passthrough(module_path: str) -> click.Command:
     return cmd
 
 
+from eigenhelm.cli.init import init  # noqa: E402
+
+cli.add_command(init, "init")
 cli.add_command(_passthrough("eigenhelm.cli.evaluate"), "evaluate")
 cli.add_command(_passthrough("eigenhelm.cli.train"), "train")
 cli.add_command(_passthrough("eigenhelm.cli.inspect"), "inspect")

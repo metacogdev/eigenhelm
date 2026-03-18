@@ -134,6 +134,14 @@ class EigenspaceModel:
     corpus_hash: str
     sigma_drift: float = 1.0  # p95 l_drift from training corpus; 1.0 = pre-calibration default
     sigma_virtue: float = 1.0  # p95 l_virtue from training corpus; 1.0 = pre-calibration default
+    exemplars: list[ExemplarRef] | None = None  # None = pre-010 model
+    n_exemplars: int = 0  # Informational; len(exemplars) when set
+    language: str | None = None  # Training language key; None = pre-009 model
+    corpus_class: str | None = None  # "A" (single-lang), "B" (cross-lang); None = pre-009
+    n_training_files: int = 0  # Files processed during training; 0 = pre-009
+    calibrated_accept: float | None = None  # p25 score threshold; None = pre-015 model
+    calibrated_reject: float | None = None  # p75 score threshold; None = pre-015 model
+    score_distribution: ScoreDistribution | None = None  # Full distribution; None = pre-015
 
     def __post_init__(self) -> None:
         if self.projection_matrix.shape[0] != FEATURE_DIM:
@@ -163,6 +171,8 @@ class ProjectionResult:
     l_drift: float
     l_virtue: float
     quality_flag: str
+    x_norm: np.ndarray | None = None  # shape (69,) — standardized input (for attribution)
+    x_rec: np.ndarray | None = None  # shape (69,) — PCA reconstruction (for attribution)
 
 
 @dataclass(frozen=True)
@@ -181,6 +191,102 @@ class TrainingResult:
     n_units_extracted: int
     n_vectors_excluded: int
     calibration: CalibrationStats | None = None
+    exemplars: list[ExemplarRef] | None = None  # Populated when exemplar selection succeeds
+    score_distribution: ScoreDistribution | None = None  # 015: training score distribution
+    calibration_skip_reason: str | None = None  # 015: why threshold calibration was skipped
+
+
+@dataclass(frozen=True)
+class ExemplarRef:
+    """A representative code sample selected from the training corpus.
+
+    Stores compressed content for NCD computation at evaluation time,
+    avoiding dependency on the original training corpus.
+    """
+
+    index: int  # Row index in the original design matrix
+    cluster: int  # PCA cluster membership (0-indexed)
+    compressed_content: bytes  # zlib.compress(source_bytes, level=9)
+    content_hash: str  # SHA-256 of original source_bytes
+    file_path: str | None = None  # Originating file path (informational)
+
+
+@dataclass(frozen=True)
+class MetricThresholds:
+    """Configurable target thresholds from the corpus research report.
+
+    Default values from corpus research: Birkhoff > 0.8, CD < 0.1,
+    WL consistency > 0.9. Overridable at evaluation time (FR-007).
+    """
+
+    birkhoff_min: float = 0.8
+    cyclomatic_density_max: float = 0.1
+    wl_consistency_min: float = 0.9
+
+
+@dataclass(frozen=True)
+class ScoreDistribution:
+    """Summary statistics of aesthetic scores computed over a training corpus.
+
+    All values are in [0.0, 1.0] and monotonically non-decreasing.
+    Produced during training by compute_score_distribution() in training/calibration.py.
+    """
+
+    min: float
+    p10: float
+    p25: float
+    median: float
+    p75: float
+    p90: float
+    max: float
+    n_scores: int
+
+    def __post_init__(self) -> None:
+        values = [self.min, self.p10, self.p25, self.median, self.p75, self.p90, self.max]
+        for i, v in enumerate(values):
+            if not (0.0 <= v <= 1.0):
+                names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
+                raise ValueError(f"ScoreDistribution.{names[i]} must be in [0.0, 1.0], got {v}")
+        for i in range(len(values) - 1):
+            if values[i] > values[i + 1]:
+                names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
+                raise ValueError(
+                    f"ScoreDistribution values must be monotonically non-decreasing: "
+                    f"{names[i]}={values[i]} > {names[i+1]}={values[i+1]}"
+                )
+        if self.n_scores < 1:
+            raise ValueError(f"ScoreDistribution.n_scores must be >= 1, got {self.n_scores}")
+
+
+@dataclass(frozen=True)
+class CalibrationThresholds:
+    """Accept and reject thresholds derived from a training score distribution.
+
+    accept: scores below this are classified "accept"
+    reject: scores above this are classified "reject"
+    source_percentiles: (p_accept, p_reject) used to derive the thresholds
+    n_scores: number of scores used in calibration
+    """
+
+    accept: float
+    reject: float
+    source_percentiles: tuple[float, float]
+    n_scores: int
+
+    def __post_init__(self) -> None:
+        if not (0.0 <= self.accept <= 1.0):
+            raise ValueError(
+                f"CalibrationThresholds.accept must be in [0.0, 1.0], got {self.accept}"
+            )
+        if not (0.0 <= self.reject <= 1.0):
+            raise ValueError(
+                f"CalibrationThresholds.reject must be in [0.0, 1.0], got {self.reject}"
+            )
+        if self.accept >= self.reject:
+            raise ValueError(
+                f"CalibrationThresholds.accept ({self.accept}) must be < "
+                f"reject ({self.reject})"
+            )
 
 
 class UnsupportedLanguageError(Exception):

@@ -1,0 +1,1 @@
+Copy-paste duplication: Four nearly identical functions differ only in variable names and a default string. Should be a single parameterized function.

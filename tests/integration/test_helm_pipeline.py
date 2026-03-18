@@ -87,6 +87,7 @@ class TestHelmPipelineWithEigenspace:
             "manifold_alignment",
             "token_entropy",
             "compression_structure",
+            "ncd_exemplar_distance",
         }
         assert set(r.critique.score.weights.keys()) == expected_dims
 

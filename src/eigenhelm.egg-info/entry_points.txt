@@ -1,9 +1,0 @@
-[console_scripts]
-eh = eigenhelm.cli.main:cli
-eigenhelm = eigenhelm.cli.main:cli
-eigenhelm-corpus = eigenhelm.cli.corpus:main
-eigenhelm-evaluate = eigenhelm.cli.evaluate:main
-eigenhelm-harness = eigenhelm.cli.harness:main
-eigenhelm-inspect = eigenhelm.cli.inspect:main
-eigenhelm-serve = eigenhelm.cli.serve:main
-eigenhelm-train = eigenhelm.cli.train:main

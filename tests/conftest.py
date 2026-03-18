@@ -9,6 +9,49 @@ import pytest
 FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures"
 
 
+def _find_polyglot_model() -> pathlib.Path | None:
+    """Find the polyglot model — check repo root first, then bundled package."""
+    repo_root = pathlib.Path(__file__).parent.parent
+    repo_model = repo_root / "models" / "general-polyglot-v1.npz"
+    if repo_model.is_file():
+        return repo_model
+    try:
+        from eigenhelm.trained_models import default_model_path
+
+        bundled = default_model_path()
+        if bundled.is_file():
+            return bundled
+    except ImportError:
+        pass
+    return None
+
+
+def _models_available() -> bool:
+    """Check if trained .npz models exist."""
+    return _find_polyglot_model() is not None
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Skip tests marked requires_model when trained models are absent."""
+    if _models_available():
+        return
+    skip = pytest.mark.skip(reason="trained models not available")
+    for item in items:
+        if "requires_model" in item.keywords:
+            item.add_marker(skip)
+
+
+@pytest.fixture(scope="module")
+def polyglot_model():
+    """Load the polyglot model, skipping if unavailable."""
+    model_path = _find_polyglot_model()
+    if model_path is None:
+        pytest.skip("polyglot model not available")
+    from eigenhelm.eigenspace import load_model
+
+    return load_model(model_path)
+
+
 def make_test_corpus(target_dir: pathlib.Path) -> pathlib.Path:
     """Populate target_dir with Python/JS/Go source files from tests/fixtures/.
 

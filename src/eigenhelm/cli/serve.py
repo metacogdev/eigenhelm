@@ -37,25 +37,25 @@ def main(argv: list[str] | None = None) -> None:
     )
     args = parser.parse_args(argv)
 
-    eigenspace = None
-    if args.model:
-        try:
-            from eigenhelm.eigenspace import load_model
+    model_source = args.model
+    if model_source is None:
+        from eigenhelm.trained_models import default_model_path
 
-            eigenspace = load_model(args.model)
-            print(
-                f"INFO: Loading eigenspace model from {args.model} "
-                f"(version={eigenspace.version}, corpus_hash={eigenspace.corpus_hash})",
-                file=sys.stderr,
-            )
-        except (FileNotFoundError, OSError) as exc:
-            print(f"ERROR: Failed to load model: {exc}", file=sys.stderr)
-            sys.exit(1)
-    else:
+        model_source = str(default_model_path())
+
+    eigenspace = None
+    try:
+        from eigenhelm.eigenspace import load_model
+
+        eigenspace = load_model(model_source)
         print(
-            "WARNING: No eigenspace model loaded; running in low-confidence mode",
+            f"INFO: Loading eigenspace model from {model_source} "
+            f"(version={eigenspace.version}, corpus_hash={eigenspace.corpus_hash})",
             file=sys.stderr,
         )
+    except (FileNotFoundError, OSError) as exc:
+        print(f"ERROR: Failed to load model: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     app = create_app(eigenspace=eigenspace)
     model_status = "loaded" if eigenspace else "none"
