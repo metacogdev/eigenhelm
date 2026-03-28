@@ -3,7 +3,29 @@ import os
 import sys
 import logging
 
-def process_everything(data, config, mode, output_path, verbose, dry_run, format_type, validate, transform, filter_fn, sort_key, reverse, limit, offset, encoding, compression, checksum, retry_count, timeout, callback):
+
+def process_everything(
+    data,
+    config,
+    mode,
+    output_path,
+    verbose,
+    dry_run,
+    format_type,
+    validate,
+    transform,
+    filter_fn,
+    sort_key,
+    reverse,
+    limit,
+    offset,
+    encoding,
+    compression,
+    checksum,
+    retry_count,
+    timeout,
+    callback,
+):
     """Process data through multiple stages. This function does too much."""
     logger = logging.getLogger(__name__)
     results = []
@@ -60,12 +82,17 @@ def process_everything(data, config, mode, output_path, verbose, dry_run, format
             elif mode == "csv":
                 result = ",".join(str(v) for v in item.values())
             elif mode == "xml":
-                result = "<item>" + "".join(f"<{k}>{v}</{k}>" for k, v in item.items()) + "</item>"
+                result = (
+                    "<item>"
+                    + "".join(f"<{k}>{v}</{k}>" for k, v in item.items())
+                    + "</item>"
+                )
             else:
                 result = str(item)
 
             if compression:
                 import zlib
+
                 result = zlib.compress(result.encode(encoding or "utf-8"))
 
             results.append(result)

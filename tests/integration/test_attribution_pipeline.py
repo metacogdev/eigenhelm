@@ -37,24 +37,33 @@ class TestFullPipeline:
     """T033: End-to-end evaluate-attribute-output pipeline."""
 
     def test_all_5_dimensions_attributed(self, helm: DynamicHelm) -> None:
-        resp = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
+        resp = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
         attr = resp.attribution
         assert attr is not None
         assert len(attr.dimensions) == 5
         dim_names = tuple(d.dimension for d in attr.dimensions)
         assert dim_names == DIMENSION_NAMES
 
-    def test_directives_generated_for_high_scoring_dims(self, helm: DynamicHelm) -> None:
-        resp = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
+    def test_directives_generated_for_high_scoring_dims(
+        self, helm: DynamicHelm
+    ) -> None:
+        resp = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
         attr = resp.attribution
         assert attr is not None
         # Any dimension above threshold should have a corresponding directive
         above_threshold = {
-            d.dimension for d in attr.dimensions
+            d.dimension
+            for d in attr.dimensions
             if d.available and d.normalized_score > attr.directive_threshold
         }
         directive_dims = {d.dimension for d in attr.directives}
@@ -65,9 +74,12 @@ class TestFullPipeline:
             assert d.category in DIRECTIVE_VOCABULARY
 
     def test_json_round_trip_preserves_attribution(self, helm: DynamicHelm) -> None:
-        resp = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
+        resp = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
         json_str = format_results_json([(Path("test.py"), resp)])
         data = json.loads(json_str)
 
@@ -81,12 +93,18 @@ class TestFullPipeline:
 
     def test_determinism(self, helm: DynamicHelm) -> None:
         """Two identical evaluations produce identical AttributionResult."""
-        resp1 = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
-        resp2 = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
+        resp1 = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
+        resp2 = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
         attr1 = resp1.attribution
         attr2 = resp2.attribution
         assert attr1 is not None
@@ -119,9 +137,12 @@ class TestPerformance:
         times = []
         for _ in range(N):
             start = time.perf_counter()
-            resp = helm.evaluate(EvaluationRequest(
-                source=_FIBONACCI_SOURCE, language="python",
-            ))
+            resp = helm.evaluate(
+                EvaluationRequest(
+                    source=_FIBONACCI_SOURCE,
+                    language="python",
+                )
+            )
             elapsed = time.perf_counter() - start
             times.append(elapsed)
             assert resp.attribution is not None
@@ -136,11 +157,16 @@ class TestPerformance:
 class TestSC002Benchmark:
     """T035: Top-3 feature coverage for drift dimension on concentrated signals."""
 
-    def test_top_3_coverage_on_fibonacci(self, helm: DynamicHelm, polyglot_model) -> None:
+    def test_top_3_coverage_on_fibonacci(
+        self, helm: DynamicHelm, polyglot_model
+    ) -> None:
         """Measure top-3 feature coverage for drift. Document, don't gate."""
-        resp = helm.evaluate(EvaluationRequest(
-            source=_FIBONACCI_SOURCE, language="python",
-        ))
+        resp = helm.evaluate(
+            EvaluationRequest(
+                source=_FIBONACCI_SOURCE,
+                language="python",
+            )
+        )
         attr = resp.attribution
         assert attr is not None
 
@@ -158,8 +184,8 @@ class TestSC002Benchmark:
 
         full_drift = decompose_drift(projection, polyglot_model, vectors[0], top_n=69)
 
-        total_sq = sum(f.contribution_value ** 2 for f in full_drift.features)
-        top3_sq = sum(f.contribution_value ** 2 for f in full_drift.features[:3])
+        total_sq = sum(f.contribution_value**2 for f in full_drift.features)
+        top3_sq = sum(f.contribution_value**2 for f in full_drift.features[:3])
 
         if total_sq > 0:
             coverage = top3_sq / total_sq

@@ -47,7 +47,9 @@ class TestDeterminism:
         assert c1 == c2
 
     def test_score_same_input_same_output(self, critic):
-        assert critic.score(PYTHON_SOURCE, "python") == critic.score(PYTHON_SOURCE, "python")
+        assert critic.score(PYTHON_SOURCE, "python") == critic.score(
+            PYTHON_SOURCE, "python"
+        )
 
     def test_repetitive_source_deterministic(self, critic):
         c1 = critic.evaluate(REPETITIVE_SOURCE, "python")
@@ -163,7 +165,8 @@ class TestViolationRawValues:
             v = entropy_violations[0]
             # raw bits/byte ∈ [0, 8], normalized ∈ [0, 1]
             assert v.raw_value > 1.0 or (
-                v.raw_value < 1.0 and abs(v.normalized_value - (1.0 - v.raw_value / 8.0)) < 1e-9
+                v.raw_value < 1.0
+                and abs(v.normalized_value - (1.0 - v.raw_value / 8.0)) < 1e-9
             ), "raw_value should be entropy in bits/byte"
             # The critical check: raw != normalized when entropy > 1 bit/byte
             if v.raw_value > 1.0:
@@ -336,8 +339,12 @@ class TestSigmaVirtue:
             l_virtue=8.0,
             quality_flag="nominal",
         )
-        score_default = AestheticCritic(sigma_virtue=1.0).score(PYTHON_SOURCE, "python", proj)
-        score_calibrated = AestheticCritic(sigma_virtue=12.0).score(PYTHON_SOURCE, "python", proj)
+        score_default = AestheticCritic(sigma_virtue=1.0).score(
+            PYTHON_SOURCE, "python", proj
+        )
+        score_calibrated = AestheticCritic(sigma_virtue=12.0).score(
+            PYTHON_SOURCE, "python", proj
+        )
         assert score_calibrated < score_default
 
     def test_sigma_virtue_default_backwards_compatible(self):

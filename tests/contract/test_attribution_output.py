@@ -52,11 +52,15 @@ def evaluation_response(polyglot_model) -> EvaluationResponse:
 class TestAttributionOutputContract:
     """Verify attribution shape returned by DynamicHelm.evaluate()."""
 
-    def test_attribution_not_none_with_model(self, evaluation_response: EvaluationResponse):
+    def test_attribution_not_none_with_model(
+        self, evaluation_response: EvaluationResponse
+    ):
         """(a) attribution field is populated when a model is loaded."""
         assert evaluation_response.attribution is not None
 
-    def test_attribution_is_attribution_result(self, evaluation_response: EvaluationResponse):
+    def test_attribution_is_attribution_result(
+        self, evaluation_response: EvaluationResponse
+    ):
         """Carrier is a single attribution object on EvaluationResponse."""
         attr = evaluation_response.attribution
         assert isinstance(attr, AttributionResult)
@@ -67,7 +71,9 @@ class TestAttributionOutputContract:
         assert attr is not None
         assert len(attr.dimensions) == 5
 
-    def test_dimension_names_match_canonical(self, evaluation_response: EvaluationResponse):
+    def test_dimension_names_match_canonical(
+        self, evaluation_response: EvaluationResponse
+    ):
         """Dimensions use the canonical names from DIMENSION_NAMES."""
         attr = evaluation_response.attribution
         assert attr is not None
@@ -84,18 +90,24 @@ class TestAttributionOutputContract:
                 f"Dimension {dim.dimension!r}: expected method {expected!r}, got {dim.method!r}"
             )
 
-    def test_drift_features_have_contribution_fields(self, evaluation_response: EvaluationResponse):
+    def test_drift_features_have_contribution_fields(
+        self, evaluation_response: EvaluationResponse
+    ):
         """(d) PCA drift features have contribution_value and magnitude."""
         attr = evaluation_response.attribution
         assert attr is not None
         drift = next(d for d in attr.dimensions if d.dimension == "manifold_drift")
-        assert len(drift.features) > 0, "Drift dimension should have feature contributions"
+        assert len(drift.features) > 0, (
+            "Drift dimension should have feature contributions"
+        )
         for feat in drift.features:
             assert isinstance(feat, FeatureContribution)
             assert isinstance(feat.contribution_value, float)
             assert isinstance(feat.contribution_magnitude, float)
 
-    def test_direct_dims_have_direct_attribution(self, evaluation_response: EvaluationResponse):
+    def test_direct_dims_have_direct_attribution(
+        self, evaluation_response: EvaluationResponse
+    ):
         """(e) Direct dimensions have DirectAttribution with required fields."""
         attr = evaluation_response.attribution
         assert attr is not None
@@ -112,7 +124,9 @@ class TestAttributionOutputContract:
             assert isinstance(dim.direct.normalization, str)
             assert len(dim.direct.normalization) > 0
 
-    def test_source_location_on_available_dims(self, evaluation_response: EvaluationResponse):
+    def test_source_location_on_available_dims(
+        self, evaluation_response: EvaluationResponse
+    ):
         """(f) source_location present on available dimensions."""
         attr = evaluation_response.attribution
         assert attr is not None
@@ -125,7 +139,9 @@ class TestAttributionOutputContract:
                 assert dim.source_location.start_line >= 1
                 assert dim.source_location.end_line >= dim.source_location.start_line
 
-    def test_carrier_is_single_attribution_field(self, evaluation_response: EvaluationResponse):
+    def test_carrier_is_single_attribution_field(
+        self, evaluation_response: EvaluationResponse
+    ):
         """(g) Attribution is carried as a single field, not separate fields."""
         # Verify the field exists on the response dataclass itself
         assert hasattr(evaluation_response, "attribution")

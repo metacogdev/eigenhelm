@@ -175,15 +175,17 @@ def render_human(summary: DiscriminationSummary) -> str:
         )
 
     overall = "ALL PASSED" if summary.all_passed else "SOME FAILED"
-    return "\n".join([
-        "Cross-Language Discrimination Report",
-        sep,
-        header,
-        sep,
-        *rows,
-        sep,
-        f"Overall: {overall}",
-    ])
+    return "\n".join(
+        [
+            "Cross-Language Discrimination Report",
+            sep,
+            header,
+            sep,
+            *rows,
+            sep,
+            f"Overall: {overall}",
+        ]
+    )
 
 
 def render_json(summary: DiscriminationSummary) -> str:

@@ -127,9 +127,7 @@ class TestPrecommitMain:
         mock_config.strict = True
         mock_config.model = None
         mock_config.language_overrides = {}
-        mock_config.thresholds_for.return_value = MagicMock(
-            accept=0.3, reject=0.7
-        )
+        mock_config.thresholds_for.return_value = MagicMock(accept=0.3, reject=0.7)
         with (
             patch("eigenhelm.cli.precommit._get_staged_files", return_value=[f]),
             patch("eigenhelm.cli.precommit.EvaluationCache.save"),
@@ -156,7 +154,11 @@ class TestPrecommitMain:
             "version": 1,
             "config_hash": "",
             "entries": {
-                str(f): {"content_hash": content_hash, "decision": "accept", "score": 0.1}
+                str(f): {
+                    "content_hash": content_hash,
+                    "decision": "accept",
+                    "score": 0.1,
+                }
             },
         }
         cache_path.write_text(json.dumps(cache_data))

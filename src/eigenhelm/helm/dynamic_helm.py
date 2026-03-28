@@ -112,7 +112,10 @@ class DynamicHelm:
     # ------------------------------------------------------------------
 
     def _evaluate_pipeline(
-        self, source: str, language: str, file_path: str | None = None,
+        self,
+        source: str,
+        language: str,
+        file_path: str | None = None,
         declaration_dominant: bool = False,
     ) -> tuple[Critique, str | None, ProjectionResult | None, list[FeatureVector]]:
         """Run Stage 1→2→3 pipeline.
@@ -155,7 +158,10 @@ class DynamicHelm:
         # Stage 2: evaluate (pass feature vector for anti-pattern detection)
         fv_values = vectors[0].values if vectors else None
         critique = self._critic.evaluate(
-            source, language, projection=projection, feature_vector=fv_values,
+            source,
+            language,
+            projection=projection,
+            feature_vector=fv_values,
             declaration_dominant=declaration_dominant,
         )
 
@@ -175,7 +181,9 @@ class DynamicHelm:
         declaration_dominant = decl_analysis.is_dominant
 
         critique, warning, projection, vectors = self._evaluate_pipeline(
-            request.source, request.language, request.file_path,
+            request.source,
+            request.language,
+            request.file_path,
             declaration_dominant=declaration_dominant,
         )
 

@@ -11,6 +11,7 @@ def sort_list(lst):
                         lst[j] = t
     return lst
 
+
 def find_max(lst):
     m = lst[0]
     for i in range(len(lst)):
@@ -25,6 +26,7 @@ def find_max(lst):
         if lst[i] > m3:
             m3 = lst[i]
     return m
+
 
 def find_min(lst):
     m = lst[0]
@@ -41,6 +43,7 @@ def find_min(lst):
             m3 = lst[i]
     return m
 
+
 def find_avg(lst):
     s = 0
     c = 0
@@ -48,6 +51,7 @@ def find_avg(lst):
         s = s + lst[i]
         c = c + 1
     return s / c
+
 
 def find_sum(lst):
     s = 0

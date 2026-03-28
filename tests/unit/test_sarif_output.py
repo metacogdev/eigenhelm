@@ -6,7 +6,12 @@ import json
 from pathlib import Path
 
 
-from eigenhelm.output.sarif import SARIF_SCHEMA, SARIF_VERSION, build_sarif, format_sarif
+from eigenhelm.output.sarif import (
+    SARIF_SCHEMA,
+    SARIF_VERSION,
+    build_sarif,
+    format_sarif,
+)
 
 
 def _make_response(decision="accept", score=0.2):
@@ -59,7 +64,8 @@ class TestBuildSarif:
             tool_version="1.0.0",
         )
         main_results = [
-            r for r in doc["runs"][0]["results"]
+            r
+            for r in doc["runs"][0]["results"]
             if r["ruleId"] == "eigenhelm/aesthetic-score"
         ]
         assert len(main_results) == 2
@@ -133,7 +139,8 @@ class TestBuildSarif:
         resp = _make_response()
         doc = build_sarif([(Path("src/module.py"), resp)], tool_version="1.0.0")
         main_results = [
-            r for r in doc["runs"][0]["results"]
+            r
+            for r in doc["runs"][0]["results"]
             if r["ruleId"] == "eigenhelm/aesthetic-score"
         ]
         assert len(main_results) == 1

@@ -140,7 +140,9 @@ def test_load_save_model(tmp_path):
     assert loaded.n_components == 4
     np.testing.assert_array_equal(loaded.mean, model.mean)
 
-    unit = CodeUnit(source="pass", language="python", name="<m>", start_line=1, end_line=1)
+    unit = CodeUnit(
+        source="pass", language="python", name="<m>", start_line=1, end_line=1
+    )
     fv = FeatureVector(values=np.ones(FEATURE_DIM), code_unit=unit)
     result = project(fv, loaded)
     assert result.coordinates.shape == (4,)

@@ -50,7 +50,10 @@ class TestHttpResponseContract:
             assert isinstance(c.weighted_contribution, float)
 
 
-def _eval_with_model(polyglot_model, source: str = "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n"):
+def _eval_with_model(
+    polyglot_model,
+    source: str = "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n",
+):
     helm = DynamicHelm(eigenspace=polyglot_model)
     return helm.evaluate(EvaluationRequest(source=source, language="python"))
 

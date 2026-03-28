@@ -4,6 +4,7 @@ COUNTER = 0
 BUFFER = []
 ERROR = ""
 
+
 def transition(action):
     global STATE, COUNTER, BUFFER, ERROR
     if STATE == "INIT":
@@ -61,14 +62,18 @@ def transition(action):
             ERROR = "must reset first"
     return STATE
 
+
 def get_state():
     return STATE
+
 
 def get_counter():
     return COUNTER
 
+
 def get_buffer():
     return BUFFER
+
 
 def get_error():
     return ERROR

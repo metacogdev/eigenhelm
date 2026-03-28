@@ -49,8 +49,14 @@ def _make_calibrated_model(
         calibrated_accept=accept,
         calibrated_reject=reject,
         score_distribution=ScoreDistribution(
-            min=0.38, p10=0.45, p25=accept, median=0.61,
-            p75=reject, p90=0.81, max=0.93, n_scores=100,
+            min=0.38,
+            p10=0.45,
+            p25=accept,
+            median=0.61,
+            p75=reject,
+            p90=0.81,
+            max=0.93,
+            n_scores=100,
         ),
     )
 
@@ -199,23 +205,41 @@ class TestDegenerateCorpus:
 class TestScoreDistribution:
     def test_valid_construction(self):
         sd = ScoreDistribution(
-            min=0.1, p10=0.2, p25=0.3, median=0.5,
-            p75=0.7, p90=0.8, max=0.9, n_scores=100,
+            min=0.1,
+            p10=0.2,
+            p25=0.3,
+            median=0.5,
+            p75=0.7,
+            p90=0.8,
+            max=0.9,
+            n_scores=100,
         )
         assert sd.min == 0.1
         assert sd.n_scores == 100
 
     def test_all_same_values(self):
         sd = ScoreDistribution(
-            min=0.5, p10=0.5, p25=0.5, median=0.5,
-            p75=0.5, p90=0.5, max=0.5, n_scores=10,
+            min=0.5,
+            p10=0.5,
+            p25=0.5,
+            median=0.5,
+            p75=0.5,
+            p90=0.5,
+            max=0.5,
+            n_scores=10,
         )
         assert sd.median == 0.5
 
     def test_boundary_values(self):
         sd = ScoreDistribution(
-            min=0.0, p10=0.0, p25=0.0, median=0.5,
-            p75=1.0, p90=1.0, max=1.0, n_scores=1,
+            min=0.0,
+            p10=0.0,
+            p25=0.0,
+            median=0.5,
+            p75=1.0,
+            p90=1.0,
+            max=1.0,
+            n_scores=1,
         )
         assert sd.min == 0.0
         assert sd.max == 1.0
@@ -223,21 +247,39 @@ class TestScoreDistribution:
     def test_out_of_range_raises(self):
         with pytest.raises(ValueError, match=r"must be in \[0\.0, 1\.0\]"):
             ScoreDistribution(
-                min=-0.1, p10=0.2, p25=0.3, median=0.5,
-                p75=0.7, p90=0.8, max=0.9, n_scores=10,
+                min=-0.1,
+                p10=0.2,
+                p25=0.3,
+                median=0.5,
+                p75=0.7,
+                p90=0.8,
+                max=0.9,
+                n_scores=10,
             )
 
     def test_non_monotonic_raises(self):
         with pytest.raises(ValueError, match="monoton"):
             ScoreDistribution(
-                min=0.5, p10=0.2, p25=0.3, median=0.5,
-                p75=0.7, p90=0.8, max=0.9, n_scores=10,
+                min=0.5,
+                p10=0.2,
+                p25=0.3,
+                median=0.5,
+                p75=0.7,
+                p90=0.8,
+                max=0.9,
+                n_scores=10,
             )
 
     def test_frozen(self):
         sd = ScoreDistribution(
-            min=0.1, p10=0.2, p25=0.3, median=0.5,
-            p75=0.7, p90=0.8, max=0.9, n_scores=50,
+            min=0.1,
+            p10=0.2,
+            p25=0.3,
+            median=0.5,
+            p75=0.7,
+            p90=0.8,
+            max=0.9,
+            n_scores=50,
         )
         with pytest.raises(AttributeError):
             sd.min = 0.0  # type: ignore[misc]
@@ -251,8 +293,10 @@ class TestScoreDistribution:
 class TestCalibrationThresholds:
     def test_valid_construction(self):
         ct = CalibrationThresholds(
-            accept=0.3, reject=0.7,
-            source_percentiles=(25.0, 75.0), n_scores=100,
+            accept=0.3,
+            reject=0.7,
+            source_percentiles=(25.0, 75.0),
+            n_scores=100,
         )
         assert ct.accept == 0.3
         assert ct.reject == 0.7
@@ -260,28 +304,36 @@ class TestCalibrationThresholds:
     def test_accept_equals_reject_raises(self):
         with pytest.raises(ValueError):
             CalibrationThresholds(
-                accept=0.5, reject=0.5,
-                source_percentiles=(25.0, 75.0), n_scores=100,
+                accept=0.5,
+                reject=0.5,
+                source_percentiles=(25.0, 75.0),
+                n_scores=100,
             )
 
     def test_accept_greater_than_reject_raises(self):
         with pytest.raises(ValueError):
             CalibrationThresholds(
-                accept=0.8, reject=0.3,
-                source_percentiles=(25.0, 75.0), n_scores=100,
+                accept=0.8,
+                reject=0.3,
+                source_percentiles=(25.0, 75.0),
+                n_scores=100,
             )
 
     def test_out_of_range_raises(self):
         with pytest.raises(ValueError):
             CalibrationThresholds(
-                accept=-0.1, reject=0.7,
-                source_percentiles=(25.0, 75.0), n_scores=100,
+                accept=-0.1,
+                reject=0.7,
+                source_percentiles=(25.0, 75.0),
+                n_scores=100,
             )
 
     def test_frozen(self):
         ct = CalibrationThresholds(
-            accept=0.3, reject=0.7,
-            source_percentiles=(25.0, 75.0), n_scores=50,
+            accept=0.3,
+            reject=0.7,
+            source_percentiles=(25.0, 75.0),
+            n_scores=50,
         )
         with pytest.raises(AttributeError):
             ct.accept = 0.1  # type: ignore[misc]
@@ -297,8 +349,14 @@ class TestDeriveThresholds:
         from eigenhelm.training.calibration import derive_thresholds
 
         dist = ScoreDistribution(
-            min=0.1, p10=0.2, p25=0.35, median=0.5,
-            p75=0.72, p90=0.85, max=0.95, n_scores=100,
+            min=0.1,
+            p10=0.2,
+            p25=0.35,
+            median=0.5,
+            p75=0.72,
+            p90=0.85,
+            max=0.95,
+            n_scores=100,
         )
         thresholds = derive_thresholds(dist)
         assert thresholds.accept == pytest.approx(0.35)
@@ -310,8 +368,14 @@ class TestDeriveThresholds:
         from eigenhelm.training.calibration import derive_thresholds
 
         dist = ScoreDistribution(
-            min=0.5, p10=0.5, p25=0.5, median=0.5,
-            p75=0.5, p90=0.5, max=0.5, n_scores=20,
+            min=0.5,
+            p10=0.5,
+            p25=0.5,
+            median=0.5,
+            p75=0.5,
+            p90=0.5,
+            max=0.5,
+            n_scores=20,
         )
         with pytest.raises(ValueError, match="Degenerate"):
             derive_thresholds(dist)

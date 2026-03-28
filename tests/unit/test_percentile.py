@@ -178,8 +178,8 @@ class TestComputeRanking:
     @pytest.mark.parametrize(
         ("count", "expected_highlight"),
         [
-            (2, 0),   # floor(2*0.20)=0
-            (5, 1),   # floor(5*0.20)=1, min(3,1)=1
+            (2, 0),  # floor(2*0.20)=0
+            (5, 1),  # floor(5*0.20)=1, min(3,1)=1
             (10, 2),  # floor(10*0.20)=2, min(3,2)=2
             (15, 3),  # floor(15*0.20)=3, min(3,3)=3
             (20, 3),  # floor(20*0.20)=4, min(3,4)=3

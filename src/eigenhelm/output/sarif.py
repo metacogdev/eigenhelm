@@ -142,7 +142,9 @@ def build_sarif(
             pct = v.contribution * 100
             violation_parts.append(f"{v.dimension} ({pct:.0f}%)")
         violations_text = (
-            "Violations: " + ", ".join(violation_parts) if violation_parts else "No violations."
+            "Violations: " + ", ".join(violation_parts)
+            if violation_parts
+            else "No violations."
         )
 
         # 016: Include percentile in message when available
@@ -218,7 +220,9 @@ def build_sarif(
 
         # 020: Declaration ratio
         if resp.declaration_ratio is not None:
-            result_entry.setdefault("properties", {})["declaration_ratio"] = resp.declaration_ratio
+            result_entry.setdefault("properties", {})["declaration_ratio"] = (
+                resp.declaration_ratio
+            )
 
         # 019: Attach region data as properties (not separate results)
         if resp.regions:

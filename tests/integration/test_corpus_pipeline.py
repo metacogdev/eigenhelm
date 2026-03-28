@@ -41,7 +41,9 @@ class TestCorpusSyncIntegration:
         # Each expected target should have a subdirectory
         for target in manifest.targets:
             target_dir = tmp_path / target.name
-            assert target_dir.exists(), f"Missing subdirectory for target '{target.name}'"
+            assert target_dir.exists(), (
+                f"Missing subdirectory for target '{target.name}'"
+            )
             sentinel = target_dir / ".eigenhelm-sync"
             assert sentinel.exists(), f"Missing sentinel for target '{target.name}'"
 

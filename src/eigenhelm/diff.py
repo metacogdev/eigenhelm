@@ -12,7 +12,9 @@ from pathlib import Path
 from eigenhelm.parsers.language_map import LANGUAGE_MAP
 
 # Set of recognized file extensions
-_RECOGNIZED_EXTENSIONS: frozenset[str] = frozenset(ext for _, (_, ext) in LANGUAGE_MAP.items())
+_RECOGNIZED_EXTENSIONS: frozenset[str] = frozenset(
+    ext for _, (_, ext) in LANGUAGE_MAP.items()
+)
 
 
 def discover_changed_files(revision_range: str) -> list[Path]:

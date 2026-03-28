@@ -76,12 +76,16 @@ class TestMandatoryChecks:
     def test_m2_compression_structure_fallback_high_birkhoff_fails(self) -> None:
         # With no violations, M2 uses fallback: birkhoff directly (013 polarity).
         # birkhoff=0.9 → compression_structure=0.9 → 0.9 < 0.5 is False → FAIL
-        entry = build_entry("test.py", _make_critique(birkhoff_measure=0.9, violations=[]))
+        entry = build_entry(
+            "test.py", _make_critique(birkhoff_measure=0.9, violations=[])
+        )
         assert entry.mandatory_checks["M2_compression_structure"] is False
 
     def test_m2_compression_structure_fallback_low_birkhoff_passes(self) -> None:
         # birkhoff=0.3 → compression_structure=0.3 → 0.3 < 0.5 is True → PASS
-        entry = build_entry("test.py", _make_critique(birkhoff_measure=0.3, violations=[]))
+        entry = build_entry(
+            "test.py", _make_critique(birkhoff_measure=0.3, violations=[])
+        )
         assert entry.mandatory_checks["M2_compression_structure"] is True
 
     def test_m5_ncd_missing_from_topn_but_active_uses_contribution(self) -> None:
@@ -105,8 +109,11 @@ class TestMandatoryChecks:
             quality_assessment="marginal",
             violations=[],  # NCD not in top-N
             metrics=AestheticMetrics(
-                entropy=4.0, compression_ratio=0.6, birkhoff_measure=0.4,
-                raw_bytes=500, compressed_bytes=300,
+                entropy=4.0,
+                compression_ratio=0.6,
+                birkhoff_measure=0.4,
+                raw_bytes=500,
+                compressed_bytes=300,
             ),
         )
         entry = build_entry("test.py", critique)

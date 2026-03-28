@@ -21,9 +21,16 @@ from eigenhelm.validation.usecase_models import FileCategory
 _EXT_TO_LANG: dict[str, str] = {ext: lang for lang, (_, ext) in LANGUAGE_MAP.items()}
 
 # Config/data file extensions that are always "schema"
-_CONFIG_EXTENSIONS: frozenset[str] = frozenset({
-    ".toml", ".yaml", ".yml", ".json", ".cfg", ".ini",
-})
+_CONFIG_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".toml",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".cfg",
+        ".ini",
+    }
+)
 
 # Directory names that indicate test files
 _TEST_DIRS: frozenset[str] = frozenset({"tests", "test", "testing"})
@@ -35,9 +42,7 @@ _SCHEMA_DIRS: frozenset[str] = frozenset({"models", "schemas", "types"})
 _GENERATED_DIRS: frozenset[str] = frozenset({"generated", "proto", "_generated", "gen"})
 
 # Regex for generated file markers (checked in first 10 lines)
-_GENERATED_MARKERS = re.compile(
-    r"^\s*#\s*(?:Generated\s+by|@generated)", re.IGNORECASE
-)
+_GENERATED_MARKERS = re.compile(r"^\s*#\s*(?:Generated\s+by|@generated)", re.IGNORECASE)
 
 
 def categorize_file(
@@ -114,7 +119,8 @@ def _categorize_init(content: str | None) -> FileCategory:
         return FileCategory.INIT  # assume re-export without content
 
     lines = [
-        ln.strip() for ln in content.splitlines()
+        ln.strip()
+        for ln in content.splitlines()
         if ln.strip() and not ln.strip().startswith("#")
     ]
     if not lines:
@@ -123,7 +129,8 @@ def _categorize_init(content: str | None) -> FileCategory:
     # Short files that are mostly imports → INIT
     if len(lines) < 50:
         import_lines = sum(
-            1 for ln in lines
+            1
+            for ln in lines
             if ln.startswith(("import ", "from ")) or ln.startswith("__all__")
         )
         if import_lines / len(lines) > 0.5:
@@ -139,7 +146,8 @@ def _is_schema_content(content: str) -> bool:
     function definitions with logic.
     """
     lines = [
-        ln for ln in content.splitlines()
+        ln
+        for ln in content.splitlines()
         if ln.strip() and not ln.strip().startswith("#")
     ]
     if not lines:
@@ -149,7 +157,8 @@ def _is_schema_content(content: str) -> bool:
     class_lines = sum(1 for ln in lines if ln.strip().startswith("class "))
     type_lines = sum(1 for ln in lines if ln.strip().startswith("type "))
     def_lines = sum(
-        1 for ln in lines
+        1
+        for ln in lines
         if ln.strip().startswith("def ") and not ln.strip().startswith("def __")
     )
 
@@ -183,8 +192,19 @@ def categorize_directory(
     for root, dirs, files in os.walk(dir_path, followlinks=False):
         # Prune common non-source directories
         dirs[:] = [
-            d for d in dirs
-            if d not in {".git", "__pycache__", ".venv", "venv", "node_modules", ".pytest_cache", "dist", "build"}
+            d
+            for d in dirs
+            if d
+            not in {
+                ".git",
+                "__pycache__",
+                ".venv",
+                "venv",
+                "node_modules",
+                ".pytest_cache",
+                "dist",
+                "build",
+            }
             and not d.endswith(".egg-info")
         ]
 
@@ -201,7 +221,9 @@ def categorize_directory(
                 continue
 
             rel_path = child.relative_to(dir_path)
-            category = categorize_file(str(rel_path), content=content, overrides=overrides)
+            category = categorize_file(
+                str(rel_path), content=content, overrides=overrides
+            )
             results[rel_path] = category
 
     return results

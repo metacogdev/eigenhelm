@@ -63,50 +63,86 @@ def _try_class(
 
     if _is_dataclass_decorated(decorators):
         if _body_is_field_only(body):
-            regions.append(_make_region(
-                DeclarationType.TYPE_DEFINITION, span_node, name, source, body,
-                count_fn=_count_field_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.TYPE_DEFINITION,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_field_lines,
+                )
+            )
         return
 
     if bases & _PROTOCOL_BASES:
         if _body_is_protocol(body):
-            regions.append(_make_region(
-                DeclarationType.TYPE_DEFINITION, span_node, name, source, body,
-                count_fn=_count_protocol_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.TYPE_DEFINITION,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_protocol_lines,
+                )
+            )
         return
 
     if bases & _TYPEDDICT_BASES:
         if _body_is_field_only(body):
-            regions.append(_make_region(
-                DeclarationType.TYPE_DEFINITION, span_node, name, source, body,
-                count_fn=_count_field_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.TYPE_DEFINITION,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_field_lines,
+                )
+            )
         return
 
     if bases & _NAMEDTUPLE_BASES:
         if _body_is_field_only(body):
-            regions.append(_make_region(
-                DeclarationType.TYPE_DEFINITION, span_node, name, source, body,
-                count_fn=_count_field_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.TYPE_DEFINITION,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_field_lines,
+                )
+            )
         return
 
     if bases & _ENUM_BASES:
         if _body_is_enum(body):
-            regions.append(_make_region(
-                DeclarationType.ENUM_DECLARATION, span_node, name, source, body,
-                count_fn=_count_assignment_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.ENUM_DECLARATION,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_assignment_lines,
+                )
+            )
         return
 
     if bases & _BASEMODEL_BASES:
         if _body_is_field_only(body):
-            regions.append(_make_region(
-                DeclarationType.CONFIG_MODEL, span_node, name, source, body,
-                count_fn=_count_field_lines,
-            ))
+            regions.append(
+                _make_region(
+                    DeclarationType.CONFIG_MODEL,
+                    span_node,
+                    name,
+                    source,
+                    body,
+                    count_fn=_count_field_lines,
+                )
+            )
         return
 
 
@@ -380,24 +416,23 @@ def _try_const_table(node, source: str, regions: list[DeclarationRegion]) -> Non
     end_line = node.end_point[0] + 1
     decl_lines = _non_blank_line_count(node, source)
 
-    regions.append(DeclarationRegion(
-        declaration_type=DeclarationType.CONST_TABLE,
-        start_line=start_line,
-        end_line=end_line,
-        declaration_line_count=decl_lines,
-        language="python",
-        node_name=name,
-    ))
+    regions.append(
+        DeclarationRegion(
+            declaration_type=DeclarationType.CONST_TABLE,
+            start_line=start_line,
+            end_line=end_line,
+            declaration_line_count=decl_lines,
+            language="python",
+            node_name=name,
+        )
+    )
 
 
 def _is_literal_collection(node) -> bool:
     elements = [c for c in node.children if c.type not in (",", "[", "]", "(", ")")]
     if not elements:
         return False
-    return all(
-        c.type in ("dictionary",)
-        for c in elements
-    )
+    return all(c.type in ("dictionary",) for c in elements)
 
 
 # ---------------------------------------------------------------------------

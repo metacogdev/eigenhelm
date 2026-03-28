@@ -53,7 +53,9 @@ def _category_for_direct_dim(dim: DimensionAttribution) -> str:
 
 # Dimensions where high severity is misleading on small files because
 # the metric is dominated by file size rather than code quality.
-_SIZE_SENSITIVE_DIMENSIONS = frozenset({"compression_structure", "ncd_exemplar_distance"})
+_SIZE_SENSITIVE_DIMENSIONS = frozenset(
+    {"compression_structure", "ncd_exemplar_distance"}
+)
 
 # Files at or below this line count get severity-capped for size-sensitive dims.
 _SMALL_FILE_LINE_THRESHOLD = 80

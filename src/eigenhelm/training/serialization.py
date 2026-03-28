@@ -30,7 +30,9 @@ def save_model(result: TrainingResult, path: Path, *, force: bool = False) -> No
     """
     path = Path(path)
     if path.exists() and not force:
-        raise FileExistsError(f"Output file already exists: {path}. Use force=True to overwrite.")
+        raise FileExistsError(
+            f"Output file already exists: {path}. Use force=True to overwrite."
+        )
     model = result.model
 
     arrays: dict[str, np.ndarray] = {
@@ -71,8 +73,12 @@ def save_model(result: TrainingResult, path: Path, *, force: bool = False) -> No
 
     # 015: Write calibrated thresholds and score distribution
     if model.calibrated_accept is not None:
-        arrays["calibrated_accept"] = np.array(model.calibrated_accept, dtype=np.float64)
-        arrays["calibrated_reject"] = np.array(model.calibrated_reject, dtype=np.float64)
+        arrays["calibrated_accept"] = np.array(
+            model.calibrated_accept, dtype=np.float64
+        )
+        arrays["calibrated_reject"] = np.array(
+            model.calibrated_reject, dtype=np.float64
+        )
     if model.score_distribution is not None:
         sd = model.score_distribution
         arrays["score_dist_min"] = np.array(sd.min, dtype=np.float64)

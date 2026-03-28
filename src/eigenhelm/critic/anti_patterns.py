@@ -55,9 +55,13 @@ def detect_phantom_authorship(
     Trigger: Volume > corpus 90th percentile AND WL entropy < corpus 10th percentile.
     Uses fallback absolute thresholds when calibration values not provided.
     """
-    vol_thresh = volume_threshold if volume_threshold is not None else _DEFAULT_VOLUME_THRESHOLD
+    vol_thresh = (
+        volume_threshold if volume_threshold is not None else _DEFAULT_VOLUME_THRESHOLD
+    )
     ent_thresh = (
-        wl_entropy_threshold if wl_entropy_threshold is not None else _DEFAULT_WL_ENTROPY_THRESHOLD
+        wl_entropy_threshold
+        if wl_entropy_threshold is not None
+        else _DEFAULT_WL_ENTROPY_THRESHOLD
     )
 
     volume = float(fv_values[0])  # Halstead Volume
@@ -89,7 +93,9 @@ def detect_builders_trap(
     """
     cd_thresh = cd_threshold if cd_threshold is not None else _DEFAULT_CD_THRESHOLD
     diff_thresh = (
-        difficulty_threshold if difficulty_threshold is not None else _DEFAULT_DIFFICULTY_THRESHOLD
+        difficulty_threshold
+        if difficulty_threshold is not None
+        else _DEFAULT_DIFFICULTY_THRESHOLD
     )
 
     cyclomatic_density = float(fv_values[4])

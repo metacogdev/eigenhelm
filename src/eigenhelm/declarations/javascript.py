@@ -36,9 +36,7 @@ def detect(source: str) -> tuple[DeclarationRegion, ...]:
     return tuple(regions)
 
 
-def _visit_top_level(
-    node, lines: list[str], regions: list[DeclarationRegion]
-) -> None:
+def _visit_top_level(node, lines: list[str], regions: list[DeclarationRegion]) -> None:
     """Process a top-level AST node, unwrapping export_statement."""
     if node.type == "export_statement":
         for child in node.children:
@@ -48,9 +46,7 @@ def _visit_top_level(
         _check_node(node, lines, regions)
 
 
-def _check_node(
-    node, lines: list[str], regions: list[DeclarationRegion]
-) -> None:
+def _check_node(node, lines: list[str], regions: list[DeclarationRegion]) -> None:
     """Dispatch detection for a declaration or class node."""
     if node.type == "lexical_declaration":
         _check_const_table(node, lines, regions)
@@ -71,7 +67,11 @@ def _check_const_table(
         if child.type == "variable_declarator":
             name = _extract_declarator_name(child)
             value = _extract_declarator_value(child)
-            if value is not None and value.type == "array" and _is_array_of_objects(value):
+            if (
+                value is not None
+                and value.type == "array"
+                and _is_array_of_objects(value)
+            ):
                 start = node.start_point[0] + 1
                 end = node.end_point[0] + 1
                 regions.append(

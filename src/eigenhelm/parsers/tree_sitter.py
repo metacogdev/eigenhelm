@@ -73,7 +73,9 @@ def parse_source(source: str, language: str) -> tree_sitter.Node | None:
     return tree.root_node
 
 
-def extract_units(source: str, language: str, file_path: str | None = None) -> list[CodeUnit]:
+def extract_units(
+    source: str, language: str, file_path: str | None = None
+) -> list[CodeUnit]:
     """Split source code into extractable CodeUnit objects.
 
     Attempts Tree-sitter parsing to find function/class boundaries.

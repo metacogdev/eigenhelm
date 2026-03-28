@@ -14,7 +14,7 @@ from eigenhelm.output.json_format import format_results_json
 from eigenhelm.output.sarif import build_sarif
 
 # A synthetic declaration-heavy Python file (8 frozen dataclasses, no logic)
-_DECLARATION_HEAVY_SOURCE = '''
+_DECLARATION_HEAVY_SOURCE = """
 from dataclasses import dataclass
 
 
@@ -71,10 +71,10 @@ class ServerConfig:
     api: str
     store: str
     workers: int
-'''
+"""
 
 # A logic-heavy file (not declaration-dominant)
-_LOGIC_HEAVY_SOURCE = '''
+_LOGIC_HEAVY_SOURCE = """
 from dataclasses import dataclass
 
 
@@ -108,7 +108,7 @@ def transform(items):
         key = f"item_{i}"
         output[key] = item
     return output
-'''
+"""
 
 
 class TestDirectiveContext:
@@ -116,9 +116,7 @@ class TestDirectiveContext:
 
     def test_declaration_heavy_gets_review_structure_directives(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_DECLARATION_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_DECLARATION_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
 
         # Must have declaration_ratio set
@@ -136,9 +134,7 @@ class TestDirectiveContext:
 
     def test_logic_heavy_has_no_declaration_ratio(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_LOGIC_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_LOGIC_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
 
         # Non-declaration-dominant: declaration_ratio should be None
@@ -146,9 +142,7 @@ class TestDirectiveContext:
 
     def test_human_output_includes_declaration_heavy_tag(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_DECLARATION_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_DECLARATION_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
 
         output = format_result_human("types.py", response)
@@ -156,9 +150,7 @@ class TestDirectiveContext:
 
     def test_logic_heavy_output_has_no_declaration_tag(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_LOGIC_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_LOGIC_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
 
         output = format_result_human("logic.py", response)
@@ -170,9 +162,7 @@ class TestScoreDampening:
 
     def test_declaration_heavy_score_above_accept_threshold(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_DECLARATION_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_DECLARATION_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
         # Dampened score must still be above accept threshold (0.4)
         assert response.score >= 0.4
@@ -180,9 +170,7 @@ class TestScoreDampening:
     def test_logic_heavy_score_unchanged(self):
         """Non-declaration files should produce identical scores."""
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_LOGIC_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_LOGIC_HEAVY_SOURCE, language="python")
         r1 = helm.evaluate(request)
         r2 = helm.evaluate(request)
         assert r1.score == r2.score
@@ -193,9 +181,7 @@ class TestMachineReadableOutput:
 
     def test_json_includes_declaration_ratio_for_dominant(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_DECLARATION_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_DECLARATION_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
         json_str = format_results_json([("types.py", response)])
         data = json.loads(json_str)
@@ -206,9 +192,7 @@ class TestMachineReadableOutput:
 
     def test_json_omits_declaration_ratio_for_non_dominant(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_LOGIC_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_LOGIC_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
         json_str = format_results_json([("logic.py", response)])
         data = json.loads(json_str)
@@ -217,13 +201,13 @@ class TestMachineReadableOutput:
 
     def test_sarif_includes_declaration_ratio_for_dominant(self):
         helm = DynamicHelm()
-        request = EvaluationRequest(
-            source=_DECLARATION_HEAVY_SOURCE, language="python"
-        )
+        request = EvaluationRequest(source=_DECLARATION_HEAVY_SOURCE, language="python")
         response = helm.evaluate(request)
         sarif = build_sarif([("types.py", response)], tool_version="0.0.0-test")
         results = sarif["runs"][0]["results"]
         # Find the aesthetic-score result
-        score_result = next(r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score")
+        score_result = next(
+            r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score"
+        )
         assert "declaration_ratio" in score_result["properties"]
         assert isinstance(score_result["properties"]["declaration_ratio"], float)

@@ -46,17 +46,20 @@ def compute(v):
         r = -1
     return r
 
+
 def power(b, e):
     r = 1
     for i in range(e):
         r = r * b
     return r
 
+
 def factorial(n):
     r = 1
     for i in range(1, n + 1):
         r = r * i
     return r
+
 
 def abs_val(x):
     if x < 0:

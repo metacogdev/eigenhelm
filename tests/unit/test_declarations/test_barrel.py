@@ -7,7 +7,7 @@ from eigenhelm.declarations.barrel import is_barrel_file
 
 class TestPythonBarrel:
     def test_pure_init_reexport(self):
-        source = '''
+        source = """
 from eigenhelm.declarations.models import (
     DeclarationAnalysis,
     DeclarationRegion,
@@ -19,11 +19,11 @@ __all__ = [
     "DeclarationRegion",
     "DeclarationType",
 ]
-'''
+"""
         assert is_barrel_file(source, "python") is True
 
     def test_init_with_real_logic(self):
-        source = '''
+        source = """
 from eigenhelm.critic import AestheticCritic
 
 class Foo:
@@ -38,11 +38,11 @@ class Foo:
 
 def helper():
     return 42
-'''
+"""
         assert is_barrel_file(source, "python") is False
 
     def test_mixed_init_below_threshold(self):
-        source = '''
+        source = """
 from foo import Bar
 from baz import Qux
 
@@ -52,33 +52,33 @@ def setup():
 class Config:
     host: str = "localhost"
     port: int = 8080
-'''
+"""
         assert is_barrel_file(source, "python") is False
 
     def test_import_only_file(self):
-        source = '''
+        source = """
 import os
 import sys
 import json
 from pathlib import Path
 from typing import Optional
-'''
+"""
         assert is_barrel_file(source, "python") is True
 
 
 class TestTypeScriptBarrel:
     def test_pure_reexport_index(self):
-        source = '''
+        source = """
 export { Foo } from "./foo";
 export { Bar } from "./bar";
 export { Baz } from "./baz";
 export { Qux } from "./qux";
 export { Quux } from "./quux";
-'''
+"""
         assert is_barrel_file(source, "typescript") is True
 
     def test_index_with_logic(self):
-        source = '''
+        source = """
 export { Foo } from "./foo";
 
 export function createApp() {
@@ -86,13 +86,13 @@ export function createApp() {
     app.init();
     return app;
 }
-'''
+"""
         assert is_barrel_file(source, "typescript") is False
 
 
 class TestRustBarrel:
     def test_mod_rs_reexports(self):
-        source = '''
+        source = """
 pub mod models;
 pub mod python;
 pub mod rust;
@@ -101,11 +101,11 @@ pub mod javascript;
 pub mod go;
 
 pub use models::{DeclarationRegion, DeclarationAnalysis};
-'''
+"""
         assert is_barrel_file(source, "rust") is True
 
     def test_mod_rs_with_logic(self):
-        source = '''
+        source = """
 pub mod models;
 
 pub fn detect(source: &str) -> Vec<Region> {
@@ -117,7 +117,7 @@ pub fn detect(source: &str) -> Vec<Region> {
     }
     regions
 }
-'''
+"""
         assert is_barrel_file(source, "rust") is False
 
 

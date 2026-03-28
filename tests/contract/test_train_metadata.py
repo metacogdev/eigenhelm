@@ -47,9 +47,17 @@ class TestTrainLanguageFlag:
     def test_multi_language_accepted(self, corpus_dir, tmp_path) -> None:
         """eigenhelm-train accepts 'multi' for Class B models."""
         out = tmp_path / "model.npz"
-        _run_train([
-            str(corpus_dir), "-o", str(out), "--language", "multi", "--corpus-class", "B",
-        ])
+        _run_train(
+            [
+                str(corpus_dir),
+                "-o",
+                str(out),
+                "--language",
+                "multi",
+                "--corpus-class",
+                "B",
+            ]
+        )
 
         data = np.load(out)
         assert str(data["language"]) == "multi"
@@ -68,9 +76,17 @@ class TestCorpusClassFlag:
 
     def test_corpus_class_b_accepted(self, corpus_dir, tmp_path) -> None:
         out = tmp_path / "model.npz"
-        _run_train([
-            str(corpus_dir), "-o", str(out), "--language", "multi", "--corpus-class", "B",
-        ])
+        _run_train(
+            [
+                str(corpus_dir),
+                "-o",
+                str(out),
+                "--language",
+                "multi",
+                "--corpus-class",
+                "B",
+            ]
+        )
 
         data = np.load(out)
         assert str(data["corpus_class"]) == "B"
@@ -78,5 +94,15 @@ class TestCorpusClassFlag:
     def test_invalid_corpus_class_rejected(self, corpus_dir, tmp_path) -> None:
         out = tmp_path / "model.npz"
         with pytest.raises(SystemExit) as exc:
-            main([str(corpus_dir), "-o", str(out), "--language", "python", "--corpus-class", "C"])
+            main(
+                [
+                    str(corpus_dir),
+                    "-o",
+                    str(out),
+                    "--language",
+                    "python",
+                    "--corpus-class",
+                    "C",
+                ]
+            )
         assert exc.value.code == 2

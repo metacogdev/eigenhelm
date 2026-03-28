@@ -239,7 +239,9 @@ def test_network_failure_captured_in_failed(tmp_path):
             raise urllib.error.URLError("connection refused")
         return io.BytesIO(tarball)
 
-    with patch("eigenhelm.corpus.sync.urllib.request.urlopen", side_effect=selective_urlopen):
+    with patch(
+        "eigenhelm.corpus.sync.urllib.request.urlopen", side_effect=selective_urlopen
+    ):
         result = sync_manifest(manifest, tmp_path)
 
     assert len(result.failed) == 1

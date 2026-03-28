@@ -52,7 +52,9 @@ class TestFormatResultHuman:
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()
-        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        resp = helm.evaluate(
+            EvaluationRequest(source="def f(): pass", language="python")
+        )
         output = format_result_human(Path("test.py"), resp)
         # Default mode: no decision label, has score + percentile info
         assert "score:" in output
@@ -65,7 +67,9 @@ class TestFormatResultHuman:
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()  # No model → no score distribution
-        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        resp = helm.evaluate(
+            EvaluationRequest(source="def f(): pass", language="python")
+        )
         output = format_result_human(Path("test.py"), resp)
         assert "percentile unavailable" in output
 
@@ -73,7 +77,9 @@ class TestFormatResultHuman:
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()
-        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        resp = helm.evaluate(
+            EvaluationRequest(source="def f(): pass", language="python")
+        )
         output = format_result_human(Path("test.py"), resp, classify=True)
         assert "decision:" in output
         assert "score:" in output
@@ -85,7 +91,9 @@ class TestFormatResultHuman:
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()
-        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        resp = helm.evaluate(
+            EvaluationRequest(source="def f(): pass", language="python")
+        )
         # Force decision to 'warn' to test vocabulary mapping
         resp = replace(resp, decision="warn")
         output = format_result_human(Path("test.py"), resp, classify=True)
@@ -98,7 +106,9 @@ class TestFormatResultsJson:
         from eigenhelm.helm import DynamicHelm, EvaluationRequest
 
         helm = DynamicHelm()
-        resp = helm.evaluate(EvaluationRequest(source="def f(): pass", language="python"))
+        resp = helm.evaluate(
+            EvaluationRequest(source="def f(): pass", language="python")
+        )
         output = format_results_json([(Path("test.py"), resp)])
         data = json.loads(output)
         assert "results" in data

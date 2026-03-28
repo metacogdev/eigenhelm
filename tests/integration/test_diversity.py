@@ -150,11 +150,13 @@ class TestSyntheticDiversity:
         offset_a = rng.standard_normal(69) * 3
         offset_b = rng.standard_normal(69) * 3
         offset_c = rng.standard_normal(69) * 3
-        X = np.vstack([
-            rng.standard_normal((25, 69)) + offset_a,
-            rng.standard_normal((25, 69)) + offset_b,
-            rng.standard_normal((25, 69)) + offset_c,
-        ])
+        X = np.vstack(
+            [
+                rng.standard_normal((25, 69)) + offset_a,
+                rng.standard_normal((25, 69)) + offset_b,
+                rng.standard_normal((25, 69)) + offset_c,
+            ]
+        )
         labels = ["repo_a"] * 25 + ["repo_b"] * 25 + ["repo_c"] * 25
         report = run_diversity_analysis(X, labels, "synthetic_high")
         assert report.passed is True

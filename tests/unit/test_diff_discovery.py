@@ -21,7 +21,9 @@ def _mock_run(stdout: str, returncode: int = 0):
 
 class TestDiscoverChangedFiles:
     def test_valid_output_returns_paths(self):
-        with patch("subprocess.run", return_value=_mock_run("src/foo.py\nsrc/bar.py\n")):
+        with patch(
+            "subprocess.run", return_value=_mock_run("src/foo.py\nsrc/bar.py\n")
+        ):
             paths = discover_changed_files("HEAD~1")
         assert Path("src/foo.py") in paths
         assert Path("src/bar.py") in paths
@@ -38,7 +40,10 @@ class TestDiscoverChangedFiles:
         ):
             paths = discover_changed_files("HEAD~1")
         assert Path("src/code.py") in paths
-        assert all(p.suffix in {".py"} or p.suffix in {".js", ".ts", ".go", ".rs", ".java"} for p in paths)
+        assert all(
+            p.suffix in {".py"} or p.suffix in {".js", ".ts", ".go", ".rs", ".java"}
+            for p in paths
+        )
         assert Path("README.md") not in paths
 
     def test_git_not_found_raises_runtime_error(self):
@@ -64,7 +69,9 @@ class TestDiscoverChangedFiles:
         assert "HEAD~2" in call_args
 
     def test_skips_blank_lines(self):
-        with patch("subprocess.run", return_value=_mock_run("\nsrc/foo.py\n\nsrc/bar.py\n")):
+        with patch(
+            "subprocess.run", return_value=_mock_run("\nsrc/foo.py\n\nsrc/bar.py\n")
+        ):
             paths = discover_changed_files("HEAD~1")
         assert len([p for p in paths if p.suffix == ".py"]) == 2
 

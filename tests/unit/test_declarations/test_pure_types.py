@@ -6,7 +6,7 @@ from eigenhelm.declarations import analyze_declarations
 
 
 def test_pure_dataclass_file_is_pure_types():
-    source = '''
+    source = """
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -26,14 +26,14 @@ class GraphNode:
     id: str
     label: str
     kind: str
-'''
+"""
     result = analyze_declarations(source, "python")
     assert result.is_dominant is True
     assert result.is_pure_types is True
 
 
 def test_const_table_file_is_not_pure_types():
-    source = '''
+    source = """
 EVENTS = [
     {"kind": "sunset", "prob": 0.15, "desc": "A beautiful sunset"},
     {"kind": "passage", "prob": 0.10, "desc": "A challenging passage"},
@@ -48,14 +48,14 @@ SEASONS = [
     {"name": "autumn", "modifier": 1.0},
     {"name": "winter", "modifier": 0.6},
 ]
-'''
+"""
     result = analyze_declarations(source, "python")
     # Const tables are not pure types — dampening applies, not skip
     assert result.is_pure_types is False
 
 
 def test_mixed_types_and_tables_is_not_pure_types():
-    source = '''
+    source = """
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -67,7 +67,7 @@ DEFAULTS = [
     {"host": "localhost", "port": 8080},
     {"host": "0.0.0.0", "port": 9090},
 ]
-'''
+"""
     result = analyze_declarations(source, "python")
     # Mixed: has both TYPE_DEFINITION and CONST_TABLE → not pure types
     if result.is_dominant:
@@ -75,18 +75,18 @@ DEFAULTS = [
 
 
 def test_logic_heavy_file_is_not_pure_types():
-    source = '''
+    source = """
 def process(data):
     for item in data:
         if item > 0:
             print(item)
-'''
+"""
     result = analyze_declarations(source, "python")
     assert result.is_pure_types is False
 
 
 def test_typescript_interfaces_are_pure_types():
-    source = '''
+    source = """
 export interface SearchResult {
     title: string;
     url: string;
@@ -104,14 +104,14 @@ export interface GraphNode {
     label: string;
     kind: string;
 }
-'''
+"""
     result = analyze_declarations(source, "typescript")
     assert result.is_dominant is True
     assert result.is_pure_types is True
 
 
 def test_rust_structs_are_pure_types():
-    source = '''
+    source = """
 pub struct SearchResult {
     pub title: String,
     pub url: String,
@@ -129,7 +129,7 @@ pub struct GraphNode {
     pub label: String,
     pub kind: String,
 }
-'''
+"""
     result = analyze_declarations(source, "rust")
     assert result.is_dominant is True
     assert result.is_pure_types is True

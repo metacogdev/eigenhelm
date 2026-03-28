@@ -208,14 +208,22 @@ class BenchmarkReport:
 
         if self.dimension_discrimination:
             # Group by category, show implementation first
-            impl_dims = [d for d in self.dimension_discrimination if d.category == FileCategory.IMPLEMENTATION]
+            impl_dims = [
+                d
+                for d in self.dimension_discrimination
+                if d.category == FileCategory.IMPLEMENTATION
+            ]
             if impl_dims:
                 lines.append("")
                 lines.append("Dimension Discrimination (implementation files):")
-                lines.append(f"  {'Dimension':<25s} {'d':>6s} {'CV':>6s} {'Signal':<8s}")
+                lines.append(
+                    f"  {'Dimension':<25s} {'d':>6s} {'CV':>6s} {'Signal':<8s}"
+                )
                 for d in impl_dims:
                     d_str = f"{d.cohens_d:.2f}" if d.cohens_d is not None else "  N/A"
-                    lines.append(f"  {d.dimension:<25s} {d_str:>6s} {d.cv:>6.2f} {d.signal_quality:<8s}")
+                    lines.append(
+                        f"  {d.dimension:<25s} {d_str:>6s} {d.cv:>6.2f} {d.signal_quality:<8s}"
+                    )
 
         if self.targets:
             lines.append("")

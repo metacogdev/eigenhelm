@@ -52,7 +52,9 @@ def discover_corpus_files(corpus_dir: Path) -> list[Path]:
 
     for root, dirs, files in os.walk(corpus_dir, followlinks=False):
         # Prune excluded directories in-place (also ignore .egg-info)
-        retained = [d for d in dirs if d not in excludes and not d.endswith(".egg-info")]
+        retained = [
+            d for d in dirs if d not in excludes and not d.endswith(".egg-info")
+        ]
         dirs.clear()
         dirs.extend(retained)
 

@@ -130,7 +130,11 @@ def decompose_alignment(
 _DIRECT_CONFIGS: dict[str, tuple[str, str, str]] = {
     # dimension -> (metric_name, normalization, metrics_attr)
     "token_entropy": ("shannon_entropy", "1.0 - (H / 8.0)", "entropy"),
-    "compression_structure": ("birkhoff_measure", "birkhoff_direct", "birkhoff_measure"),
+    "compression_structure": (
+        "birkhoff_measure",
+        "birkhoff_direct",
+        "birkhoff_measure",
+    ),
     "ncd_exemplar_distance": ("ncd", "ncd_direct", ""),
 }
 
@@ -180,7 +184,9 @@ def attribute_direct(
         computed_value=computed_value,
         normalization=normalization,
         normalized_score=normalized_score,
-        exemplar_id=nearest_exemplar_id if dimension == "ncd_exemplar_distance" else None,
+        exemplar_id=nearest_exemplar_id
+        if dimension == "ncd_exemplar_distance"
+        else None,
     )
 
     return DimensionAttribution(

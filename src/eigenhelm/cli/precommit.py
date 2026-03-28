@@ -200,10 +200,7 @@ def _evaluate_staged_file(
         return cached.decision, cached.score, False, None
 
     # Resolve language
-    lang = (
-        lang_overrides.get(file_path.suffix)
-        or _EXT_TO_LANG.get(file_path.suffix)
-    )
+    lang = lang_overrides.get(file_path.suffix) or _EXT_TO_LANG.get(file_path.suffix)
     if lang is None:
         return None, None, False, None
 
@@ -217,9 +214,7 @@ def _evaluate_staged_file(
         return None, None, False, None
 
     resp = helm.evaluate(
-        EvaluationRequest(
-            source=source, language=lang, file_path=path_str
-        )
+        EvaluationRequest(source=source, language=lang, file_path=path_str)
     )
 
     # Apply per-file thresholds from config

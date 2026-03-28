@@ -71,9 +71,7 @@ class TestBenchmarkCorrelation:
         """
         bench = HumanBenchmark(BENCHMARK_JSON, SAMPLES_DIR)
         result = bench.evaluate()
-        excellent_count = sum(
-            1 for hr in result.human_ratings if hr >= 4.0
-        )
+        excellent_count = sum(1 for hr in result.human_ratings if hr >= 4.0)
         # In 2-dim fallback, classification accuracy is not testable.
         # Verify at least that evaluation ran for all excellent functions.
         assert excellent_count > 0, "No excellent functions found in benchmark"

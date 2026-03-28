@@ -147,7 +147,9 @@ class HumanBenchmark:
             # Check: no reject on human-rated excellent (4-5)
             excellent_rejects = sum(
                 1
-                for hr, cl in zip(result.human_ratings, result.classifications, strict=False)
+                for hr, cl in zip(
+                    result.human_ratings, result.classifications, strict=False
+                )
                 if hr >= 4.0 and cl == "reject"
             )
             if excellent_rejects > 0:

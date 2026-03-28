@@ -78,8 +78,11 @@ class TestInspectHumanOutput:
 
     def test_metadata_displayed(self, tmp_path: Path) -> None:
         model = _make_model_file(
-            tmp_path, "js_model.npz",
-            language="javascript", corpus_class="A", n_training_files=250,
+            tmp_path,
+            "js_model.npz",
+            language="javascript",
+            corpus_class="A",
+            n_training_files=250,
         )
         output = _capture_inspect(model)
         assert "Language:     javascript" in output
@@ -99,8 +102,11 @@ class TestInspectJsonOutput:
 
     def test_json_contains_metadata(self, tmp_path: Path) -> None:
         model = _make_model_file(
-            tmp_path, "go_model.npz",
-            language="go", corpus_class="A", n_training_files=180,
+            tmp_path,
+            "go_model.npz",
+            language="go",
+            corpus_class="A",
+            n_training_files=180,
         )
         output = _capture_inspect(model, as_json=True)
         data = json.loads(output)

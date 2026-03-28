@@ -12,6 +12,7 @@ def retry(max_attempts=3, delay=0.1):
     Returns:
         Decorated function that retries on failure.
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -24,5 +25,7 @@ def retry(max_attempts=3, delay=0.1):
                     if attempt < max_attempts - 1:
                         time.sleep(delay)
             raise last_exc
+
         return wrapper
+
     return decorator

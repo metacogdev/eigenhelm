@@ -64,7 +64,9 @@ def run_corpus(corpus_dir: Path, helm: DynamicHelm) -> CorpusStats:
             n_skipped += 1
             continue
 
-        result = helm.evaluate(EvaluationRequest(source=source, language=lang, file_path=str(path)))
+        result = helm.evaluate(
+            EvaluationRequest(source=source, language=lang, file_path=str(path))
+        )
         scores.append(result.score)
         if result.decision == "accept":
             accepted += 1

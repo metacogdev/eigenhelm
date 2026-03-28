@@ -28,7 +28,9 @@ def _parse_thresholds(data: dict) -> ThresholdConfig:
 def _parse_path_rule(data: dict) -> PathRule:
     glob = data.get("glob", "")
     thresholds_data = data.get("thresholds", {})
-    thresholds = _parse_thresholds(thresholds_data) if thresholds_data else ThresholdConfig()
+    thresholds = (
+        _parse_thresholds(thresholds_data) if thresholds_data else ThresholdConfig()
+    )
     return PathRule(glob=glob, thresholds=thresholds)
 
 

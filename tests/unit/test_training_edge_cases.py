@@ -26,17 +26,23 @@ class TestMinimumCorpusGuard:
     def test_at_min_files_succeeds(self, corpus_dir: Path) -> None:
         """Corpus with exactly min_files eligible files succeeds."""
         # corpus_dir has 10 files (5 languages x 2 files each)
-        result = train_eigenspace(corpus_dir, language="python", corpus_class="A", min_files=10)
+        result = train_eigenspace(
+            corpus_dir, language="python", corpus_class="A", min_files=10
+        )
         assert result.n_files_processed >= 10
 
     def test_zero_min_files_allows_small_corpus(self, tmp_path: Path) -> None:
         """min_files=0 allows any non-empty corpus (PCA still needs >= 2 vectors)."""
         corpus = tmp_path / "tiny_corpus"
         corpus.mkdir()
-        (corpus / "one.py").write_text("def f(x):\n    if x > 0:\n        return x\n    return -x\n")
+        (corpus / "one.py").write_text(
+            "def f(x):\n    if x > 0:\n        return x\n    return -x\n"
+        )
         (corpus / "two.py").write_text("def g(y):\n    return y * 2 + 1\n")
 
-        result = train_eigenspace(corpus, language="python", corpus_class="A", min_files=0)
+        result = train_eigenspace(
+            corpus, language="python", corpus_class="A", min_files=0
+        )
         assert result.n_files_processed == 2
 
 
@@ -55,7 +61,9 @@ class TestSkippedFileAccounting:
         (corpus / "readme.txt").write_text("not code")
         (corpus / "data.csv").write_text("a,b,c\n1,2,3")
 
-        result = train_eigenspace(corpus, language="python", corpus_class="A", min_files=1)
+        result = train_eigenspace(
+            corpus, language="python", corpus_class="A", min_files=1
+        )
         # discover_corpus_files() only finds recognized extensions
         # so txt/csv files are never even attempted
         assert result.n_files_processed >= 5
@@ -72,6 +80,8 @@ class TestSkippedFileAccounting:
         # Empty Python file — valid extension but no extractable units
         (corpus / "empty.py").write_text("")
 
-        result = train_eigenspace(corpus, language="python", corpus_class="A", min_files=1)
+        result = train_eigenspace(
+            corpus, language="python", corpus_class="A", min_files=1
+        )
         # The empty file either produces no vectors or is skipped
         assert result.n_files_processed + result.n_files_skipped >= 5

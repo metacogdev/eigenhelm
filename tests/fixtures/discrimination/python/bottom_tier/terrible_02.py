@@ -1,6 +1,7 @@
 # nested loops 5 deep with copy-paste duplication
 data = []
 
+
 def process(a):
     global data
     r = 0
@@ -21,6 +22,7 @@ def process(a):
                             r = r + 5
                         data.append(r)
     return r
+
 
 def process2(a):
     global data

@@ -100,7 +100,9 @@ class TestExtractBatchContract:
         """extract_batch() returns a list."""
         from eigenhelm.virtue_extractor import VirtueExtractor
 
-        result = VirtueExtractor().extract_batch([(python_quicksort_source, "python", "f.py")])
+        result = VirtueExtractor().extract_batch(
+            [(python_quicksort_source, "python", "f.py")]
+        )
         assert isinstance(result, list)
 
     def test_batch_no_raise_on_unsupported(self, python_quicksort_source):
@@ -153,7 +155,9 @@ class TestProjectContract:
         result = ext.project(vectors[0], synthetic_model)
         assert result.coordinates.shape == (synthetic_model.n_components,)
 
-    def test_project_quality_flag_values(self, python_quicksort_source, synthetic_model):
+    def test_project_quality_flag_values(
+        self, python_quicksort_source, synthetic_model
+    ):
         """quality_flag is one of the three allowed values."""
         from eigenhelm.virtue_extractor import VirtueExtractor
 
@@ -162,7 +166,9 @@ class TestProjectContract:
         result = ext.project(vectors[0], synthetic_model)
         assert result.quality_flag in ("nominal", "partial_input", "high_drift")
 
-    def test_project_l_drift_non_negative(self, python_quicksort_source, synthetic_model):
+    def test_project_l_drift_non_negative(
+        self, python_quicksort_source, synthetic_model
+    ):
         """L_drift >= 0."""
         from eigenhelm.virtue_extractor import VirtueExtractor
 

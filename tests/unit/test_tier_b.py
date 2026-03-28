@@ -39,7 +39,11 @@ class TestSteerBehavior:
         session = helm.create_session()
         tau_start = 0.8
         req = SteeringRequest(
-            source=HIGH_ENTROPY_SOURCE, language="python", tau=tau_start, p=0.9, session=session
+            source=HIGH_ENTROPY_SOURCE,
+            language="python",
+            tau=tau_start,
+            p=0.9,
+            session=session,
         )
         r = helm.steer(req)
         # High error → positive u_k → τ decreases (or stays at tau_min)
@@ -124,7 +128,11 @@ class TestCustomPIDConfig:
         session = helm.create_session()
         tau_start, p_start = 0.8, 0.9
         req = SteeringRequest(
-            source=CLEAN_SOURCE, language="python", tau=tau_start, p=p_start, session=session
+            source=CLEAN_SOURCE,
+            language="python",
+            tau=tau_start,
+            p=p_start,
+            session=session,
         )
         r = helm.steer(req)
         assert abs(r.tau - tau_start) < 1e-9

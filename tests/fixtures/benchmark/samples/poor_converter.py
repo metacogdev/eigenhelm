@@ -27,9 +27,9 @@ def convert(value, from_unit, to_unit):
     elif from_unit == "g" and to_unit == "kg":
         return value / 1000
     elif from_unit == "c" and to_unit == "f":
-        return value * 9/5 + 32
+        return value * 9 / 5 + 32
     elif from_unit == "f" and to_unit == "c":
-        return (value - 32) * 5/9
+        return (value - 32) * 5 / 9
     elif from_unit == "c" and to_unit == "k":
         return value + 273.15
     elif from_unit == "k" and to_unit == "c":

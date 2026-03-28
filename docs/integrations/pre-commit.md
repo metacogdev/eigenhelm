@@ -22,7 +22,7 @@ pre-commit install
 
 ## What it does
 
-On each commit, `eigenhelm-check` evaluates all staged Python files against the configured model and thresholds. If any file scores above the reject threshold, the commit is blocked.
+On each commit, `eigenhelm-check` evaluates all staged files against the configured model and thresholds. If any file scores above the reject threshold, the commit is blocked.
 
 ## Configuration
 

@@ -67,13 +67,15 @@ class AttributionAudit:
         records: list[DirectiveRecord] = []
         for ev in evaluations:
             for idx, cat in enumerate(ev.directive_categories):
-                records.append(DirectiveRecord(
-                    file_path=ev.file_path,
-                    directive_index=idx,
-                    category=cat,
-                    dimension="",  # populated from full attribution if available
-                    severity="",
-                ))
+                records.append(
+                    DirectiveRecord(
+                        file_path=ev.file_path,
+                        directive_index=idx,
+                        category=cat,
+                        dimension="",  # populated from full attribution if available
+                        severity="",
+                    )
+                )
         return records
 
     def generate_annotation_template(
@@ -88,13 +90,15 @@ class AttributionAudit:
         """
         entries = []
         for dr in directives:
-            entries.append({
-                "file_path": dr.file_path,
-                "directive_index": dr.directive_index,
-                "category": dr.category,
-                "rating": None,  # to be filled by reviewer
-                "rater": None,
-            })
+            entries.append(
+                {
+                    "file_path": dr.file_path,
+                    "directive_index": dr.directive_index,
+                    "category": dr.category,
+                    "rating": None,  # to be filled by reviewer
+                    "rater": None,
+                }
+            )
         output_path.write_text(json.dumps(entries, indent=2))
 
     def load_annotations(self, path: Path) -> dict[tuple[str, int], list[str]]:
@@ -157,10 +161,7 @@ class AttributionAudit:
         Collapses to binary: accurate+partial vs inaccurate.
         Returns None if insufficient paired data.
         """
-        paired = [
-            ratings for ratings in annotations.values()
-            if len(ratings) == 2
-        ]
+        paired = [ratings for ratings in annotations.values() if len(ratings) == 2]
         if len(paired) < 5:
             return None
 

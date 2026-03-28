@@ -4,6 +4,7 @@ y = 0
 z = []
 q = {}
 
+
 def do_stuff(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o):
     global x, y, z, q
     x = a + 7

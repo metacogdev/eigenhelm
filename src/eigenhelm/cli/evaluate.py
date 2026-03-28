@@ -33,7 +33,9 @@ from eigenhelm.helm.models import EvaluationRequest, EvaluationResponse
 from eigenhelm.parsers.language_map import LANGUAGE_MAP
 
 # Build extension → language mapping from LANGUAGE_MAP
-EXTENSION_TO_LANGUAGE: dict[str, str] = {ext: lang for lang, (_, ext) in LANGUAGE_MAP.items()}
+EXTENSION_TO_LANGUAGE: dict[str, str] = {
+    ext: lang for lang, (_, ext) in LANGUAGE_MAP.items()
+}
 
 
 DEFAULT_EXCLUDES = {
@@ -56,7 +58,11 @@ def _load_excludes(dir_path: Path) -> set[str]:
     if ignore_file.is_file():
         try:
             lines = ignore_file.read_text().splitlines()
-            custom = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+            custom = [
+                line.strip()
+                for line in lines
+                if line.strip() and not line.startswith("#")
+            ]
             excludes.update(custom)
         except OSError:
             pass
@@ -68,7 +74,9 @@ def _walk_directory(dir_path: Path, excludes: set[str]) -> list[tuple[Path, str]
     results: list[tuple[Path, str]] = []
     for root, dirs, files in os.walk(dir_path, followlinks=False):
         # Prune excluded directories
-        retained = [d for d in dirs if d not in excludes and not d.endswith(".egg-info")]
+        retained = [
+            d for d in dirs if d not in excludes and not d.endswith(".egg-info")
+        ]
         dirs.clear()
         dirs.extend(retained)
 
@@ -160,10 +168,16 @@ def format_result_human(
             label = region.label.value
             # Format spans as line ranges
             if len(region.spans) == 1:
-                span_str = f"lines {region.spans[0].start_line}-{region.spans[0].end_line}"
+                span_str = (
+                    f"lines {region.spans[0].start_line}-{region.spans[0].end_line}"
+                )
             else:
                 span_str = f"{region.total_lines} lines"
-            pct_str = f"p{round(region.percentile)}" if region.percentile is not None else "n/a"
+            pct_str = (
+                f"p{round(region.percentile)}"
+                if region.percentile is not None
+                else "n/a"
+            )
             lines.append(f"    {label} ({span_str}):  {region.score:.2f} ({pct_str})")
 
     # Per-dimension contribution breakdown (016)
@@ -211,7 +225,11 @@ def format_summary_human(
     sep = "─" * 38
 
     # Compute mean percentile from files that have it available
-    pct_values = [r.percentile for _, r in results if r.percentile_available and r.percentile is not None]
+    pct_values = [
+        r.percentile
+        for _, r in results
+        if r.percentile_available and r.percentile is not None
+    ]
     if pct_values:
         mean_pct = sum(pct_values) / len(pct_values)
         pct_part = f" | mean percentile: p{round(mean_pct)}"
@@ -248,13 +266,12 @@ def format_ranking_human(
 
     from eigenhelm.output.percentile import compute_ranking
 
-    ranking_input = [
-        (str(path), resp.score, resp.percentile)
-        for path, resp in results
-    ]
+    ranking_input = [(str(path), resp.score, resp.percentile) for path, resp in results]
     ranking = compute_ranking(ranking_input, bottom=bottom, bottom_pct=bottom_pct)
 
-    lines = [f"Ranking: {len(ranking.files)} files evaluated (bottom {ranking.highlight_count} highlighted)"]
+    lines = [
+        f"Ranking: {len(ranking.files)} files evaluated (bottom {ranking.highlight_count} highlighted)"
+    ]
     lines.append("")
 
     for f in ranking.files:
@@ -266,7 +283,9 @@ def format_ranking_human(
         )
 
     lines.append("")
-    lines.append(f"  spread: {ranking.spread:.2f} | highlighted: {ranking.highlight_count} of {len(ranking.files)}")
+    lines.append(
+        f"  spread: {ranking.spread:.2f} | highlighted: {ranking.highlight_count} of {len(ranking.files)}"
+    )
 
     return "\n".join(lines)
 
@@ -356,10 +375,14 @@ def _evaluate_stdin(
 ) -> list[tuple[Path | str, EvaluationResponse]]:
     """Read from stdin and evaluate."""
     source = sys.stdin.read()
-    resp = helm.evaluate(EvaluationRequest(
-        source=source, language=language,
-        top_n=top_n, directive_threshold=directive_threshold,
-    ))
+    resp = helm.evaluate(
+        EvaluationRequest(
+            source=source,
+            language=language,
+            top_n=top_n,
+            directive_threshold=directive_threshold,
+        )
+    )
     resp = _attach_regions(resp, source, language, helm)
     return [("<stdin>", resp)]
 
@@ -391,10 +414,15 @@ def _evaluate_paths(
         decl = analyze_declarations(source, lang)
         if decl.is_pure_types:
             continue
-        resp = helm.evaluate(EvaluationRequest(
-            source=source, language=lang, file_path=str(path),
-            top_n=top_n, directive_threshold=directive_threshold,
-        ))
+        resp = helm.evaluate(
+            EvaluationRequest(
+                source=source,
+                language=lang,
+                file_path=str(path),
+                top_n=top_n,
+                directive_threshold=directive_threshold,
+            )
+        )
         if config is not None:
             thresholds = config.thresholds_for(str(path))
             resp = _apply_thresholds(resp, thresholds)
@@ -418,8 +446,11 @@ def _evaluate_diff_paths(
     if not changed:
         return []
     return _evaluate_paths(
-        helm, changed, config=config,
-        top_n=top_n, directive_threshold=directive_threshold,
+        helm,
+        changed,
+        config=config,
+        top_n=top_n,
+        directive_threshold=directive_threshold,
     )
 
 
@@ -470,70 +501,105 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("paths", nargs="*", type=Path, help="File or directory paths")
     parser.add_argument(
-        "--language", default=None,
+        "--language",
+        default=None,
         help="Language (required for stdin mode when no paths given)",
     )
     parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
     parser.add_argument(
-        "--json", dest="json_output", action="store_true",
+        "--json",
+        dest="json_output",
+        action="store_true",
         help="[DEPRECATED] JSON output. Use --format json instead.",
     )
     parser.add_argument(
-        "--format", dest="output_format", choices=["human", "json", "sarif"],
-        default=None, help="Output format: human (default), json, or sarif.",
+        "--format",
+        dest="output_format",
+        choices=["human", "json", "sarif"],
+        default=None,
+        help="Output format: human (default), json, or sarif.",
     )
     parser.add_argument(
-        "--scorecard", action="store_true",
+        "--scorecard",
+        action="store_true",
         help="Generate per-repository scorecard (M1-M5 mandatory, Q1-Q5 qualitative)",
     )
     strict_group = parser.add_mutually_exclusive_group()
     strict_group.add_argument(
-        "--strict", action="store_true", default=False,
+        "--strict",
+        action="store_true",
+        default=False,
         help="Treat warn decisions as reject (exit code 2).",
     )
     strict_group.add_argument(
-        "--lenient", action="store_true", default=False,
+        "--lenient",
+        action="store_true",
+        default=False,
         help="Treat warn decisions as accept (exit code 0).",
     )
     parser.add_argument(
-        "--diff", dest="diff_range", default=None, metavar="REVISION_RANGE",
+        "--diff",
+        dest="diff_range",
+        default=None,
+        metavar="REVISION_RANGE",
         help="Evaluate only files changed in the given git revision range.",
     )
     parser.add_argument(
-        "--accept-threshold", dest="accept_threshold", type=float, default=None,
+        "--accept-threshold",
+        dest="accept_threshold",
+        type=float,
+        default=None,
         help="Override accept threshold (overrides model and config).",
     )
     parser.add_argument(
-        "--reject-threshold", dest="reject_threshold", type=float, default=None,
+        "--reject-threshold",
+        dest="reject_threshold",
+        type=float,
+        default=None,
         help="Override reject threshold (overrides model and config).",
     )
     # 016: Output mode flags (mutually exclusive)
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument(
-        "--classify", action="store_true", default=False,
+        "--classify",
+        action="store_true",
+        default=False,
         help="Show accept/marginal/reject labels in human output (opt-in).",
     )
     mode_group.add_argument(
-        "--rank", action="store_true", default=False,
+        "--rank",
+        action="store_true",
+        default=False,
         help="Relative ranking mode: sort files by score, highlight bottom N.",
     )
     # Ranking options (only valid with --rank)
     highlight_group = parser.add_mutually_exclusive_group()
     highlight_group.add_argument(
-        "--bottom", type=int, default=None,
+        "--bottom",
+        type=int,
+        default=None,
         help="Override highlight count in rank mode.",
     )
     highlight_group.add_argument(
-        "--bottom-pct", dest="bottom_pct", type=float, default=None,
+        "--bottom-pct",
+        dest="bottom_pct",
+        type=float,
+        default=None,
         help="Override highlight percentage in rank mode (0-100).",
     )
     # 017: Attribution options
     parser.add_argument(
-        "--top-n", dest="top_n", type=int, default=None,
+        "--top-n",
+        dest="top_n",
+        type=int,
+        default=None,
         help="Number of top features per PCA dimension in attribution (default: 3).",
     )
     parser.add_argument(
-        "--directive-threshold", dest="directive_threshold", type=float, default=None,
+        "--directive-threshold",
+        dest="directive_threshold",
+        type=float,
+        default=None,
         help="Minimum normalized score to generate directives (default: 0.3).",
     )
     return parser
@@ -600,11 +666,13 @@ def _render_output(
 
         print(format_sarif(results, tool_version=_get_tool_version()))
     elif getattr(args, "rank", False):
-        print(format_ranking_human(
-            results,
-            bottom=getattr(args, "bottom", None),
-            bottom_pct=getattr(args, "bottom_pct", None),
-        ))
+        print(
+            format_ranking_human(
+                results,
+                bottom=getattr(args, "bottom", None),
+                bottom_pct=getattr(args, "bottom_pct", None),
+            )
+        )
     else:
         classify = getattr(args, "classify", False)
         for path, resp in results:
@@ -624,17 +692,23 @@ def _dispatch_evaluation(
     directive_threshold = getattr(args, "directive_threshold", None)
     attr_kwargs = {
         "top_n": top_n if top_n is not None else 3,
-        "directive_threshold": directive_threshold if directive_threshold is not None else 0.3,
+        "directive_threshold": directive_threshold
+        if directive_threshold is not None
+        else 0.3,
     }
 
     if not args.paths and args.diff_range is None:
         if not language:
-            print("ERROR: --language is required when reading from stdin", file=sys.stderr)
+            print(
+                "ERROR: --language is required when reading from stdin", file=sys.stderr
+            )
             return 3
         return _evaluate_stdin(helm, language, **attr_kwargs)
     if args.diff_range is not None:
         try:
-            return _evaluate_diff_paths(helm, args.diff_range, config=config, **attr_kwargs)
+            return _evaluate_diff_paths(
+                helm, args.diff_range, config=config, **attr_kwargs
+            )
         except RuntimeError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 3

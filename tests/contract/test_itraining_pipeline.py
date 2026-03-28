@@ -53,7 +53,10 @@ class TestTrainEigenspaceContract:
     def test_explained_variance_ratio_sums_to_cumulative(self, corpus_dir):
         """explained_variance_ratio.sum() ≈ cumulative_variance."""
         result = train_eigenspace(corpus_dir)
-        assert abs(result.explained_variance_ratio.sum() - result.cumulative_variance) < 1e-9
+        assert (
+            abs(result.explained_variance_ratio.sum() - result.cumulative_variance)
+            < 1e-9
+        )
 
     def test_cumulative_variance_meets_threshold(self, corpus_dir):
         """Auto-selected components meet the default 90% threshold."""
@@ -149,7 +152,9 @@ class TestSaveModelContract:
         path = tmp_path / "model.npz"
         save_model(result, path)
         data = np.load(path)
-        np.testing.assert_array_equal(data["projection_matrix"], result.model.projection_matrix)
+        np.testing.assert_array_equal(
+            data["projection_matrix"], result.model.projection_matrix
+        )
 
     def test_save_raises_file_exists_error_no_force(self, corpus_dir, tmp_path):
         """save_model() raises FileExistsError when path exists and force=False."""
@@ -176,7 +181,9 @@ class TestSaveModelContract:
         save_model(result, path)
         loaded = load_model(path)
         assert loaded.n_components == result.model.n_components
-        np.testing.assert_array_equal(loaded.projection_matrix, result.model.projection_matrix)
+        np.testing.assert_array_equal(
+            loaded.projection_matrix, result.model.projection_matrix
+        )
 
 
 # ---------------------------------------------------------------------------

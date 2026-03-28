@@ -122,9 +122,7 @@ class TestDescriptions:
 
     def test_descriptions_non_empty(self, manifest):
         for target in manifest.targets:
-            assert target.description, (
-                f"{target.name}: description must be non-empty"
-            )
+            assert target.description, f"{target.name}: description must be non-empty"
 
     def test_descriptions_are_substantial(self, manifest):
         for target in manifest.targets:

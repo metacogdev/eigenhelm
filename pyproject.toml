@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eigenhelm"
-version = "0.6.0"
+version = "0.7.0"
 description = "Software Poet Conscience — language-agnostic code aesthetic evaluation"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -58,6 +58,7 @@ eigenhelm-serve = "eigenhelm.cli.serve:main"
 eigenhelm-harness = "eigenhelm.cli.harness:main"
 eigenhelm-benchmark = "eigenhelm.cli.benchmark:main"
 eigenhelm-check = "eigenhelm.cli.precommit:main"
+eigenhelm-mcp = "eigenhelm.cli.mcp:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

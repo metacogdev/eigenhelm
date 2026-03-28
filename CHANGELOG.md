@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/matchdav/eigenhelm/compare/v0.6.0...v0.7.0) (2026-03-24)
+
+
+### Features
+
+* add Makefile with clean target for environment cleanup ([c002080](https://github.com/matchdav/eigenhelm/commit/c002080f7707413dd5987a3f0273ad0714be1d2f))
+* implement model management CLI and registry integration ([807a2fd](https://github.com/matchdav/eigenhelm/commit/807a2fd22f51a556fc1b9fdcae28822d20b650c4))
+* MCP layer ([ee5b274](https://github.com/matchdav/eigenhelm/commit/ee5b274e86ef5c10338c28a095108c15444c5de7))
+
+
+### Bug Fixes
+
+* update pre-commit documentation to clarify file evaluation criteria ([93e2e77](https://github.com/matchdav/eigenhelm/commit/93e2e77794d9f11182ea296504256091606dea2b))
+
 ## [0.6.0](https://github.com/matchdav/eigenhelm/compare/v0.5.0...v0.6.0) (2026-03-20)
 
 

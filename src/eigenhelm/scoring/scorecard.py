@@ -116,7 +116,8 @@ def _compute_qualitative(
     return {
         "Q1_birkhoff": birkhoff if birkhoff is not None else 0.0,
         "Q2_compression_structure": birkhoff if birkhoff is not None else 0.0,
-        "Q3_token_entropy": 1.0 - min((entropy if entropy is not None else 0.0) / 8.0, 1.0),
+        "Q3_token_entropy": 1.0
+        - min((entropy if entropy is not None else 0.0) / 8.0, 1.0),
         "Q4_ncd_exemplar": ncd_val,
         "Q5_overall_aesthetic": overall,
     }
@@ -151,8 +152,13 @@ def build_summary(entries: list[ScorecardEntry]) -> ScorecardSummary:
     }
 
     # Q-score distributions
-    q_keys = ["Q1_birkhoff", "Q2_compression_structure", "Q3_token_entropy",
-              "Q4_ncd_exemplar", "Q5_overall_aesthetic"]
+    q_keys = [
+        "Q1_birkhoff",
+        "Q2_compression_structure",
+        "Q3_token_entropy",
+        "Q4_ncd_exemplar",
+        "Q5_overall_aesthetic",
+    ]
     distributions: dict[str, dict[str, float]] = {}
     for qk in q_keys:
         vals = [e.qualitative_scores.get(qk, 0.0) for e in entries]
@@ -242,14 +248,18 @@ def render_human(scorecard: Scorecard) -> str:
 
 def render_json(scorecard: Scorecard) -> str:
     """Render scorecard as JSON."""
+
     def _entry_dict(e: ScorecardEntry) -> dict[str, Any]:
         return {
             "file_path": e.file_path,
             "mandatory_checks": e.mandatory_checks,
             "qualitative_scores": e.qualitative_scores,
             "anti_patterns": [
-                {"pattern_name": ap.pattern_name, "explanation": ap.explanation,
-                 "triggering_metrics": ap.triggering_metrics}
+                {
+                    "pattern_name": ap.pattern_name,
+                    "explanation": ap.explanation,
+                    "triggering_metrics": ap.triggering_metrics,
+                }
                 for ap in e.anti_patterns
             ],
         }

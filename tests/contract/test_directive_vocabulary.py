@@ -42,9 +42,14 @@ def test_generated_categories_in_vocabulary() -> None:
             source_location=_LOC,
             features=(
                 FeatureContribution(
-                    feature_index=0, feature_name="halstead_volume",
-                    contribution_value=0.9, contribution_magnitude=0.9,
-                    raw_value=5.0, corpus_mean=3.0, standardized_deviation=2.0, rank=1,
+                    feature_index=0,
+                    feature_name="halstead_volume",
+                    contribution_value=0.9,
+                    contribution_magnitude=0.9,
+                    raw_value=5.0,
+                    corpus_mean=3.0,
+                    standardized_deviation=2.0,
+                    rank=1,
                 ),
             ),
         )
@@ -59,9 +64,14 @@ def test_generated_categories_in_vocabulary() -> None:
             source_location=_LOC,
             features=(
                 FeatureContribution(
-                    feature_index=10, feature_name="wl_hash_bin_05",
-                    contribution_value=0.9, contribution_magnitude=0.9,
-                    raw_value=5.0, corpus_mean=3.0, standardized_deviation=2.0, rank=1,
+                    feature_index=10,
+                    feature_name="wl_hash_bin_05",
+                    contribution_value=0.9,
+                    contribution_magnitude=0.9,
+                    raw_value=5.0,
+                    corpus_mean=3.0,
+                    standardized_deviation=2.0,
+                    rank=1,
                 ),
             ),
         )
@@ -76,9 +86,14 @@ def test_generated_categories_in_vocabulary() -> None:
             source_location=_LOC,
             features=(
                 FeatureContribution(
-                    feature_index=10, feature_name="wl_hash_bin_05",
-                    contribution_value=0.9, contribution_magnitude=0.9,
-                    raw_value=5.0, corpus_mean=3.0, standardized_deviation=-1.0, rank=1,
+                    feature_index=10,
+                    feature_name="wl_hash_bin_05",
+                    contribution_value=0.9,
+                    contribution_magnitude=0.9,
+                    raw_value=5.0,
+                    corpus_mean=3.0,
+                    standardized_deviation=-1.0,
+                    rank=1,
                 ),
             ),
         )

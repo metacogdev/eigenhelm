@@ -74,12 +74,14 @@ class DeclarationAnalysis:
         """
         if not self.is_dominant or not self.regions:
             return False
-        _TYPE_KINDS = frozenset({
-            DeclarationType.TYPE_DEFINITION,
-            DeclarationType.ENUM_DECLARATION,
-            DeclarationType.FIELD_ONLY_CLASS,
-            DeclarationType.CONFIG_MODEL,
-        })
+        _TYPE_KINDS = frozenset(
+            {
+                DeclarationType.TYPE_DEFINITION,
+                DeclarationType.ENUM_DECLARATION,
+                DeclarationType.FIELD_ONLY_CLASS,
+                DeclarationType.CONFIG_MODEL,
+            }
+        )
         return all(r.declaration_type in _TYPE_KINDS for r in self.regions)
 
     def __post_init__(self) -> None:

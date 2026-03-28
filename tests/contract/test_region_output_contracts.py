@@ -100,7 +100,11 @@ def test_sarif_properties_regions_present(helm):
 
     # Find the file-level result (ruleId starts with eigenhelm/)
     results = sarif["runs"][0]["results"]
-    file_results = [r for r in results if r.get("ruleId", "").startswith("eigenhelm/aesthetic-score")]
+    file_results = [
+        r
+        for r in results
+        if r.get("ruleId", "").startswith("eigenhelm/aesthetic-score")
+    ]
     assert len(file_results) >= 1
 
     file_result = file_results[0]
@@ -117,7 +121,11 @@ def test_sarif_no_properties_regions_when_no_tests(helm):
     sarif = build_sarif([("test.py", resp)], tool_version="test")
 
     results = sarif["runs"][0]["results"]
-    file_results = [r for r in results if r.get("ruleId", "").startswith("eigenhelm/aesthetic-score")]
+    file_results = [
+        r
+        for r in results
+        if r.get("ruleId", "").startswith("eigenhelm/aesthetic-score")
+    ]
     for fr in file_results:
         props = fr.get("properties", {})
         assert "regions" not in props

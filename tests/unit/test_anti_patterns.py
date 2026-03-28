@@ -60,7 +60,9 @@ class TestPhantomAuthorship:
 
     def test_custom_thresholds(self) -> None:
         fv = _make_feature_vector(volume=500.0, low_wl_entropy=True)
-        result = detect_phantom_authorship(fv, volume_threshold=400.0, wl_entropy_threshold=5.0)
+        result = detect_phantom_authorship(
+            fv, volume_threshold=400.0, wl_entropy_threshold=5.0
+        )
         assert result is not None
 
     def test_deterministic(self) -> None:
@@ -108,7 +110,9 @@ class TestDetectAntiPatterns:
     """Tests for the combined detect_anti_patterns() function."""
 
     def test_both_patterns_can_fire(self) -> None:
-        fv = _make_feature_vector(volume=3000.0, low_wl_entropy=True, density=0.01, difficulty=50.0)
+        fv = _make_feature_vector(
+            volume=3000.0, low_wl_entropy=True, density=0.01, difficulty=50.0
+        )
         violations = detect_anti_patterns(fv)
         names = {v.pattern_name for v in violations}
         assert "phantom_authorship" in names

@@ -83,7 +83,9 @@ class TestStability100Steps:
         tau, p = 0.8, 0.9
         for i in range(100):
             src = REPETITIVE_SOURCE if i < 30 else HIGH_ENTROPY_SOURCE
-            req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
+            req = SteeringRequest(
+                source=src, language="python", tau=tau, p=p, session=session
+            )
             r = helm.steer(req)
             errors.append(r.error)
             tau, p = r.tau, r.p
@@ -109,7 +111,9 @@ class TestStability100Steps:
         taus = []
         for i in range(100):
             src = HIGH_ENTROPY_SOURCE if i < 30 else REPETITIVE_SOURCE
-            req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
+            req = SteeringRequest(
+                source=src, language="python", tau=tau, p=p, session=session
+            )
             r = helm.steer(req)
             taus.append(r.tau)
             tau, p = r.tau, r.p
@@ -127,7 +131,9 @@ class TestStability100Steps:
         ps = []
         for i in range(100):
             src = HIGH_ENTROPY_SOURCE if i < 30 else REPETITIVE_SOURCE
-            req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
+            req = SteeringRequest(
+                source=src, language="python", tau=tau, p=p, session=session
+            )
             r = helm.steer(req)
             ps.append(r.p)
             tau, p = r.tau, r.p
@@ -171,14 +177,18 @@ class TestStepFunctionSettling:
         steady-state estimate equals tau_min; all post-convergence steps are
         within tolerance.
         """
-        helm = DynamicHelm(pid_config=PIDConfig(kp=0.8, ki=0.2, kd=0.0, alpha=1.0, gamma_tau=0.8))
+        helm = DynamicHelm(
+            pid_config=PIDConfig(kp=0.8, ki=0.2, kd=0.0, alpha=1.0, gamma_tau=0.8)
+        )
         session = helm.create_session()
 
         tau, p = 0.8, 0.9
         taus = []
         for i in range(20):
             src = HIGH_ENTROPY_SOURCE if i < 10 else ""
-            req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
+            req = SteeringRequest(
+                source=src, language="python", tau=tau, p=p, session=session
+            )
             r = helm.steer(req)
             taus.append(r.tau)
             tau, p = r.tau, r.p
@@ -198,14 +208,18 @@ class TestStepFunctionSettling:
 
     def test_no_sustained_oscillation_after_step_10(self):
         """No more than 3 consecutive sign changes in derivative of τ after step 10."""
-        helm = DynamicHelm(pid_config=PIDConfig(kp=0.8, ki=0.2, kd=0.0, alpha=1.0, gamma_tau=0.8))
+        helm = DynamicHelm(
+            pid_config=PIDConfig(kp=0.8, ki=0.2, kd=0.0, alpha=1.0, gamma_tau=0.8)
+        )
         session = helm.create_session()
 
         tau, p = 0.8, 0.9
         taus = []
         for i in range(30):
             src = HIGH_ENTROPY_SOURCE if i < 10 else ""
-            req = SteeringRequest(source=src, language="python", tau=tau, p=p, session=session)
+            req = SteeringRequest(
+                source=src, language="python", tau=tau, p=p, session=session
+            )
             r = helm.steer(req)
             taus.append(r.tau)
             tau, p = r.tau, r.p

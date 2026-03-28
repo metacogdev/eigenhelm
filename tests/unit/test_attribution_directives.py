@@ -21,7 +21,9 @@ from eigenhelm.attribution.models import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-_LOC = SourceLocation(code_unit_name="func", start_line=1, end_line=10, file_path="f.py")
+_LOC = SourceLocation(
+    code_unit_name="func", start_line=1, end_line=10, file_path="f.py"
+)
 
 
 def _pca_dim(
@@ -186,7 +188,11 @@ def test_direct_token_entropy() -> None:
 
 
 def test_direct_compression_structure() -> None:
-    dims = (_direct_dim(dimension="compression_structure", metric_name="compression_structure"),)
+    dims = (
+        _direct_dim(
+            dimension="compression_structure", metric_name="compression_structure"
+        ),
+    )
     result = generate_directives(dims, threshold=0.3)
     assert result[0].category == "improve_compression"
 
@@ -197,7 +203,11 @@ def test_direct_compression_structure() -> None:
 
 
 def test_direct_ncd_exemplar_distance() -> None:
-    dims = (_direct_dim(dimension="ncd_exemplar_distance", metric_name="ncd_exemplar_distance"),)
+    dims = (
+        _direct_dim(
+            dimension="ncd_exemplar_distance", metric_name="ncd_exemplar_distance"
+        ),
+    )
     result = generate_directives(dims, threshold=0.3)
     assert result[0].category == "review_structure"
 
@@ -223,11 +233,13 @@ def test_configurable_threshold() -> None:
 
 def test_small_file_caps_compression_severity() -> None:
     """compression_structure with high score on a small file → capped to medium."""
-    dims = (_direct_dim(
-        dimension="compression_structure",
-        metric_name="compression_structure",
-        score=0.92,
-    ),)
+    dims = (
+        _direct_dim(
+            dimension="compression_structure",
+            metric_name="compression_structure",
+            score=0.92,
+        ),
+    )
     result = generate_directives(dims, threshold=0.3, source_line_count=50)
     assert len(result) == 1
     assert result[0].severity == "medium"
@@ -235,11 +247,13 @@ def test_small_file_caps_compression_severity() -> None:
 
 def test_small_file_caps_ncd_severity() -> None:
     """ncd_exemplar_distance with high score on a small file → capped to medium."""
-    dims = (_direct_dim(
-        dimension="ncd_exemplar_distance",
-        metric_name="ncd_exemplar_distance",
-        score=0.85,
-    ),)
+    dims = (
+        _direct_dim(
+            dimension="ncd_exemplar_distance",
+            metric_name="ncd_exemplar_distance",
+            score=0.85,
+        ),
+    )
     result = generate_directives(dims, threshold=0.3, source_line_count=40)
     assert len(result) == 1
     assert result[0].severity == "medium"
@@ -247,11 +261,13 @@ def test_small_file_caps_ncd_severity() -> None:
 
 def test_large_file_no_severity_cap() -> None:
     """compression_structure on a large file retains high severity."""
-    dims = (_direct_dim(
-        dimension="compression_structure",
-        metric_name="compression_structure",
-        score=0.92,
-    ),)
+    dims = (
+        _direct_dim(
+            dimension="compression_structure",
+            metric_name="compression_structure",
+            score=0.92,
+        ),
+    )
     result = generate_directives(dims, threshold=0.3, source_line_count=200)
     assert len(result) == 1
     assert result[0].severity == "high"
@@ -259,11 +275,13 @@ def test_large_file_no_severity_cap() -> None:
 
 def test_small_file_no_cap_when_already_medium() -> None:
     """Medium severity on a small file stays medium (no downgrade to low)."""
-    dims = (_direct_dim(
-        dimension="compression_structure",
-        metric_name="compression_structure",
-        score=0.55,
-    ),)
+    dims = (
+        _direct_dim(
+            dimension="compression_structure",
+            metric_name="compression_structure",
+            score=0.55,
+        ),
+    )
     result = generate_directives(dims, threshold=0.3, source_line_count=30)
     assert len(result) == 1
     assert result[0].severity == "medium"
@@ -279,11 +297,13 @@ def test_small_file_pca_dims_not_capped() -> None:
 
 def test_no_line_count_no_cap() -> None:
     """When source_line_count is None, no cap is applied (backward compat)."""
-    dims = (_direct_dim(
-        dimension="compression_structure",
-        metric_name="compression_structure",
-        score=0.92,
-    ),)
+    dims = (
+        _direct_dim(
+            dimension="compression_structure",
+            metric_name="compression_structure",
+            score=0.92,
+        ),
+    )
     result = generate_directives(dims, threshold=0.3)
     assert len(result) == 1
     assert result[0].severity == "high"

@@ -7,7 +7,7 @@ def calculate(expression):
     op = None
     op_pos = -1
     for i, c in enumerate(expression):
-        if i > 0 and c in "+-*/" and expression[i-1] != "e":
+        if i > 0 and c in "+-*/" and expression[i - 1] != "e":
             op = c
             op_pos = i
             break
@@ -19,7 +19,7 @@ def calculate(expression):
             return None
 
     left = expression[:op_pos].strip()
-    right = expression[op_pos+1:].strip()
+    right = expression[op_pos + 1 :].strip()
 
     try:
         a = float(left)

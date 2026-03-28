@@ -19,7 +19,7 @@ from eigenhelm.declarations import (
 # Fixture: declaration-heavy Python source (multiple dataclasses)
 # ---------------------------------------------------------------------------
 
-_MULTI_DATACLASS_SOURCE = '''\
+_MULTI_DATACLASS_SOURCE = """\
 from dataclasses import dataclass
 
 
@@ -42,10 +42,10 @@ class Color:
 class Vertex:
     position: Point
     color: Color
-'''
+"""
 
 # A source where declarations are a minority of lines
-_LOGIC_HEAVY_SOURCE = '''\
+_LOGIC_HEAVY_SOURCE = """\
 from dataclasses import dataclass
 
 
@@ -78,7 +78,7 @@ def transform(values: list[float]) -> list[float]:
     for v in values:
         out.append(v ** 2 + v + 1)
     return out
-'''
+"""
 
 
 # ---------------------------------------------------------------------------

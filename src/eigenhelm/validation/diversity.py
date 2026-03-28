@@ -122,7 +122,7 @@ def run_diversity_analysis(
 
     # --- Effective rank via SVD ---
     _, s, _ = np.linalg.svd(X_std, full_matrices=False)
-    s_sq = s ** 2
+    s_sq = s**2
     total = s_sq.sum()
     if total > 0:
         evr = s_sq / total
@@ -166,14 +166,12 @@ def run_diversity_analysis(
     for repo in unique_repos:
         n_k = repo_counts[repo]
         diff = repo_centroids[repo] - global_mean
-        between_var_per_feat += n_k * (diff ** 2)
+        between_var_per_feat += n_k * (diff**2)
     between_var_per_feat /= n_vectors
 
     total_var_sum = total_var_per_feat.sum()
     if total_var_sum > 0:
-        between_repo_variance_ratio = float(
-            between_var_per_feat.sum() / total_var_sum
-        )
+        between_repo_variance_ratio = float(between_var_per_feat.sum() / total_var_sum)
     else:
         between_repo_variance_ratio = 0.0
 
@@ -206,9 +204,7 @@ def run_diversity_analysis(
             f"between_repo_variance_ratio {between_repo_variance_ratio:.4f} < {THRESHOLD_BETWEEN_REPO_VARIANCE_RATIO}"
         )
     if dead_features > THRESHOLD_DEAD_FEATURES:
-        warnings.append(
-            f"dead_features {dead_features} > {THRESHOLD_DEAD_FEATURES}"
-        )
+        warnings.append(f"dead_features {dead_features} > {THRESHOLD_DEAD_FEATURES}")
     if sample_balance < THRESHOLD_SAMPLE_BALANCE:
         warnings.append(
             f"sample_balance {sample_balance:.2f} < {THRESHOLD_SAMPLE_BALANCE}"
@@ -255,15 +251,17 @@ def render_human(summary: DiversitySummary) -> str:
         )
 
     overall = "ALL PASSED" if summary.all_passed else "SOME FAILED"
-    return "\n".join([
-        "Corpus Diversity Report",
-        sep,
-        header,
-        sep,
-        *rows,
-        sep,
-        f"Overall: {overall}",
-    ])
+    return "\n".join(
+        [
+            "Corpus Diversity Report",
+            sep,
+            header,
+            sep,
+            *rows,
+            sep,
+            f"Overall: {overall}",
+        ]
+    )
 
 
 def render_json(summary: DiversitySummary) -> str:

@@ -82,7 +82,9 @@ def compute(ast_root: tree_sitter.Node, iterations: int = 3) -> np.ndarray:
         new_labels: dict[int, int] = {}
         for node in all_nodes:
             nid = id(node)
-            child_labels = sorted(str(labels[id(c)][-1]) for c in node.children if id(c) in labels)
+            child_labels = sorted(
+                str(labels[id(c)][-1]) for c in node.children if id(c) in labels
+            )
             aggregated = str(labels[nid][-1]) + "||" + "||".join(child_labels)
             new_labels[nid] = _node_hash(aggregated)
 

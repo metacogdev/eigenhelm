@@ -49,7 +49,9 @@ def skill(target: str | None, install: bool, force: bool) -> None:
     if install:
         dest = Path(target) if target else Path.cwd()
         if dest.is_file():
-            click.echo("ERROR: --install target must be a directory, not a file.", err=True)
+            click.echo(
+                "ERROR: --install target must be a directory, not a file.", err=True
+            )
             sys.exit(1)
         out_path = dest / ".claude" / "skills" / "eigenhelm.md"
     else:

@@ -77,7 +77,9 @@ class TestDiscriminationSummary:
     def test_all_passed_when_all_pass(self) -> None:
         reports = [
             DiscriminationReport("python", "A", 5, 0.92, 1.5, 2.0, 0.2, 0.5, 0.8, True),
-            DiscriminationReport("javascript", "A", 4, 0.91, 1.3, 1.8, 0.3, 0.6, 0.7, True),
+            DiscriminationReport(
+                "javascript", "A", 4, 0.91, 1.3, 1.8, 0.3, 0.6, 0.7, True
+            ),
         ]
         summary = build_summary(reports)
         assert summary.all_passed is True
@@ -97,7 +99,9 @@ class TestRenderHuman:
 
     def test_table_has_required_columns(self) -> None:
         reports = [
-            DiscriminationReport("python", "A", 5, 0.92, 1.5, 2.0, 0.2, 0.55, 0.82, True),
+            DiscriminationReport(
+                "python", "A", 5, 0.92, 1.5, 2.0, 0.2, 0.55, 0.82, True
+            ),
         ]
         summary = build_summary(reports)
         output = render_human(summary)
@@ -129,7 +133,9 @@ class TestRenderJson:
 
     def test_valid_json_with_reports_array(self) -> None:
         reports = [
-            DiscriminationReport("python", "A", 5, 0.92, 1.5, 2.0, 0.2, 0.55, 0.82, True),
+            DiscriminationReport(
+                "python", "A", 5, 0.92, 1.5, 2.0, 0.2, 0.55, 0.82, True
+            ),
             DiscriminationReport("go", "A", 3, 0.88, 1.0, 1.0, 0.4, 0.45, 0.3, False),
         ]
         summary = build_summary(reports)
@@ -144,7 +150,9 @@ class TestRenderJson:
 
     def test_per_language_report_keys(self) -> None:
         reports = [
-            DiscriminationReport("javascript", "A", 4, 0.91, 1.3, 1.8, 0.3, 0.6, 0.7, True),
+            DiscriminationReport(
+                "javascript", "A", 4, 0.91, 1.3, 1.8, 0.3, 0.6, 0.7, True
+            ),
         ]
         summary = build_summary(reports)
         output = render_json(summary)
@@ -152,8 +160,15 @@ class TestRenderJson:
 
         report = data["reports"][0]
         required_keys = {
-            "language", "corpus_class", "n_components", "cumulative_variance",
-            "sigma_drift", "sigma_virtue", "mean_in_score", "mean_out_score",
-            "effect_size", "passed",
+            "language",
+            "corpus_class",
+            "n_components",
+            "cumulative_variance",
+            "sigma_drift",
+            "sigma_virtue",
+            "mean_in_score",
+            "mean_out_score",
+            "effect_size",
+            "passed",
         }
         assert required_keys.issubset(report.keys())

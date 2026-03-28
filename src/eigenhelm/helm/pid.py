@@ -41,7 +41,11 @@ class PIDController:
             new_integral = 0.0
 
         # PID output
-        u = cfg.kp * error + cfg.ki * new_integral + cfg.kd * (filtered - session.filtered_error)
+        u = (
+            cfg.kp * error
+            + cfg.ki * new_integral
+            + cfg.kd * (filtered - session.filtered_error)
+        )
 
         # Mutate session state
         session.integral = new_integral
@@ -51,7 +55,9 @@ class PIDController:
 
         return u
 
-    def actuate(self, tau: float, p: float, control_output: float) -> tuple[float, float]:
+    def actuate(
+        self, tau: float, p: float, control_output: float
+    ) -> tuple[float, float]:
         """Apply actuation equations and clamp outputs to configured bounds.
 
         Args:

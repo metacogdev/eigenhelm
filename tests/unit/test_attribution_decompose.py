@@ -253,7 +253,9 @@ class TestDecomposeDrift:
 
         for fc in result.features:
             assert pytest.approx(fc.raw_value, rel=1e-10) == fv.values[fc.feature_index]
-            assert pytest.approx(fc.corpus_mean, rel=1e-10) == model.mean[fc.feature_index]
+            assert (
+                pytest.approx(fc.corpus_mean, rel=1e-10) == model.mean[fc.feature_index]
+            )
 
     def test_standardized_deviation(self) -> None:
         """standardized_deviation = (raw - mean) / std."""
@@ -264,7 +266,9 @@ class TestDecomposeDrift:
         result = decompose_drift(proj, model, fv, top_n=3)
 
         for fc in result.features:
-            expected = (fv.values[fc.feature_index] - model.mean[fc.feature_index]) / model.std[fc.feature_index]
+            expected = (
+                fv.values[fc.feature_index] - model.mean[fc.feature_index]
+            ) / model.std[fc.feature_index]
             assert pytest.approx(fc.standardized_deviation, rel=1e-10) == expected
 
     def test_rank_field_is_one_indexed(self) -> None:
@@ -321,7 +325,10 @@ class TestDecomposeAlignment:
         expected_c = z @ W.T  # shape (69,)
 
         for fc in result.features:
-            assert pytest.approx(fc.contribution_value, rel=1e-10) == expected_c[fc.feature_index]
+            assert (
+                pytest.approx(fc.contribution_value, rel=1e-10)
+                == expected_c[fc.feature_index]
+            )
 
     def test_contribution_magnitude_is_abs_c(self) -> None:
         model = _make_model()
@@ -335,7 +342,9 @@ class TestDecomposeAlignment:
         expected_c = z @ W.T
 
         for fc in result.features:
-            assert pytest.approx(fc.contribution_magnitude, rel=1e-10) == abs(expected_c[fc.feature_index])
+            assert pytest.approx(fc.contribution_magnitude, rel=1e-10) == abs(
+                expected_c[fc.feature_index]
+            )
 
     def test_not_exact_decomposition(self) -> None:
         """Alignment is a heuristic ranking, NOT an exact additive decomposition of l_virtue."""

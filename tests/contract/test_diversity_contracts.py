@@ -112,12 +112,21 @@ class TestDiversitySummary:
     def test_all_passed(self) -> None:
         reports = [
             DiversityReport(
-                language="go", corpus_class="A", n_repos=4, n_vectors=100,
-                n_features=69, effective_rank=4.0, dead_features=2,
+                language="go",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=100,
+                n_features=69,
+                effective_rank=4.0,
+                dead_features=2,
                 explained_variance_top3=[0.1, 0.1, 0.1],
-                min_centroid_distance=2.0, mean_centroid_distance=3.0,
-                between_repo_variance_ratio=0.1, sample_balance=0.5,
-                repo_stats=[], passed=True, warnings=[],
+                min_centroid_distance=2.0,
+                mean_centroid_distance=3.0,
+                between_repo_variance_ratio=0.1,
+                sample_balance=0.5,
+                repo_stats=[],
+                passed=True,
+                warnings=[],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
@@ -126,12 +135,21 @@ class TestDiversitySummary:
     def test_not_all_passed(self) -> None:
         reports = [
             DiversityReport(
-                language="go", corpus_class="A", n_repos=4, n_vectors=100,
-                n_features=69, effective_rank=1.5, dead_features=20,
+                language="go",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=100,
+                n_features=69,
+                effective_rank=1.5,
+                dead_features=20,
                 explained_variance_top3=[0.5, 0.3, 0.1],
-                min_centroid_distance=0.5, mean_centroid_distance=1.0,
-                between_repo_variance_ratio=0.02, sample_balance=0.05,
-                repo_stats=[], passed=False, warnings=["low rank"],
+                min_centroid_distance=0.5,
+                mean_centroid_distance=1.0,
+                between_repo_variance_ratio=0.02,
+                sample_balance=0.05,
+                repo_stats=[],
+                passed=False,
+                warnings=["low rank"],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
@@ -144,12 +162,21 @@ class TestRenderHuman:
     def test_table_has_required_columns(self) -> None:
         reports = [
             DiversityReport(
-                language="go", corpus_class="A", n_repos=4, n_vectors=100,
-                n_features=69, effective_rank=4.0, dead_features=2,
+                language="go",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=100,
+                n_features=69,
+                effective_rank=4.0,
+                dead_features=2,
                 explained_variance_top3=[0.1, 0.1, 0.1],
-                min_centroid_distance=2.0, mean_centroid_distance=3.0,
-                between_repo_variance_ratio=0.1, sample_balance=0.5,
-                repo_stats=[], passed=True, warnings=[],
+                min_centroid_distance=2.0,
+                mean_centroid_distance=3.0,
+                between_repo_variance_ratio=0.1,
+                sample_balance=0.5,
+                repo_stats=[],
+                passed=True,
+                warnings=[],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
@@ -162,12 +189,21 @@ class TestRenderHuman:
     def test_failing_report_shows_fail(self) -> None:
         reports = [
             DiversityReport(
-                language="go", corpus_class="A", n_repos=4, n_vectors=100,
-                n_features=69, effective_rank=1.5, dead_features=20,
+                language="go",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=100,
+                n_features=69,
+                effective_rank=1.5,
+                dead_features=20,
                 explained_variance_top3=[0.5, 0.3, 0.1],
-                min_centroid_distance=0.5, mean_centroid_distance=1.0,
-                between_repo_variance_ratio=0.02, sample_balance=0.05,
-                repo_stats=[], passed=False, warnings=["low rank"],
+                min_centroid_distance=0.5,
+                mean_centroid_distance=1.0,
+                between_repo_variance_ratio=0.02,
+                sample_balance=0.05,
+                repo_stats=[],
+                passed=False,
+                warnings=["low rank"],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
@@ -182,15 +218,23 @@ class TestRenderJson:
     def test_valid_json_structure(self) -> None:
         reports = [
             DiversityReport(
-                language="go", corpus_class="A", n_repos=4, n_vectors=100,
-                n_features=69, effective_rank=4.0, dead_features=2,
+                language="go",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=100,
+                n_features=69,
+                effective_rank=4.0,
+                dead_features=2,
                 explained_variance_top3=[0.1, 0.1, 0.1],
-                min_centroid_distance=2.0, mean_centroid_distance=3.0,
-                between_repo_variance_ratio=0.1, sample_balance=0.5,
+                min_centroid_distance=2.0,
+                mean_centroid_distance=3.0,
+                between_repo_variance_ratio=0.1,
+                sample_balance=0.5,
                 repo_stats=[
                     RepoDiversityStats("gjson", 25, 1.2),
                 ],
-                passed=True, warnings=[],
+                passed=True,
+                warnings=[],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
@@ -207,20 +251,34 @@ class TestRenderJson:
     def test_per_language_keys(self) -> None:
         reports = [
             DiversityReport(
-                language="javascript", corpus_class="A", n_repos=4, n_vectors=50,
-                n_features=69, effective_rank=3.5, dead_features=5,
+                language="javascript",
+                corpus_class="A",
+                n_repos=4,
+                n_vectors=50,
+                n_features=69,
+                effective_rank=3.5,
+                dead_features=5,
                 explained_variance_top3=[0.2, 0.15, 0.1],
-                min_centroid_distance=1.5, mean_centroid_distance=2.0,
-                between_repo_variance_ratio=0.08, sample_balance=0.4,
-                repo_stats=[], passed=True, warnings=[],
+                min_centroid_distance=1.5,
+                mean_centroid_distance=2.0,
+                between_repo_variance_ratio=0.08,
+                sample_balance=0.4,
+                repo_stats=[],
+                passed=True,
+                warnings=[],
             ),
         ]
         summary = DiversitySummary(reports=tuple(reports))
         data = json.loads(render_json(summary))
         lang_data = data["languages"]["javascript"]
         required_keys = {
-            "effective_rank", "dead_features", "min_centroid_distance",
-            "between_repo_variance_ratio", "sample_balance", "passed",
-            "warnings", "repos",
+            "effective_rank",
+            "dead_features",
+            "min_centroid_distance",
+            "between_repo_variance_ratio",
+            "sample_balance",
+            "passed",
+            "warnings",
+            "repos",
         }
         assert required_keys.issubset(lang_data.keys())

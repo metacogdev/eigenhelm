@@ -84,12 +84,18 @@ def test_empty_description_raises():
 
 def test_archive_url_tag_ref():
     t = _make_target(url="https://github.com/encode/httpx", ref="0.28.1")
-    assert t.archive_url == "https://github.com/encode/httpx/archive/refs/tags/0.28.1.tar.gz"
+    assert (
+        t.archive_url
+        == "https://github.com/encode/httpx/archive/refs/tags/0.28.1.tar.gz"
+    )
 
 
 def test_archive_url_tag_ref_with_v_prefix():
     t = _make_target(url="https://github.com/pydantic/pydantic", ref="v2.12.5")
-    assert t.archive_url == "https://github.com/pydantic/pydantic/archive/refs/tags/v2.12.5.tar.gz"
+    assert (
+        t.archive_url
+        == "https://github.com/pydantic/pydantic/archive/refs/tags/v2.12.5.tar.gz"
+    )
 
 
 def test_archive_url_sha_ref():

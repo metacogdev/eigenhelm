@@ -95,7 +95,9 @@ def load_model(path: str | Path) -> EigenspaceModel:
     # Load language metadata (009) — backward-compat: None for pre-009 models
     language = str(data["language"]) if "language" in data else None
     corpus_class = str(data["corpus_class"]) if "corpus_class" in data else None
-    n_training_files = int(data["n_training_files"]) if "n_training_files" in data else 0
+    n_training_files = (
+        int(data["n_training_files"]) if "n_training_files" in data else 0
+    )
 
     # Load calibrated thresholds (015) — backward-compat: None for pre-015 models
     calibrated_accept = None
@@ -115,7 +117,9 @@ def load_model(path: str | Path) -> EigenspaceModel:
             p75=float(data["score_dist_p75"]),
             p90=float(data["score_dist_p90"]),
             max=float(data["score_dist_max"]),
-            n_scores=int(data["score_dist_n_scores"]) if "score_dist_n_scores" in data else 1,
+            n_scores=int(data["score_dist_n_scores"])
+            if "score_dist_n_scores" in data
+            else 1,
         )
 
     return EigenspaceModel(

@@ -5,6 +5,7 @@ scores = []
 grades = []
 active = []
 
+
 def add(n, a, s, g, act):
     global names, ages, scores, grades, active
     names.append(n)
@@ -12,6 +13,7 @@ def add(n, a, s, g, act):
     scores.append(s)
     grades.append(g)
     active.append(act)
+
 
 def remove(idx):
     global names, ages, scores, grades, active
@@ -33,11 +35,13 @@ def remove(idx):
     grades = grades2
     active = active2
 
+
 def find_by_name(n):
     for i in range(len(names)):
         if names[i] == n:
             return i
     return -1
+
 
 def get_active_above_score(threshold):
     r = []
@@ -47,13 +51,27 @@ def get_active_above_score(threshold):
                 r.append(i)
     return r
 
+
 def update_grade(idx, g):
     global grades
     if idx >= 0 and idx < len(grades):
         grades[idx] = g
 
+
 def summary():
     s = ""
     for i in range(len(names)):
-        s = s + names[i] + ":" + str(ages[i]) + ":" + str(scores[i]) + ":" + grades[i] + ":" + str(active[i]) + "|"
+        s = (
+            s
+            + names[i]
+            + ":"
+            + str(ages[i])
+            + ":"
+            + str(scores[i])
+            + ":"
+            + grades[i]
+            + ":"
+            + str(active[i])
+            + "|"
+        )
     return s

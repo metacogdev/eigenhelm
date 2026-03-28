@@ -302,7 +302,10 @@ def test_archive_url_tag_ref(tmp_path):
     manifest = load_manifest(path)
     httpx = manifest.targets[0]
 
-    assert httpx.archive_url == "https://github.com/encode/httpx/archive/refs/tags/0.28.1.tar.gz"
+    assert (
+        httpx.archive_url
+        == "https://github.com/encode/httpx/archive/refs/tags/0.28.1.tar.gz"
+    )
 
 
 # ---------------------------------------------------------------------------

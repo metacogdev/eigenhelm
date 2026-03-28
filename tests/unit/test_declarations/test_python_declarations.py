@@ -151,7 +151,8 @@ def test_pydantic_basemodel_detected():
 def test_mixed_file_below_threshold():
     """Mixed file: regions detected but ratio below 0.6."""
     logic_lines = "\n".join(f"    x = x + {i}" for i in range(200))
-    src = textwrap.dedent("""\
+    src = (
+        textwrap.dedent("""\
         from dataclasses import dataclass
 
         @dataclass(frozen=True)
@@ -165,7 +166,10 @@ def test_mixed_file_below_threshold():
             dy: float
 
         def compute(x):
-    """) + logic_lines + "\n    return x\n"
+    """)
+        + logic_lines
+        + "\n    return x\n"
+    )
 
     analysis = analyze_declarations(src, "python")
     assert len(analysis.regions) == 2

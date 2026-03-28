@@ -38,13 +38,18 @@ class TestGitHubActionBuildingBlocks:
         mock_resp.percentile_available = False
         mock_resp.contributions = ()
         mock_resp.attribution = None
+        mock_resp.regions = ()
+        mock_resp.declaration_ratio = None
 
         changed_files = [tmp_path / "changed.py"]
         changed_files[0].write_text("x = 1\n")
 
         with (
             patch("eigenhelm.diff.discover_changed_files", return_value=changed_files),
-            patch("eigenhelm.cli.evaluate._evaluate_paths", return_value=[(str(changed_files[0]), mock_resp)]),
+            patch(
+                "eigenhelm.cli.evaluate._evaluate_paths",
+                return_value=[(str(changed_files[0]), mock_resp)],
+            ),
         ):
             code = main(["--diff", "HEAD~1", "--format", "sarif"])
 
@@ -54,7 +59,11 @@ class TestGitHubActionBuildingBlocks:
         captured = capsys.readouterr()
         data = json.loads(captured.out)
         assert data["version"] == "2.1.0"
-        main_results = [r for r in data["runs"][0]["results"] if r["ruleId"] == "eigenhelm/aesthetic-score"]
+        main_results = [
+            r
+            for r in data["runs"][0]["results"]
+            if r["ruleId"] == "eigenhelm/aesthetic-score"
+        ]
         assert len(main_results) == 1
         assert main_results[0]["level"] == "warning"
 
@@ -72,13 +81,18 @@ class TestGitHubActionBuildingBlocks:
         mock_resp.percentile_available = False
         mock_resp.contributions = ()
         mock_resp.attribution = None
+        mock_resp.regions = ()
+        mock_resp.declaration_ratio = None
 
         changed_files = [tmp_path / "changed.py"]
         changed_files[0].write_text("x = 1\n")
 
         with (
             patch("eigenhelm.diff.discover_changed_files", return_value=changed_files),
-            patch("eigenhelm.cli.evaluate._evaluate_paths", return_value=[(str(changed_files[0]), mock_resp)]),
+            patch(
+                "eigenhelm.cli.evaluate._evaluate_paths",
+                return_value=[(str(changed_files[0]), mock_resp)],
+            ),
         ):
             code = main(["--diff", "HEAD~1", "--format", "json"])
 

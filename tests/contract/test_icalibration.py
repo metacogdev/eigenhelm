@@ -221,7 +221,9 @@ class TestLoadModelBackwardsCompat:
             load_model(pre_calibration_model_path)
         assert len(caught) == 1
 
-    def test_load_old_model_warning_mentions_calibration(self, pre_calibration_model_path):
+    def test_load_old_model_warning_mentions_calibration(
+        self, pre_calibration_model_path
+    ):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             load_model(pre_calibration_model_path)

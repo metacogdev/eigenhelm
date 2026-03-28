@@ -1,6 +1,7 @@
 import sys
 import os
 
+
 def handle_request(req):
     """Handle incoming request. Poorly structured with deep nesting and no separation."""
     result = None
@@ -17,7 +18,10 @@ def handle_request(req):
                                     user_id = int(req["params"]["id"])
                                     if user_id > 0:
                                         if user_id < 10000:
-                                            result = {"id": user_id, "name": "User " + str(user_id)}
+                                            result = {
+                                                "id": user_id,
+                                                "name": "User " + str(user_id),
+                                            }
                                         else:
                                             error = "ID too large"
                                             status = 400
@@ -28,9 +32,14 @@ def handle_request(req):
                                     error = "Bad ID format"
                                     status = 400
                             else:
-                                result = [{"id": i, "name": "User " + str(i)} for i in range(10)]
+                                result = [
+                                    {"id": i, "name": "User " + str(i)}
+                                    for i in range(10)
+                                ]
                         else:
-                            result = [{"id": i, "name": "User " + str(i)} for i in range(10)]
+                            result = [
+                                {"id": i, "name": "User " + str(i)} for i in range(10)
+                            ]
                     elif req["path"] == "/items":
                         if "params" in req:
                             if "category" in req["params"]:

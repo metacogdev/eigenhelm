@@ -25,40 +25,62 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument(
-        "--project", type=Path, action="append", default=None,
+        "--project",
+        type=Path,
+        action="append",
+        default=None,
         help="Project directory to evaluate (can be repeated)",
     )
     source_group.add_argument(
-        "--corpus", type=Path, default=None,
+        "--corpus",
+        type=Path,
+        default=None,
         help="Path to TOML corpus manifest",
     )
     parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
     parser.add_argument(
-        "--format", dest="output_format", choices=["human", "json"], default="human",
+        "--format",
+        dest="output_format",
+        choices=["human", "json"],
+        default="human",
         help="Output format (default: human)",
     )
     parser.add_argument(
-        "--output", type=Path, default=None,
+        "--output",
+        type=Path,
+        default=None,
         help="Save JSON report to this path",
     )
     parser.add_argument(
-        "--good-corpus", dest="good_corpus", type=Path, default=None,
+        "--good-corpus",
+        dest="good_corpus",
+        type=Path,
+        default=None,
         help="Path to known-good corpus for FP analysis",
     )
     parser.add_argument(
-        "--bad-corpus", dest="bad_corpus", type=Path, default=None,
+        "--bad-corpus",
+        dest="bad_corpus",
+        type=Path,
+        default=None,
         help="Path to known-problematic corpus for FN analysis",
     )
     parser.add_argument(
-        "--replay", type=Path, default=None,
+        "--replay",
+        type=Path,
+        default=None,
         help="Replay evaluation against recent commits of this git repo",
     )
     parser.add_argument(
-        "--commits", type=int, default=50,
+        "--commits",
+        type=int,
+        default=50,
         help="Number of commits to replay (default: 50)",
     )
     parser.add_argument(
-        "--compare", type=Path, default=None,
+        "--compare",
+        type=Path,
+        default=None,
         help="Compare current run against a baseline JSON report",
     )
     return parser
@@ -73,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
         model_path = args.model
         if model_path is None:
             from eigenhelm.trained_models import default_model_path
+
             model_path = str(default_model_path())
 
         from eigenhelm.eigenspace import load_model
@@ -82,9 +105,14 @@ def main(argv: list[str] | None = None) -> int:
         helm = DynamicHelm(eigenspace=eigenspace)
 
         from eigenhelm.validation.usecase_benchmark import (
-            UseCaseBenchmark, add_fp_fn_targets, add_replay_target,
-            compare_reports, compute_fp_fn, compute_noise_rate,
-            replay_commits, sync_corpus,
+            UseCaseBenchmark,
+            add_fp_fn_targets,
+            add_replay_target,
+            compare_reports,
+            compute_fp_fn,
+            compute_noise_rate,
+            replay_commits,
+            sync_corpus,
         )
         from eigenhelm.validation.usecase_models import QualityTarget
 
@@ -94,15 +122,19 @@ def main(argv: list[str] | None = None) -> int:
         if args.corpus:
             # Sync and register projects from manifest
             import tempfile
+
             corpus_dir = Path(tempfile.mkdtemp(prefix="eigenhelm-benchmark-"))
             import tomllib
+
             with open(args.corpus, "rb") as f:
                 manifest = tomllib.load(f)
             corpus_version = manifest.get("meta", {}).get("version", "")
             projects = sync_corpus(args.corpus, corpus_dir)
             for project in projects:
                 project_dir = corpus_dir / project["name"]
-                project_list.append((project_dir, project.get("src_dir"), project["name"]))
+                project_list.append(
+                    (project_dir, project.get("src_dir"), project["name"])
+                )
         else:
             for project_path in args.project:
                 project_list.append((project_path, None, project_path.name))
@@ -145,7 +177,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Noise rate: {noise_rate:.1%}", file=sys.stderr)
             total_flagged = sum(r.n_flagged for r in replays)
             total_fp = sum(r.n_false_positive for r in replays)
-            print(f"  Total flagged: {total_flagged}, FP (non-impl): {total_fp}", file=sys.stderr)
+            print(
+                f"  Total flagged: {total_flagged}, FP (non-impl): {total_fp}",
+                file=sys.stderr,
+            )
 
         if report.n_files == 0:
             print("ERROR: No evaluable files found", file=sys.stderr)
@@ -158,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.compare:
             import json as _json
+
             baseline_data = _json.loads(args.compare.read_text())
             # Reconstruct minimal baseline for comparison (targets only)
             baseline_targets = tuple(
@@ -171,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                 for t in baseline_data.get("targets", [])
             )
             from dataclasses import replace as dc_replace2
+
             baseline = dc_replace2(report, targets=baseline_targets)
             alerts = compare_reports(report, baseline)
             if alerts:

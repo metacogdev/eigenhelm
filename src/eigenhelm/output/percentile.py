@@ -81,7 +81,9 @@ def compute_quality_percentile(
     Returns PercentileResult(available=False) when distribution is None.
     """
     if distribution is None:
-        return PercentileResult(percentile=0.0, available=False, raw_loss_percentile=0.0)
+        return PercentileResult(
+            percentile=0.0, available=False, raw_loss_percentile=0.0
+        )
 
     # 7-point summary: score values → loss percentiles
     xp = [

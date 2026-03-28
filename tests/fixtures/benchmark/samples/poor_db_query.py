@@ -1,5 +1,13 @@
-def build_query(table, filters=None, fields=None, sort=None, limit=None,
-                 join=None, group=None, having=None):
+def build_query(
+    table,
+    filters=None,
+    fields=None,
+    sort=None,
+    limit=None,
+    join=None,
+    group=None,
+    having=None,
+):
     """Build SQL query string. SQL injection vulnerable, string concatenation."""
     sql = "SELECT "
 
@@ -23,8 +31,9 @@ def build_query(table, filters=None, fields=None, sort=None, limit=None,
             if isinstance(value, str):
                 conditions.append(f"{key} = '{value}'")
             elif isinstance(value, (list, tuple)):
-                vals = ", ".join(f"'{v}'" if isinstance(v, str) else str(v)
-                               for v in value)
+                vals = ", ".join(
+                    f"'{v}'" if isinstance(v, str) else str(v) for v in value
+                )
                 conditions.append(f"{key} IN ({vals})")
             elif value is None:
                 conditions.append(f"{key} IS NULL")

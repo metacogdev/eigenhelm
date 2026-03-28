@@ -71,8 +71,7 @@ class TestNcdToExemplars:
         source = _QUICKSORT_SRC
         exemplars = [
             source,  # identical — should give NCD ≈ 0
-            b"import random; data = [random.randint(0, 1000) "
-            b"for _ in range(100)]" * 3,
+            b"import random; data = [random.randint(0, 1000) for _ in range(100)]" * 3,
         ]
         result = ncd_to_exemplars(source, exemplars)
         assert result is not None

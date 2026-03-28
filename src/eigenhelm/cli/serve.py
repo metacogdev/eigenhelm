@@ -26,7 +26,9 @@ def main(argv: list[str] | None = None) -> None:
         prog="eigenhelm-serve",
         description="Start the eigenhelm evaluation sidecar server",
     )
-    parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
+    parser.add_argument(
+        "--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)"
+    )
     parser.add_argument("--port", type=int, default=8080, help="Port (default: 8080)")
     parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
     parser.add_argument(

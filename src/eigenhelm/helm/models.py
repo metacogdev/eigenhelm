@@ -36,12 +36,18 @@ class EvaluationResponse:
 
     decision: Literal["accept", "warn", "reject"]
     score: float  # Aesthetic loss ∈ [0.0, 1.0] — always critique.score.value
-    structural_confidence: Literal["high", "low"]  # Always critique.score.structural_confidence
+    structural_confidence: Literal[
+        "high", "low"
+    ]  # Always critique.score.structural_confidence
     critique: Critique  # Full Stage 2 output
     warning: str | None = None  # Machine-parseable warning per R-010
-    percentile: float | None = None  # Quality percentile 0-100 (higher = better), None if unavailable
+    percentile: float | None = (
+        None  # Quality percentile 0-100 (higher = better), None if unavailable
+    )
     percentile_available: bool = False  # True when model has ScoreDistribution
-    contributions: tuple[DimensionContribution, ...] = ()  # Per-dimension breakdown (016)
+    contributions: tuple[
+        DimensionContribution, ...
+    ] = ()  # Per-dimension breakdown (016)
     attribution: AttributionResult | None = None  # Score attribution (017)
     regions: tuple = ()  # 019: RegionSummary entries (empty when no test code detected)
     declaration_ratio: float | None = None  # 020: set when file is declaration-dominant
@@ -120,7 +126,9 @@ class PIDConfig:
         if self.i_max < 0:
             raise ValueError(f"i_max must be ≥ 0, got {self.i_max}")
         if self.tau_min >= self.tau_max:
-            raise ValueError(f"tau_min must be < tau_max, got {self.tau_min} >= {self.tau_max}")
+            raise ValueError(
+                f"tau_min must be < tau_max, got {self.tau_min} >= {self.tau_max}"
+            )
         if self.p_min >= self.p_max:
             raise ValueError(f"p_min must be < p_max, got {self.p_min} >= {self.p_max}")
         if self.gamma_tau < 0:

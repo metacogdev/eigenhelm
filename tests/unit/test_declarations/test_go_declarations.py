@@ -38,7 +38,9 @@ type Response struct {
 """
         regions = detect(source)
         assert len(regions) == 2
-        assert all(r.declaration_type == DeclarationType.TYPE_DEFINITION for r in regions)
+        assert all(
+            r.declaration_type == DeclarationType.TYPE_DEFINITION for r in regions
+        )
         names = {r.node_name for r in regions}
         assert names == {"Request", "Response"}
 
@@ -89,7 +91,9 @@ var routes = []Route{
         # Should have the struct (TYPE_DEFINITION) and the var block (CONST_TABLE)
         types = {r.declaration_type for r in regions}
         assert DeclarationType.CONST_TABLE in types
-        table = [r for r in regions if r.declaration_type == DeclarationType.CONST_TABLE]
+        table = [
+            r for r in regions if r.declaration_type == DeclarationType.CONST_TABLE
+        ]
         assert len(table) == 1
         assert table[0].node_name == "routes"
 

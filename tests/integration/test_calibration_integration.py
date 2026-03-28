@@ -172,9 +172,7 @@ class TestBenchmarkWithCalibration:
         validates the mechanism, not the threshold quality.
         """
         human_ratings, _, decisions = self._evaluate_benchmark(corpus_dir, tmp_path)
-        excellent = [
-            (hr, d) for hr, d in zip(human_ratings, decisions) if hr >= 4.0
-        ]
+        excellent = [(hr, d) for hr, d in zip(human_ratings, decisions) if hr >= 4.0]
         assert len(excellent) > 0, "No excellent functions in benchmark"
         # Verify the calibration mechanism works — decisions are derived from
         # model thresholds, not the hardcoded 0.4/0.6.
@@ -189,9 +187,7 @@ class TestBenchmarkWithCalibration:
         Relaxed from spec target (70%) because the test fixture corpus is small.
         """
         human_ratings, _, decisions = self._evaluate_benchmark(corpus_dir, tmp_path)
-        poor = [
-            (hr, d) for hr, d in zip(human_ratings, decisions) if hr <= 2.0
-        ]
+        poor = [(hr, d) for hr, d in zip(human_ratings, decisions) if hr <= 2.0]
         if len(poor) == 0:
             pytest.skip("No poor-rated functions in benchmark")
         flagged = sum(1 for _, d in poor if d in {"warn", "reject"})

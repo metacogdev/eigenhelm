@@ -129,7 +129,9 @@ class TestWeightSumsAllConfigs:
 
     def _proj(self) -> ProjectionResult:
         return ProjectionResult(
-            coordinates=np.zeros(3), l_drift=0.3, l_virtue=0.5,
+            coordinates=np.zeros(3),
+            l_drift=0.3,
+            l_virtue=0.5,
             quality_flag="nominal",
         )
 
@@ -171,7 +173,9 @@ class TestContributionTransparency:
     def test_contributions_keys_match_weights(self):
         critic = AestheticCritic()
         critique = critic.evaluate(ELITE_SOURCE, "python")
-        assert set(critique.score.contributions.keys()) == set(critique.score.weights.keys())
+        assert set(critique.score.contributions.keys()) == set(
+            critique.score.weights.keys()
+        )
 
     def test_violation_weighted_contribution(self):
         critic = AestheticCritic()

@@ -14,13 +14,15 @@ FEATURE_NAMES: tuple[str, ...] = (
 )
 
 # Fixed directive vocabulary — closed set of category labels.
-DIRECTIVE_VOCABULARY: frozenset[str] = frozenset({
-    "reduce_complexity",
-    "review_token_distribution",
-    "extract_repeated_logic",
-    "review_structure",
-    "improve_compression",
-})
+DIRECTIVE_VOCABULARY: frozenset[str] = frozenset(
+    {
+        "reduce_complexity",
+        "review_token_distribution",
+        "extract_repeated_logic",
+        "review_structure",
+        "improve_compression",
+    }
+)
 
 # Canonical dimension names in stable order.
 DIMENSION_NAMES: tuple[str, ...] = (

@@ -19,7 +19,9 @@ def process_admins(admins):
             name = admin.get("name", "unknown")
             email = admin.get("email", "unknown")
             role = admin.get("role", "admin")
-            results.append({"name": name, "email": email, "role": role, "type": "admin"})
+            results.append(
+                {"name": name, "email": email, "role": role, "type": "admin"}
+            )
     return results
 
 
@@ -30,7 +32,9 @@ def process_guests(guests):
             name = guest.get("name", "unknown")
             email = guest.get("email", "unknown")
             role = guest.get("role", "guest")
-            results.append({"name": name, "email": email, "role": role, "type": "guest"})
+            results.append(
+                {"name": name, "email": email, "role": role, "type": "guest"}
+            )
     return results
 
 
@@ -41,5 +45,7 @@ def process_moderators(moderators):
             name = mod.get("name", "unknown")
             email = mod.get("email", "unknown")
             role = mod.get("role", "moderator")
-            results.append({"name": name, "email": email, "role": role, "type": "moderator"})
+            results.append(
+                {"name": name, "email": email, "role": role, "type": "moderator"}
+            )
     return results

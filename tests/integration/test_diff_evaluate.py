@@ -57,6 +57,7 @@ class TestDiffEvaluate:
         from eigenhelm.diff import discover_changed_files
 
         import os
+
         old_cwd = os.getcwd()
         try:
             os.chdir(git_repo)
@@ -76,7 +77,7 @@ class TestDiffEvaluate:
 
         evaluated_files = []
 
-        def fake_evaluate_paths(helm, paths, config=None):
+        def fake_evaluate_paths(helm, paths, config=None, **kwargs):
             for p in paths:
                 evaluated_files.append(p.name)
             return []
@@ -84,7 +85,10 @@ class TestDiffEvaluate:
         old_cwd = os.getcwd()
         try:
             os.chdir(git_repo)
-            with patch("eigenhelm.cli.evaluate._evaluate_paths", side_effect=fake_evaluate_paths):
+            with patch(
+                "eigenhelm.cli.evaluate._evaluate_paths",
+                side_effect=fake_evaluate_paths,
+            ):
                 code = main(["--diff", "HEAD~1"])
         finally:
             os.chdir(old_cwd)
@@ -103,6 +107,7 @@ class TestDiffEvaluate:
         _git(["commit", "-m", "add readme"], cwd=git_repo)
 
         import os
+
         old_cwd = os.getcwd()
         try:
             os.chdir(git_repo)

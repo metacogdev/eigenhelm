@@ -105,9 +105,13 @@ class CalibrationStats:
 
     def __post_init__(self) -> None:
         if self.sigma_drift <= 0:
-            raise ValueError(f"CalibrationStats.sigma_drift must be > 0, got {self.sigma_drift}")
+            raise ValueError(
+                f"CalibrationStats.sigma_drift must be > 0, got {self.sigma_drift}"
+            )
         if self.sigma_virtue <= 0:
-            raise ValueError(f"CalibrationStats.sigma_virtue must be > 0, got {self.sigma_virtue}")
+            raise ValueError(
+                f"CalibrationStats.sigma_virtue must be > 0, got {self.sigma_virtue}"
+            )
         if self.n_projections <= 0:
             raise ValueError(
                 f"CalibrationStats.n_projections must be > 0, got {self.n_projections}"
@@ -132,16 +136,24 @@ class EigenspaceModel:
     n_components: int
     version: str
     corpus_hash: str
-    sigma_drift: float = 1.0  # p95 l_drift from training corpus; 1.0 = pre-calibration default
-    sigma_virtue: float = 1.0  # p95 l_virtue from training corpus; 1.0 = pre-calibration default
+    sigma_drift: float = (
+        1.0  # p95 l_drift from training corpus; 1.0 = pre-calibration default
+    )
+    sigma_virtue: float = (
+        1.0  # p95 l_virtue from training corpus; 1.0 = pre-calibration default
+    )
     exemplars: list[ExemplarRef] | None = None  # None = pre-010 model
     n_exemplars: int = 0  # Informational; len(exemplars) when set
     language: str | None = None  # Training language key; None = pre-009 model
-    corpus_class: str | None = None  # "A" (single-lang), "B" (cross-lang); None = pre-009
+    corpus_class: str | None = (
+        None  # "A" (single-lang), "B" (cross-lang); None = pre-009
+    )
     n_training_files: int = 0  # Files processed during training; 0 = pre-009
     calibrated_accept: float | None = None  # p25 score threshold; None = pre-015 model
     calibrated_reject: float | None = None  # p75 score threshold; None = pre-015 model
-    score_distribution: ScoreDistribution | None = None  # Full distribution; None = pre-015
+    score_distribution: ScoreDistribution | None = (
+        None  # Full distribution; None = pre-015
+    )
 
     def __post_init__(self) -> None:
         if self.projection_matrix.shape[0] != FEATURE_DIM:
@@ -152,9 +164,13 @@ class EigenspaceModel:
         if np.any(self.std <= 0):
             raise ValueError("EigenspaceModel.std must be > 0 for all dimensions")
         if self.sigma_drift <= 0:
-            raise ValueError(f"EigenspaceModel.sigma_drift must be > 0, got {self.sigma_drift}")
+            raise ValueError(
+                f"EigenspaceModel.sigma_drift must be > 0, got {self.sigma_drift}"
+            )
         if self.sigma_virtue <= 0:
-            raise ValueError(f"EigenspaceModel.sigma_virtue must be > 0, got {self.sigma_virtue}")
+            raise ValueError(
+                f"EigenspaceModel.sigma_virtue must be > 0, got {self.sigma_virtue}"
+            )
 
 
 @dataclass(frozen=True)
@@ -171,8 +187,12 @@ class ProjectionResult:
     l_drift: float
     l_virtue: float
     quality_flag: str
-    x_norm: np.ndarray | None = None  # shape (69,) — standardized input (for attribution)
-    x_rec: np.ndarray | None = None  # shape (69,) — PCA reconstruction (for attribution)
+    x_norm: np.ndarray | None = (
+        None  # shape (69,) — standardized input (for attribution)
+    )
+    x_rec: np.ndarray | None = (
+        None  # shape (69,) — PCA reconstruction (for attribution)
+    )
 
 
 @dataclass(frozen=True)
@@ -191,9 +211,15 @@ class TrainingResult:
     n_units_extracted: int
     n_vectors_excluded: int
     calibration: CalibrationStats | None = None
-    exemplars: list[ExemplarRef] | None = None  # Populated when exemplar selection succeeds
-    score_distribution: ScoreDistribution | None = None  # 015: training score distribution
-    calibration_skip_reason: str | None = None  # 015: why threshold calibration was skipped
+    exemplars: list[ExemplarRef] | None = (
+        None  # Populated when exemplar selection succeeds
+    )
+    score_distribution: ScoreDistribution | None = (
+        None  # 015: training score distribution
+    )
+    calibration_skip_reason: str | None = (
+        None  # 015: why threshold calibration was skipped
+    )
 
 
 @dataclass(frozen=True)
@@ -242,20 +268,32 @@ class ScoreDistribution:
     n_scores: int
 
     def __post_init__(self) -> None:
-        values = [self.min, self.p10, self.p25, self.median, self.p75, self.p90, self.max]
+        values = [
+            self.min,
+            self.p10,
+            self.p25,
+            self.median,
+            self.p75,
+            self.p90,
+            self.max,
+        ]
         for i, v in enumerate(values):
             if not (0.0 <= v <= 1.0):
                 names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
-                raise ValueError(f"ScoreDistribution.{names[i]} must be in [0.0, 1.0], got {v}")
+                raise ValueError(
+                    f"ScoreDistribution.{names[i]} must be in [0.0, 1.0], got {v}"
+                )
         for i in range(len(values) - 1):
             if values[i] > values[i + 1]:
                 names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
                 raise ValueError(
                     f"ScoreDistribution values must be monotonically non-decreasing: "
-                    f"{names[i]}={values[i]} > {names[i+1]}={values[i+1]}"
+                    f"{names[i]}={values[i]} > {names[i + 1]}={values[i + 1]}"
                 )
         if self.n_scores < 1:
-            raise ValueError(f"ScoreDistribution.n_scores must be >= 1, got {self.n_scores}")
+            raise ValueError(
+                f"ScoreDistribution.n_scores must be >= 1, got {self.n_scores}"
+            )
 
 
 @dataclass(frozen=True)

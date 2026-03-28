@@ -1,5 +1,6 @@
 def find_item(collection, predicate):
     """Find item matching predicate. Abuses exceptions for control flow."""
+
     class Found(Exception):
         def __init__(self, item):
             self.item = item

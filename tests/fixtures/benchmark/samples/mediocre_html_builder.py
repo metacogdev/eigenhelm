@@ -18,8 +18,9 @@ def build_html(tag, content="", attrs=None, children=None):
                 child_content = child.get("content", "")
                 child_attrs = child.get("attrs", None)
                 child_children = child.get("children", None)
-                html += build_html(child_tag, child_content,
-                                   child_attrs, child_children)
+                html += build_html(
+                    child_tag, child_content, child_attrs, child_children
+                )
             elif isinstance(child, tuple):
                 if len(child) >= 2:
                     html += build_html(child[0], child[1])

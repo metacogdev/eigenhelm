@@ -110,7 +110,9 @@ def main(argv: list[str] | None = None) -> None:
         ca = info.get("calibrated_accept")
         cr = info.get("calibrated_reject")
         if ca is not None and cr is not None:
-            lines.append(f"  Thresholds:   accept < {ca:.4f} (p25)  reject > {cr:.4f} (p75)")
+            lines.append(
+                f"  Thresholds:   accept < {ca:.4f} (p25)  reject > {cr:.4f} (p75)"
+            )
 
         score_dist = info.get("score_distribution")
         if score_dist is not None:

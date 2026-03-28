@@ -41,15 +41,15 @@ class C:
         return self.g
 
     def m8(self, x):
-        self.h = {x, x+1, x+2, x+3, x+4}
+        self.h = {x, x + 1, x + 2, x + 3, x + 4}
         return self.h
 
     def m9(self, x):
-        self.i = x ** 2
+        self.i = x**2
         return self.i
 
     def m10(self, x):
-        self.j = x ** 3
+        self.j = x**3
         return self.j
 
     def do_all(self, x):
@@ -63,4 +63,15 @@ class C:
         self.m8(x)
         self.m9(x)
         self.m10(x)
-        return str(self.a) + self.b + str(len(self.c)) + str(len(self.d)) + str(self.e) + str(self.f) + str(self.g) + str(len(self.h)) + str(self.i) + str(self.j)
+        return (
+            str(self.a)
+            + self.b
+            + str(len(self.c))
+            + str(len(self.d))
+            + str(self.e)
+            + str(self.f)
+            + str(self.g)
+            + str(len(self.h))
+            + str(self.i)
+            + str(self.j)
+        )

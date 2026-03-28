@@ -60,7 +60,9 @@ class TestExitCodesContract:
 
     def test_runtime_error_exits_3(self, tmp_path):
         # No language with stdin mode = error 3
-        with patch("eigenhelm.cli.evaluate._evaluate_paths", side_effect=Exception("boom")):
+        with patch(
+            "eigenhelm.cli.evaluate._evaluate_paths", side_effect=Exception("boom")
+        ):
             code = main([str(tmp_path / "file.py")])
         assert code == 3
 

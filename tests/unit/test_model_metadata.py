@@ -52,7 +52,9 @@ class TestMetadataRoundTrip:
     """Save → load round-trip preserves language metadata."""
 
     def test_language_and_corpus_class_round_trip(self, tmp_path: Path) -> None:
-        result = _make_result(language="javascript", corpus_class="A", n_training_files=250)
+        result = _make_result(
+            language="javascript", corpus_class="A", n_training_files=250
+        )
         out = tmp_path / "model.npz"
         save_model(result, out)
 

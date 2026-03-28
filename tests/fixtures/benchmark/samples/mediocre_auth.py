@@ -30,9 +30,9 @@ def authenticate(username, password, max_attempts=5):
     }
 
     if username in users and users[username] == pw_hash:
-        session_id = hashlib.sha256(
-            f"{username}{time.time()}".encode()
-        ).hexdigest()[:32]
+        session_id = hashlib.sha256(f"{username}{time.time()}".encode()).hexdigest()[
+            :32
+        ]
         _sessions[session_id] = {"user": username, "created": time.time()}
         return {"success": True, "session_id": session_id}
     else:

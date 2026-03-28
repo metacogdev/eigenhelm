@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from eigenhelm.critic import AestheticMetrics, AestheticScore, Critique, IAestheticCritic, Violation
+from eigenhelm.critic import (
+    AestheticMetrics,
+    AestheticScore,
+    Critique,
+    IAestheticCritic,
+    Violation,
+)
 from eigenhelm.critic.birkhoff import birkhoff_measure
 from eigenhelm.critic.entropy import shannon_entropy
 from eigenhelm.critic.ncd import ncd_to_exemplars, ncd_to_exemplars_with_id
@@ -103,7 +109,9 @@ class AestheticCritic(IAestheticCritic):
 
         if projection is not None:
             norm["manifold_drift"] = min(projection.l_drift / self.sigma_drift, 1.0)
-            norm["manifold_alignment"] = min(projection.l_virtue / self.sigma_virtue, 1.0)
+            norm["manifold_alignment"] = min(
+                projection.l_virtue / self.sigma_virtue, 1.0
+            )
         else:
             norm["manifold_drift"] = 0.0
             norm["manifold_alignment"] = 0.0
@@ -264,7 +272,9 @@ class AestheticCritic(IAestheticCritic):
             source_bytes = source.encode("utf-8")
             if self._exemplar_ids is not None:
                 ncd_result = ncd_to_exemplars_with_id(
-                    source_bytes, self._exemplars, self._exemplar_ids,
+                    source_bytes,
+                    self._exemplars,
+                    self._exemplar_ids,
                     min_bytes=self.min_compression_bytes,
                 )
                 if ncd_result is not None:
@@ -275,7 +285,9 @@ class AestheticCritic(IAestheticCritic):
                 ncd_dist = ncd_to_exemplars(
                     source_bytes, self._exemplars, min_bytes=self.min_compression_bytes
                 )
-            normalized["ncd_exemplar_distance"] = ncd_dist if ncd_dist is not None else 0.0
+            normalized["ncd_exemplar_distance"] = (
+                ncd_dist if ncd_dist is not None else 0.0
+            )
         else:
             normalized["ncd_exemplar_distance"] = 0.0
 
@@ -295,12 +307,16 @@ class AestheticCritic(IAestheticCritic):
 
         raw_values: dict[str, float] = {
             "manifold_drift": projection.l_drift if projection is not None else 0.0,
-            "manifold_alignment": projection.l_virtue if projection is not None else 0.0,
+            "manifold_alignment": projection.l_virtue
+            if projection is not None
+            else 0.0,
             "token_entropy": metrics.entropy,
             "compression_structure": metrics.birkhoff_measure,
             "ncd_exemplar_distance": normalized["ncd_exemplar_distance"],
         }
-        violations = self._rank_violations(normalized, raw_values, weights, score.value, top_n)
+        violations = self._rank_violations(
+            normalized, raw_values, weights, score.value, top_n
+        )
 
         if score.value >= self.reject_threshold:
             quality = "reject"

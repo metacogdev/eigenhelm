@@ -84,10 +84,16 @@ def main(argv: list[str] | None = None) -> int:
         prog="eigenhelm-harness",
         description="Compare two corpora with statistical testing",
     )
-    parser.add_argument("--before", required=True, type=Path, help="Before corpus directory")
-    parser.add_argument("--after", required=True, type=Path, help="After corpus directory")
+    parser.add_argument(
+        "--before", required=True, type=Path, help="Before corpus directory"
+    )
+    parser.add_argument(
+        "--after", required=True, type=Path, help="After corpus directory"
+    )
     parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
-    parser.add_argument("--json", dest="json_output", action="store_true", help="JSON output")
+    parser.add_argument(
+        "--json", dest="json_output", action="store_true", help="JSON output"
+    )
     args = parser.parse_args(argv)
 
     try:

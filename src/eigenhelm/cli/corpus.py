@@ -66,6 +66,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         CompositionManifest,
         load_any_manifest,
     )
+
     try:
         loaded = load_any_manifest(args.manifest_path)
     except FileNotFoundError as exc:
@@ -164,9 +165,7 @@ def _print_bulk_result(bulk) -> None:
         n_skipped = len(sr.skipped)
         n_failed = len(sr.failed)
         total = sr.total_files
-        status = (
-            f"  {name}: {n_synced} synced  {n_skipped} skipped  {n_failed} failed"
-        )
+        status = f"  {name}: {n_synced} synced  {n_skipped} skipped  {n_failed} failed"
         if n_synced > 0:
             status += f"  ({total} files)"
         print(status)

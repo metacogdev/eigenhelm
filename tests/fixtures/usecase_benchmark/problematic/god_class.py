@@ -18,6 +18,7 @@ class ApplicationManager:
 
     def load_config(self, path):
         import json
+
         with open(path) as f:
             self.config = json.load(f)
         self.logs.append(f"Config loaded from {path}")
@@ -60,7 +61,9 @@ class ApplicationManager:
     def process_notifications(self):
         for notification in self.notifications:
             if notification["type"] == "email":
-                self.send_email(notification["to"], notification["subject"], notification["body"])
+                self.send_email(
+                    notification["to"], notification["subject"], notification["body"]
+                )
             elif notification["type"] == "log":
                 self.logs.append(notification["message"])
         self.notifications.clear()

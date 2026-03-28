@@ -159,7 +159,9 @@ class TestDerivativeLowPass:
 class TestOutputClamping:
     def test_tau_clamped_to_max(self):
         """Large negative control output drives tau up; clamped at tau_max."""
-        config = PIDConfig(kp=100.0, ki=0.0, kd=0.0, tau_min=0.1, tau_max=1.5, gamma_tau=1.0)
+        config = PIDConfig(
+            kp=100.0, ki=0.0, kd=0.0, tau_min=0.1, tau_max=1.5, gamma_tau=1.0
+        )
         pid = PIDController(config)
         # Large positive error → large u_k → tau decreases but is clamped
         # Actually: large positive error e_k with kp=100 → u_k=100*e_k
@@ -170,7 +172,9 @@ class TestOutputClamping:
 
     def test_tau_clamped_to_min(self):
         """Large positive control output clamps tau at tau_min."""
-        config = PIDConfig(kp=100.0, ki=0.0, kd=0.0, tau_min=0.1, tau_max=1.5, gamma_tau=1.0)
+        config = PIDConfig(
+            kp=100.0, ki=0.0, kd=0.0, tau_min=0.1, tau_max=1.5, gamma_tau=1.0
+        )
         pid = PIDController(config)
         # Negative u_k → tau increases; clamped at tau_max
         tau_new, _ = pid.actuate(0.8, 0.9, -100.0)

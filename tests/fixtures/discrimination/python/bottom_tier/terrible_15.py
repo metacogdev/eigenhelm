@@ -3,9 +3,11 @@ import os
 
 DB = {}
 
+
 def save(key, val):
     global DB
     DB[key] = val
+
 
 def load(key):
     global DB
@@ -13,6 +15,7 @@ def load(key):
         return DB[key]
     else:
         return None
+
 
 def process_path(p):
     parts = []
@@ -36,11 +39,12 @@ def process_path(p):
                 dot_idx = i
         if dot_idx >= 0:
             name = last[0:dot_idx]
-            ext = last[dot_idx + 1:]
+            ext = last[dot_idx + 1 :]
         else:
             name = last
             ext = ""
     return {"parts": parts, "name": name, "ext": ext}
+
 
 def join_path(parts):
     r = ""
@@ -49,6 +53,7 @@ def join_path(parts):
             r = r + "/"
         r = r + parts[i]
     return r
+
 
 def normalize(p):
     info = process_path(p)
@@ -65,6 +70,7 @@ def normalize(p):
         else:
             cleaned.append(part)
     return join_path(cleaned)
+
 
 def batch_process(paths):
     results = []

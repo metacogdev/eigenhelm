@@ -89,7 +89,11 @@ def train_eigenspace(
 
     from eigenhelm.models import EigenspaceModel
     from eigenhelm.training.corpus import compute_corpus_hash, discover_corpus_files
-    from eigenhelm.training.pca import compute_calibration, compute_pca, select_exemplars
+    from eigenhelm.training.pca import (
+        compute_calibration,
+        compute_pca,
+        select_exemplars,
+    )
 
     corpus_dir = Path(corpus_dir)
     if not corpus_dir.exists():
@@ -97,12 +101,16 @@ def train_eigenspace(
 
     # US2 validation (T017): variance_threshold range
     if not (0.0 < variance_threshold <= 1.0):
-        raise ValueError(f"variance_threshold must be in (0.0, 1.0], got {variance_threshold}")
+        raise ValueError(
+            f"variance_threshold must be in (0.0, 1.0], got {variance_threshold}"
+        )
 
     # Discover eligible files
     files = discover_corpus_files(corpus_dir)
     if not files:
-        raise ValueError(f"No eligible code files found in corpus directory: {corpus_dir}")
+        raise ValueError(
+            f"No eligible code files found in corpus directory: {corpus_dir}"
+        )
 
     if len(files) < min_files:
         raise ValueError(
@@ -112,10 +120,14 @@ def train_eigenspace(
 
     corpus_hash = compute_corpus_hash(files)
 
-    vectors, source_bytes_list, n_files_processed, n_files_skipped = _extract_corpus_vectors(files)
+    vectors, source_bytes_list, n_files_processed, n_files_skipped = (
+        _extract_corpus_vectors(files)
+    )
 
     if not vectors:
-        raise ValueError("All feature extractions failed — no valid vectors to train on.")
+        raise ValueError(
+            "All feature extractions failed — no valid vectors to train on."
+        )
 
     # Assemble design matrix and exclude NaN/Inf vectors (FR-013)
     X_raw = np.stack(vectors, axis=0)  # shape (N, 69)
@@ -128,7 +140,9 @@ def train_eigenspace(
         )
     X = X_raw[valid_mask]
     # Filter source bytes to match valid vectors
-    valid_source_bytes = [s for s, v in zip(source_bytes_list, valid_mask, strict=False) if v]
+    valid_source_bytes = [
+        s for s, v in zip(source_bytes_list, valid_mask, strict=False) if v
+    ]
 
     # US2 guard (T019): must have at least some valid vectors
     if X.shape[0] == 0:
@@ -169,7 +183,10 @@ def train_eigenspace(
     score_distribution = None
     calibration_skip_reason = None
     try:
-        from eigenhelm.training.calibration import compute_score_distribution, derive_thresholds
+        from eigenhelm.training.calibration import (
+            compute_score_distribution,
+            derive_thresholds,
+        )
 
         score_distribution = compute_score_distribution(X, model, valid_source_bytes)
         thresholds = derive_thresholds(score_distribution)
@@ -232,7 +249,14 @@ def inspect_model(path: Path) -> dict:
     data = np.load(path, allow_pickle=False)
 
     # These keys are required — raise KeyError if missing
-    required = ("projection_matrix", "mean", "std", "n_components", "version", "corpus_hash")
+    required = (
+        "projection_matrix",
+        "mean",
+        "std",
+        "n_components",
+        "version",
+        "corpus_hash",
+    )
     for key in required:
         if key not in data:
             raise KeyError(f"Required key missing from model file: {key!r}")
@@ -259,11 +283,17 @@ def inspect_model(path: Path) -> dict:
     # Language metadata (009) — backward-compat defaults for pre-009 models
     language = str(data["language"]) if "language" in data else None
     corpus_class_val = str(data["corpus_class"]) if "corpus_class" in data else None
-    n_training_files = int(data["n_training_files"]) if "n_training_files" in data else 0
+    n_training_files = (
+        int(data["n_training_files"]) if "n_training_files" in data else 0
+    )
 
     # Calibrated thresholds (015) — backward-compat: None for pre-015 models
-    calibrated_accept = float(data["calibrated_accept"]) if "calibrated_accept" in data else None
-    calibrated_reject = float(data["calibrated_reject"]) if "calibrated_reject" in data else None
+    calibrated_accept = (
+        float(data["calibrated_accept"]) if "calibrated_accept" in data else None
+    )
+    calibrated_reject = (
+        float(data["calibrated_reject"]) if "calibrated_reject" in data else None
+    )
     score_dist = None
     if "score_dist_min" in data:
         score_dist = {

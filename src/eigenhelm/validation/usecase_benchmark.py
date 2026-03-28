@@ -66,7 +66,16 @@ def sync_corpus(manifest_path: Path, target_dir: Path) -> list[dict]:
 
         if commit:
             subprocess.run(
-                ["git", "-C", str(project_dir), "fetch", "--depth", "1", "origin", commit],
+                [
+                    "git",
+                    "-C",
+                    str(project_dir),
+                    "fetch",
+                    "--depth",
+                    "1",
+                    "origin",
+                    commit,
+                ],
                 capture_output=True,
             )
             subprocess.run(
@@ -77,18 +86,34 @@ def sync_corpus(manifest_path: Path, target_dir: Path) -> list[dict]:
     return projects
 
 
-def _discover_source_files(project_dir: Path, src_dir: str | None = None) -> list[tuple[Path, str]]:
+def _discover_source_files(
+    project_dir: Path, src_dir: str | None = None
+) -> list[tuple[Path, str]]:
     """Discover evaluable source files in a project."""
     root = project_dir / src_dir if src_dir else project_dir
     if not root.is_dir():
         root = project_dir
 
     results: list[tuple[Path, str]] = []
-    skip_dirs = {".git", "__pycache__", ".venv", "venv", "node_modules", ".pytest_cache", "dist", "build", ".tox", ".eggs"}
+    skip_dirs = {
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "node_modules",
+        ".pytest_cache",
+        "dist",
+        "build",
+        ".tox",
+        ".eggs",
+    }
 
     import os
+
     for dirpath, dirs, files in os.walk(root, followlinks=False):
-        dirs[:] = [d for d in dirs if d not in skip_dirs and not d.endswith(".egg-info")]
+        dirs[:] = [
+            d for d in dirs if d not in skip_dirs and not d.endswith(".egg-info")
+        ]
         for filename in files:
             child = Path(dirpath) / filename
             if child.is_symlink():
@@ -100,7 +125,9 @@ def _discover_source_files(project_dir: Path, src_dir: str | None = None) -> lis
     return results
 
 
-def _compute_distribution(scores: list[float], category: FileCategory) -> CategoryDistribution:
+def _compute_distribution(
+    scores: list[float], category: FileCategory
+) -> CategoryDistribution:
     """Compute 7-point score distribution for a file category."""
     arr = np.array(scores)
     return CategoryDistribution(
@@ -138,8 +165,11 @@ def _compute_dimension_discrimination(
     For implementation files: split by score median and compute Cohen's d.
     """
     dimensions = [
-        "manifold_drift", "manifold_alignment",
-        "token_entropy", "compression_structure", "ncd_exemplar_distance",
+        "manifold_drift",
+        "manifold_alignment",
+        "token_entropy",
+        "compression_structure",
+        "ncd_exemplar_distance",
     ]
     results: list[DimensionDiscrimination] = []
 
@@ -159,28 +189,36 @@ def _compute_dimension_discrimination(
             cohens_d = None
             if cat == FileCategory.IMPLEMENTATION and len(cat_evals) >= 10:
                 median_score = float(np.median([e.score for e in cat_evals]))
-                low_group = [s for e, s in zip(cat_evals, scores) if e.score <= median_score]
-                high_group = [s for e, s in zip(cat_evals, scores) if e.score > median_score]
+                low_group = [
+                    s for e, s in zip(cat_evals, scores) if e.score <= median_score
+                ]
+                high_group = [
+                    s for e, s in zip(cat_evals, scores) if e.score > median_score
+                ]
                 if len(low_group) >= 2 and len(high_group) >= 2:
                     mean_low = np.mean(low_group)
                     mean_high = np.mean(high_group)
                     pooled_std = np.sqrt(
-                        (np.var(low_group) * (len(low_group) - 1)
-                         + np.var(high_group) * (len(high_group) - 1))
+                        (
+                            np.var(low_group) * (len(low_group) - 1)
+                            + np.var(high_group) * (len(high_group) - 1)
+                        )
                         / (len(low_group) + len(high_group) - 2)
                     )
                     if pooled_std > 0:
                         cohens_d = float((mean_high - mean_low) / pooled_std)
 
-            results.append(DimensionDiscrimination(
-                dimension=dim,
-                category=cat,
-                cohens_d=cohens_d,
-                cv=cv,
-                mean=mean,
-                std=std,
-                signal_quality=_signal_quality_label(cohens_d),
-            ))
+            results.append(
+                DimensionDiscrimination(
+                    dimension=dim,
+                    category=cat,
+                    cohens_d=cohens_d,
+                    cv=cv,
+                    mean=mean,
+                    std=std,
+                    signal_quality=_signal_quality_label(cohens_d),
+                )
+            )
 
     return results
 
@@ -204,7 +242,9 @@ def compute_fp_fn(
         (fp_rate, fn_rate) — None if insufficient data.
     """
     if impl_only:
-        good_evals = [e for e in good_evals if e.category == FileCategory.IMPLEMENTATION]
+        good_evals = [
+            e for e in good_evals if e.category == FileCategory.IMPLEMENTATION
+        ]
         bad_evals = [e for e in bad_evals if e.category == FileCategory.IMPLEMENTATION]
 
     fp_rate = None
@@ -246,7 +286,9 @@ class UseCaseBenchmark:
         self._corpus_version = corpus_version
         self._projects: list[tuple[Path, str | None, str]] = []  # (dir, src_dir, name)
 
-    def add_project(self, project_dir: Path, src_dir: str | None = None, name: str | None = None) -> None:
+    def add_project(
+        self, project_dir: Path, src_dir: str | None = None, name: str | None = None
+    ) -> None:
         """Register a project directory for evaluation."""
         project_name = name or project_dir.name
         self._projects.append((project_dir, src_dir, project_name))
@@ -269,7 +311,9 @@ class UseCaseBenchmark:
 
                 try:
                     response = self._helm.evaluate(
-                        EvaluationRequest(source=source, language=lang, file_path=str(file_path))
+                        EvaluationRequest(
+                            source=source, language=lang, file_path=str(file_path)
+                        )
                     )
                 except Exception:
                     continue
@@ -283,19 +327,23 @@ class UseCaseBenchmark:
                 n_directives = 0
                 if response.attribution:
                     n_directives = len(response.attribution.directives)
-                    directive_cats = tuple(d.category for d in response.attribution.directives)
+                    directive_cats = tuple(
+                        d.category for d in response.attribution.directives
+                    )
 
-                evaluations.append(FileEvaluation(
-                    file_path=rel_path,
-                    project=project_name,
-                    category=category,
-                    score=response.score,
-                    decision=response.decision,
-                    percentile=response.percentile,
-                    dim_scores=dim_scores,
-                    n_directives=n_directives,
-                    directive_categories=directive_cats,
-                ))
+                evaluations.append(
+                    FileEvaluation(
+                        file_path=rel_path,
+                        project=project_name,
+                        category=category,
+                        score=response.score,
+                        decision=response.decision,
+                        percentile=response.percentile,
+                        dim_scores=dim_scores,
+                        n_directives=n_directives,
+                        directive_categories=directive_cats,
+                    )
+                )
 
         # Compute per-category distributions
         categories: list[CategoryDistribution] = []
@@ -315,7 +363,8 @@ class UseCaseBenchmark:
         try:
             sha_result = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             if sha_result.returncode == 0:
                 git_sha = sha_result.stdout.strip()
@@ -346,47 +395,58 @@ class UseCaseBenchmark:
         targets: list[QualityTarget] = []
 
         # SC-001: >= 500 files, >= 4 categories
-        targets.append(QualityTarget(
-            name="sc_001_file_count",
-            description="At least 500 evaluated files across 4+ categories",
-            baseline=float(len(evaluations)),
-            target=500.0,
-            direction="higher_is_better",
-        ))
+        targets.append(
+            QualityTarget(
+                name="sc_001_file_count",
+                description="At least 500 evaluated files across 4+ categories",
+                baseline=float(len(evaluations)),
+                target=500.0,
+                direction="higher_is_better",
+            )
+        )
 
         # SC-002: Implementation median at least 0.15 lower than init median
-        impl_dist = next((c for c in categories if c.category == FileCategory.IMPLEMENTATION), None)
-        init_dist = next((c for c in categories if c.category == FileCategory.INIT), None)
+        impl_dist = next(
+            (c for c in categories if c.category == FileCategory.IMPLEMENTATION), None
+        )
+        init_dist = next(
+            (c for c in categories if c.category == FileCategory.INIT), None
+        )
 
         if impl_dist and init_dist:
             gap = init_dist.median - impl_dist.median
         else:
             gap = None
-        targets.append(QualityTarget(
-            name="sc_002_impl_vs_init_gap",
-            description="Implementation median score at least 0.15 lower than init median",
-            baseline=gap,
-            target=0.15,
-            direction="higher_is_better",
-        ))
+        targets.append(
+            QualityTarget(
+                name="sc_002_impl_vs_init_gap",
+                description="Implementation median score at least 0.15 lower than init median",
+                baseline=gap,
+                target=0.15,
+                direction="higher_is_better",
+            )
+        )
 
         # SC-003: At least 2 dimensions with Cohen's d > 0.5 for implementation files
         if dim_disc:
             impl_strong = sum(
-                1 for dd in dim_disc
+                1
+                for dd in dim_disc
                 if dd.category == FileCategory.IMPLEMENTATION
                 and dd.cohens_d is not None
                 and abs(dd.cohens_d) > 0.5
             )
         else:
             impl_strong = 0
-        targets.append(QualityTarget(
-            name="sc_003_dimension_discrimination",
-            description="At least 2 dimensions with Cohen's d > 0.5 for implementation files",
-            baseline=float(impl_strong),
-            target=2.0,
-            direction="higher_is_better",
-        ))
+        targets.append(
+            QualityTarget(
+                name="sc_003_dimension_discrimination",
+                description="At least 2 dimensions with Cohen's d > 0.5 for implementation files",
+                baseline=float(impl_strong),
+                target=2.0,
+                direction="higher_is_better",
+            )
+        )
 
         return targets
 
@@ -400,20 +460,24 @@ def add_fp_fn_targets(
     from dataclasses import replace
 
     new_targets = list(report.targets)
-    new_targets.append(QualityTarget(
-        name="sc_004_fp_rate",
-        description="False positive rate on known-good impl files < 20%",
-        baseline=fp_rate,
-        target=0.20,
-        direction="lower_is_better",
-    ))
-    new_targets.append(QualityTarget(
-        name="sc_005_fn_rate",
-        description="False negative rate on known-problematic files < 40%",
-        baseline=fn_rate,
-        target=0.40,
-        direction="lower_is_better",
-    ))
+    new_targets.append(
+        QualityTarget(
+            name="sc_004_fp_rate",
+            description="False positive rate on known-good impl files < 20%",
+            baseline=fp_rate,
+            target=0.20,
+            direction="lower_is_better",
+        )
+    )
+    new_targets.append(
+        QualityTarget(
+            name="sc_005_fn_rate",
+            description="False negative rate on known-problematic files < 40%",
+            baseline=fn_rate,
+            target=0.40,
+            direction="lower_is_better",
+        )
+    )
     return replace(report, fp_rate=fp_rate, fn_rate=fn_rate, targets=tuple(new_targets))
 
 
@@ -425,13 +489,15 @@ def add_replay_target(
     from dataclasses import replace
 
     new_targets = list(report.targets)
-    new_targets.append(QualityTarget(
-        name="sc_007_noise_rate",
-        description="CI replay noise rate < 6%",
-        baseline=noise_rate,
-        target=0.06,
-        direction="lower_is_better",
-    ))
+    new_targets.append(
+        QualityTarget(
+            name="sc_007_noise_rate",
+            description="CI replay noise rate < 6%",
+            baseline=noise_rate,
+            target=0.06,
+            direction="lower_is_better",
+        )
+    )
     return replace(report, targets=tuple(new_targets))
 
 
@@ -443,13 +509,15 @@ def add_attribution_target(
     from dataclasses import replace
 
     new_targets = list(report.targets)
-    new_targets.append(QualityTarget(
-        name="sc_006_attribution_precision",
-        description="Directive precision >= 60%",
-        baseline=precision,
-        target=0.60,
-        direction="higher_is_better",
-    ))
+    new_targets.append(
+        QualityTarget(
+            name="sc_006_attribution_precision",
+            description="Directive precision >= 60%",
+            baseline=precision,
+            target=0.60,
+            direction="higher_is_better",
+        )
+    )
     return replace(report, attribution_precision=precision, targets=tuple(new_targets))
 
 
@@ -476,7 +544,9 @@ def replay_commits(
     # Get recent commit SHAs
     result = subprocess.run(
         ["git", "-C", str(repo_path), "log", f"--max-count={n_commits}", "--format=%H"],
-        capture_output=True, text=True, check=True,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     shas = [s.strip() for s in result.stdout.strip().split("\n") if s.strip()]
 
@@ -485,10 +555,22 @@ def replay_commits(
     for sha in shas:
         # Get files changed in this commit
         diff_result = subprocess.run(
-            ["git", "-C", str(repo_path), "diff-tree", "--no-commit-id", "--name-only", "-r", sha],
-            capture_output=True, text=True,
+            [
+                "git",
+                "-C",
+                str(repo_path),
+                "diff-tree",
+                "--no-commit-id",
+                "--name-only",
+                "-r",
+                sha,
+            ],
+            capture_output=True,
+            text=True,
         )
-        changed_files = [f.strip() for f in diff_result.stdout.strip().split("\n") if f.strip()]
+        changed_files = [
+            f.strip() for f in diff_result.stdout.strip().split("\n") if f.strip()
+        ]
 
         evaluations: list[FileEvaluation] = []
         for rel_path in changed_files:
@@ -500,7 +582,8 @@ def replay_commits(
             # Read file content from the historical commit, not working tree
             show_result = subprocess.run(
                 ["git", "-C", str(repo_path), "show", f"{sha}:{rel_path}"],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             if show_result.returncode != 0:
                 continue  # file was deleted in this commit or binary
@@ -515,27 +598,31 @@ def replay_commits(
             except Exception:
                 continue
 
-            evaluations.append(FileEvaluation(
-                file_path=rel_path,
-                project=repo_path.name,
-                category=category,
-                score=response.score,
-                decision=response.decision,
-            ))
+            evaluations.append(
+                FileEvaluation(
+                    file_path=rel_path,
+                    project=repo_path.name,
+                    category=category,
+                    score=response.score,
+                    decision=response.decision,
+                )
+            )
 
         # Compute per-commit FP stats
         flagged = [e for e in evaluations if e.decision in ("warn", "reject")]
         fp_flagged = [e for e in flagged if e.category != FileCategory.IMPLEMENTATION]
         all_noise = len(flagged) > 0 and len(fp_flagged) == len(flagged)
 
-        replay_results.append(CommitReplayResult(
-            commit_sha=sha,
-            n_files_changed=len(evaluations),
-            n_flagged=len(flagged),
-            n_false_positive=len(fp_flagged),
-            all_noise=all_noise,
-            file_results=tuple(evaluations),
-        ))
+        replay_results.append(
+            CommitReplayResult(
+                commit_sha=sha,
+                n_files_changed=len(evaluations),
+                n_flagged=len(flagged),
+                n_false_positive=len(fp_flagged),
+                all_noise=all_noise,
+                file_results=tuple(evaluations),
+            )
+        )
 
     return replay_results
 
@@ -572,43 +659,53 @@ def compare_reports(
 
         # Target regression: was passing, now failing
         if was_met and not now_met:
-            alerts.append(RegressionAlert(
-                target_name=current_target.name,
-                previous_value=prev.baseline,
-                current_value=current_target.baseline,
-                target_value=current_target.target,
-                was_met=True,
-                now_met=False,
-                message=f"Target '{current_target.name}' regressed: was met, now failing",
-            ))
+            alerts.append(
+                RegressionAlert(
+                    target_name=current_target.name,
+                    previous_value=prev.baseline,
+                    current_value=current_target.baseline,
+                    target_value=current_target.target,
+                    was_met=True,
+                    now_met=False,
+                    message=f"Target '{current_target.name}' regressed: was met, now failing",
+                )
+            )
             continue
 
         # Metric regression: value worsened by >10%
         if prev.baseline is not None and current_target.baseline is not None:
             if prev.baseline != 0:
                 if current_target.direction == "lower_is_better":
-                    change = (current_target.baseline - prev.baseline) / abs(prev.baseline)
+                    change = (current_target.baseline - prev.baseline) / abs(
+                        prev.baseline
+                    )
                     if change > 0.10:
-                        alerts.append(RegressionAlert(
-                            target_name=current_target.name,
-                            previous_value=prev.baseline,
-                            current_value=current_target.baseline,
-                            target_value=current_target.target,
-                            was_met=was_met,
-                            now_met=now_met,
-                            message=f"Metric '{current_target.name}' regressed by {change:.0%}",
-                        ))
+                        alerts.append(
+                            RegressionAlert(
+                                target_name=current_target.name,
+                                previous_value=prev.baseline,
+                                current_value=current_target.baseline,
+                                target_value=current_target.target,
+                                was_met=was_met,
+                                now_met=now_met,
+                                message=f"Metric '{current_target.name}' regressed by {change:.0%}",
+                            )
+                        )
                 else:
-                    change = (prev.baseline - current_target.baseline) / abs(prev.baseline)
+                    change = (prev.baseline - current_target.baseline) / abs(
+                        prev.baseline
+                    )
                     if change > 0.10:
-                        alerts.append(RegressionAlert(
-                            target_name=current_target.name,
-                            previous_value=prev.baseline,
-                            current_value=current_target.baseline,
-                            target_value=current_target.target,
-                            was_met=was_met,
-                            now_met=now_met,
-                            message=f"Metric '{current_target.name}' regressed by {change:.0%}",
-                        ))
+                        alerts.append(
+                            RegressionAlert(
+                                target_name=current_target.name,
+                                previous_value=prev.baseline,
+                                current_value=current_target.baseline,
+                                target_value=current_target.target,
+                                was_met=was_met,
+                                now_met=now_met,
+                                message=f"Metric '{current_target.name}' regressed by {change:.0%}",
+                            )
+                        )
 
     return alerts

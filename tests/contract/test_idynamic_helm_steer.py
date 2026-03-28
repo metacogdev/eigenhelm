@@ -27,7 +27,9 @@ def quicksort(arr):
 
 
 def _req(source, language, tau, p, session):
-    return SteeringRequest(source=source, language=language, tau=tau, p=p, session=session)
+    return SteeringRequest(
+        source=source, language=language, tau=tau, p=p, session=session
+    )
 
 
 @pytest.fixture

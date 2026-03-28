@@ -3,8 +3,10 @@ import math
 
 REGISTRY = {}
 
+
 def register(name, code):
     REGISTRY[name] = code
+
 
 def run(name, x):
     try:
@@ -13,6 +15,7 @@ def run(name, x):
         return loc["result"]
     except:
         return -1
+
 
 def build_functions():
     register("f1", "result = x * 2 + 3")
@@ -25,6 +28,7 @@ def build_functions():
     register("f8", "result = x * 9 + 10")
     register("f9", "result = x ** 2")
     register("f10", "result = x ** 3")
+
 
 def run_all(x):
     build_functions()
@@ -40,6 +44,7 @@ def run_all(x):
     t = t + run("f9", x)
     t = t + run("f10", x)
     return t
+
 
 def make_vars(n):
     d = {}

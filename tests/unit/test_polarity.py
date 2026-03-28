@@ -24,40 +24,55 @@ class TestTokenEntropyPolarity:
 
     def test_zero_entropy_max_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=0.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=0.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["token_entropy"] == pytest.approx(1.0)
 
     def test_max_entropy_no_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=8.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=8.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["token_entropy"] == pytest.approx(0.0)
 
     def test_midpoint_entropy(self, critic):
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["token_entropy"] == pytest.approx(0.5)
 
     def test_high_entropy_low_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=6.5, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=6.5,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["token_entropy"] == pytest.approx(0.1875)
 
     def test_low_entropy_high_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=1.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=1.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["token_entropy"] == pytest.approx(0.875)
@@ -68,24 +83,33 @@ class TestCompressionStructurePolarity:
 
     def test_zero_birkhoff_no_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=0.0,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.0,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["compression_structure"] == pytest.approx(0.0)
 
     def test_max_birkhoff_max_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=1.0,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=1.0,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["compression_structure"] == pytest.approx(1.0)
 
     def test_high_birkhoff_high_penalty(self, critic):
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=0.85,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.85,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["compression_structure"] == pytest.approx(0.85)
@@ -99,12 +123,17 @@ class TestDriftAlignmentUnchanged:
         from eigenhelm.models import ProjectionResult
 
         proj = ProjectionResult(
-            coordinates=np.zeros(3), l_drift=0.5, l_virtue=0.3,
+            coordinates=np.zeros(3),
+            l_drift=0.5,
+            l_virtue=0.3,
             quality_flag="nominal",
         )
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, proj)
         assert norm["manifold_drift"] == pytest.approx(0.5)
@@ -112,8 +141,11 @@ class TestDriftAlignmentUnchanged:
 
     def test_no_projection_zero(self, critic):
         metrics = AestheticMetrics(
-            entropy=4.0, compression_ratio=0.5, birkhoff_measure=0.5,
-            raw_bytes=100, compressed_bytes=50,
+            entropy=4.0,
+            compression_ratio=0.5,
+            birkhoff_measure=0.5,
+            raw_bytes=100,
+            compressed_bytes=50,
         )
         norm = critic._normalize_dimensions(metrics, None)
         assert norm["manifold_drift"] == 0.0
@@ -128,7 +160,9 @@ class TestWeightConfigurations:
         from eigenhelm.models import ProjectionResult
 
         proj = ProjectionResult(
-            coordinates=np.zeros(3), l_drift=0.1, l_virtue=0.1,
+            coordinates=np.zeros(3),
+            l_drift=0.1,
+            l_virtue=0.1,
             quality_flag="nominal",
         )
         critic = AestheticCritic(exemplars=[b"x" * 100])
@@ -140,7 +174,9 @@ class TestWeightConfigurations:
         from eigenhelm.models import ProjectionResult
 
         proj = ProjectionResult(
-            coordinates=np.zeros(3), l_drift=0.1, l_virtue=0.1,
+            coordinates=np.zeros(3),
+            l_drift=0.1,
+            l_virtue=0.1,
             quality_flag="nominal",
         )
         critic = AestheticCritic()
@@ -162,7 +198,9 @@ class TestWeightConfigurations:
         from eigenhelm.models import ProjectionResult
 
         proj = ProjectionResult(
-            coordinates=np.zeros(3), l_drift=0.1, l_virtue=0.1,
+            coordinates=np.zeros(3),
+            l_drift=0.1,
+            l_virtue=0.1,
             quality_flag="nominal",
         )
         critic = AestheticCritic()

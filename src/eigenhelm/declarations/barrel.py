@@ -53,10 +53,31 @@ def _is_python_import(line: str) -> bool:
         return True
     # Indented import continuation lines (imported names)
     stripped = line.lstrip()
-    if stripped and not stripped.startswith(("def ", "class ", "if ", "for ", "while ", "return ", "raise ", "try ", "with ", "async ")):
+    if stripped and not stripped.startswith(
+        (
+            "def ",
+            "class ",
+            "if ",
+            "for ",
+            "while ",
+            "return ",
+            "raise ",
+            "try ",
+            "with ",
+            "async ",
+        )
+    ):
         # Could be a continuation of a multi-line import or __all__
         # Only count if it looks like a name or string, not logic
-        if stripped.rstrip(",").rstrip(")").rstrip("]").replace('"', "").replace("'", "").replace(" ", "").isidentifier():
+        if (
+            stripped.rstrip(",")
+            .rstrip(")")
+            .rstrip("]")
+            .replace('"', "")
+            .replace("'", "")
+            .replace(" ", "")
+            .isidentifier()
+        ):
             return True
     # Comment lines
     if line.startswith("#"):
@@ -72,7 +93,19 @@ def _is_js_ts_import(line: str) -> bool:
     if line.startswith(("} from", "};", "}")):
         return True
     # Continuation of multi-line imports
-    if line.startswith((" ", "\t")) and not line.lstrip().startswith(("function ", "class ", "const ", "let ", "var ", "if ", "for ", "while ", "return ")):
+    if line.startswith((" ", "\t")) and not line.lstrip().startswith(
+        (
+            "function ",
+            "class ",
+            "const ",
+            "let ",
+            "var ",
+            "if ",
+            "for ",
+            "while ",
+            "return ",
+        )
+    ):
         return True
     if line.startswith("//"):
         return True
@@ -86,7 +119,25 @@ def _is_rust_use(line: str) -> bool:
     # Continuation of multi-line use statements
     if line.startswith(("}", "};", "},")):
         return True
-    if line.startswith((" ", "\t")) and not line.lstrip().startswith(("fn ", "pub fn ", "struct ", "enum ", "impl ", "trait ", "const ", "static ", "type ", "let ", "if ", "for ", "while ", "return ", "match ")):
+    if line.startswith((" ", "\t")) and not line.lstrip().startswith(
+        (
+            "fn ",
+            "pub fn ",
+            "struct ",
+            "enum ",
+            "impl ",
+            "trait ",
+            "const ",
+            "static ",
+            "type ",
+            "let ",
+            "if ",
+            "for ",
+            "while ",
+            "return ",
+            "match ",
+        )
+    ):
         return True
     if line.startswith("//"):
         return True

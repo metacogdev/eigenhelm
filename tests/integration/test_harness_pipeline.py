@@ -48,4 +48,6 @@ class TestHarnessPipeline:
         assert report.improvement is True
         # Verify invariant 18 consistency
         assert report.significant == (report.p_value < 0.05)
-        assert report.improvement == (report.significant and report.delta_mean_score < 0.0)
+        assert report.improvement == (
+            report.significant and report.delta_mean_score < 0.0
+        )

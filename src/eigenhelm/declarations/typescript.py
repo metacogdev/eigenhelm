@@ -167,9 +167,7 @@ def _is_literal(node) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _handle_const_table(
-    node, source: str, regions: list[DeclarationRegion]
-) -> None:
+def _handle_const_table(node, source: str, regions: list[DeclarationRegion]) -> None:
     """Detect module-level ``const FOO = [{...}, {...}]``."""
     if not _is_const_declaration(node):
         return

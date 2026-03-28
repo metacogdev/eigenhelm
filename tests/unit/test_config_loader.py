@@ -25,7 +25,7 @@ class TestLoadConfig:
         cfg_file = tmp_path / ".eigenhelm.toml"
         cfg_file.write_text(
             'model = "models/e.npz"\nlanguage = "python"\nstrict = true\n'
-            '[thresholds]\naccept = 0.2\nreject = 0.8\n'
+            "[thresholds]\naccept = 0.2\nreject = 0.8\n"
             '[[paths]]\nglob = "src/**"\n[paths.thresholds]\naccept = 0.1\nreject = 0.9\n'
             '[language_overrides]\n".jsx" = "javascript"\n'
         )

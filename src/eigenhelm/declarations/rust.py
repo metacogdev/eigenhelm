@@ -61,9 +61,7 @@ def _detect_const_table(node, source_lines: list[str]) -> DeclarationRegion | No
         return None
 
     # Check that the array contains at least one struct expression
-    has_struct = any(
-        child.type == "struct_expression" for child in value_node.children
-    )
+    has_struct = any(child.type == "struct_expression" for child in value_node.children)
     if not has_struct:
         return None
 

@@ -50,7 +50,9 @@ def compute_score_distribution(
     # Decompress exemplars for NCD (same pattern as DynamicHelm.__init__)
     exemplar_bytes = None
     if model.exemplars is not None:
-        exemplar_bytes = [zlib.decompress(e.compressed_content) for e in model.exemplars]
+        exemplar_bytes = [
+            zlib.decompress(e.compressed_content) for e in model.exemplars
+        ]
 
     critic = AestheticCritic(
         sigma_drift=model.sigma_drift,

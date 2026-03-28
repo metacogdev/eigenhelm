@@ -196,8 +196,14 @@ class TestModelRoundTrip:
         std = np.abs(rng.standard_normal(FEATURE_DIM)) + 0.1
 
         score_dist = ScoreDistribution(
-            min=0.40, p10=0.46, p25=0.53, median=0.60,
-            p75=0.71, p90=0.80, max=0.92, n_scores=200,
+            min=0.40,
+            p10=0.46,
+            p25=0.53,
+            median=0.60,
+            p75=0.71,
+            p90=0.80,
+            max=0.92,
+            n_scores=200,
         )
         model = EigenspaceModel(
             projection_matrix=W,
