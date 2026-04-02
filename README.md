@@ -60,7 +60,8 @@ uv tool install eigenhelm
 A bundled model is included — no setup needed.
 
 ```bash
-eh evaluate path/to/file.py --classify
+eh evaluate src/ --rank           # rank files best-to-worst
+eh evaluate path/to/file.py --classify   # single-file classification
 ```
 
 ### What the scores mean
@@ -69,7 +70,7 @@ eh evaluate path/to/file.py --classify
 - **marginal** (score 0.4-0.6): Acceptable; review directives if improvement is straightforward.
 - **reject** (score > 0.6): Worth reviewing. Read the directives for guidance.
 
-Scores are relative to elite open-source training corpora. Most production code scores marginal — that's normal, not a problem.
+Scores are relative to high-quality open-source training corpora. Most production code scores marginal — that's normal, not a problem.
 
 ---
 
@@ -80,7 +81,7 @@ Scores are relative to elite open-source training corpora. Most production code 
 | **Input** | AST structure (69-dim vector) | Source text |
 | **Deterministic** | Yes — same code, same score | No |
 | **Trainable on your corpus** | Yes — `eh train` | No |
-| **Hard CI gate** | Yes — exit codes, strict mode | Suggestions only |
+| **Hard CI gate** | Yes — with calibrated thresholds | Suggestions only |
 | **Tracks quality over time** | Yes — comparable scores | No stable metric |
 | **Catches logic bugs** | No | Yes |
 | **Cost** | Zero (local) | Per-token LLM cost |
@@ -95,7 +96,11 @@ They're complementary. eigenhelm runs first — in the agent's inner loop. LLM r
 eh skill --install
 ```
 
-The skill teaches AI agents the correct workflow: evaluate after tests pass, two passes maximum, never sacrifice correctness for score. In a controlled benchmark (3 scenarios, scored by a separate reviewer not involved in generation), agents using the skill produced code rated 46% higher on quality metrics. [Full guide.](https://eigenhelm.sh/integrations/agent-skills/)
+The skill teaches AI agents the correct workflow: evaluate after tests pass, two passes maximum, never sacrifice correctness for score.
+
+**Important:** Do not loop until accept. Do not optimize for the score. Do not hard-gate merges with default thresholds. eigenhelm is a signal for focusing attention, not a judge.
+
+In a controlled benchmark (3 scenarios, scored by a separate reviewer not involved in generation), agents using the skill produced code rated 46% higher on quality metrics. [Full guide.](https://eigenhelm.sh/integrations/agent-skills/)
 
 ---
 
@@ -105,7 +110,7 @@ All commands are available as `eigenhelm <command>` or `eh <command>`:
 
 | Command | Description |
 |---------|-------------|
-| `eh evaluate` | Evaluate source files against the aesthetic manifold |
+| `eh evaluate` | Evaluate source files against the trained quality model |
 | `eh train` | Train a new eigenspace model from a corpus directory |
 | `eh inspect` | Inspect a saved model's metadata |
 | `eh serve` | Run the evaluation HTTP server |
@@ -157,7 +162,7 @@ uv run ruff check .
 ```
 eigenhelm/
 ├── virtue_extractor.py   — Tree-sitter + Lizard → FeatureVector (69 dimensions)
-├── critic/               — AestheticCritic: 5-dim scoring (drift, alignment, entropy, compression, NCD)
+├── critic/               — StructuralCritic: 5-dim scoring (drift, alignment, entropy, compression, NCD)
 ├── declarations/         — Declaration-aware scoring (type defs, barrel files, data tables)
 ├── regions/              — Test/production code region detection
 ├── eigenspace/           — EigenspaceModel: PCA projection, drift scoring

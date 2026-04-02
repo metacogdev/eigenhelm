@@ -64,6 +64,31 @@ class TestLoadConfig:
         cfg = load_config(cfg_file)
         assert cfg.thresholds == ThresholdConfig()
 
+    def test_exclude_patterns_parsed(self, tmp_path):
+        """exclude array in TOML is parsed into ProjectConfig.exclude."""
+        cfg_file = tmp_path / ".eigenhelm.toml"
+        cfg_file.write_text('exclude = ["vendor/**", "*_pb2.py"]\n')
+        cfg = load_config(cfg_file)
+        assert cfg.exclude == ("vendor/**", "*_pb2.py")
+
+    def test_exclude_empty_list(self, tmp_path):
+        cfg_file = tmp_path / ".eigenhelm.toml"
+        cfg_file.write_text("exclude = []\n")
+        cfg = load_config(cfg_file)
+        assert cfg.exclude == ()
+
+    def test_exclude_not_a_list_raises(self, tmp_path):
+        cfg_file = tmp_path / ".eigenhelm.toml"
+        cfg_file.write_text('exclude = "vendor/**"\n')
+        with pytest.raises(ValueError, match="must be a list"):
+            load_config(cfg_file)
+
+    def test_exclude_absent_defaults_empty(self, tmp_path):
+        cfg_file = tmp_path / ".eigenhelm.toml"
+        cfg_file.write_text("")
+        cfg = load_config(cfg_file)
+        assert cfg.exclude == ()
+
     def test_multiple_path_rules(self, tmp_path):
         cfg_file = tmp_path / ".eigenhelm.toml"
         cfg_file.write_text(

@@ -11,6 +11,10 @@ DEFAULT_CONFIG_TEMPLATE = """\
 # Optional: default language override for all files (e.g., "python", "javascript")
 # language = "python"
 
+# Optional: glob patterns for files/directories to skip during evaluation.
+# Uses fnmatch syntax. Matches against relative paths within evaluated directories.
+# exclude = ["vendor/**", "*_pb2.py", "src/generated/**"]
+
 # Global accept/reject thresholds.
 # Scores <= accept  -> "accept" decision
 # Scores in between -> "warn" decision

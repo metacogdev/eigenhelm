@@ -28,11 +28,12 @@ eigenhelm doesn't ask you to write perfect code. It asks you to measure, so you 
 
 ## What eigenhelm does
 
-eigenhelm scores code structure using information theory — not an LLM. It parses the AST, extracts a structural fingerprint, and measures how closely the code resembles curated high-quality corpora. The output is a deterministic score, a classification, and actionable directives pointing to specific code locations.
+eigenhelm scores code structure using information theory — not an LLM. It parses the AST, extracts a structural fingerprint, and measures how closely the code resembles high-quality open-source projects. The output is a deterministic score, a ranking, and actionable directives pointing to specific code locations.
 
 ```bash
 uv tool install eigenhelm
-eh evaluate src/mymodule.py --classify
+eh evaluate src/ --rank              # rank files best-to-worst
+eh evaluate src/mymodule.py --classify  # single-file classification
 ```
 
 ---
@@ -78,6 +79,8 @@ src/pipeline.py
 
 Score dropped from 0.72 to 0.35. The code is structurally sound. No human reviewed it.
 
+**Important:** eigenhelm is a signal, not a judge. Don't loop until accept. Don't optimize for the score. Don't hard-gate merges with default thresholds. Use it to focus attention on the code that needs it most.
+
 In a controlled benchmark (3 scenarios, 6 builds, scored by a separate reviewer not involved in generation), agents using eigenhelm's skill contract produced code rated **46% higher** on design, robustness, and spec compliance — with zero correctness regressions. [Full benchmark results →](integrations/agent-skills.md#benchmark-results-3-scenarios-6-builds)
 
 **See it on real code:** We ran eigenhelm against the official FastAPI full-stack template and found a grab-bag `utils.py` mixing email, JWT tokens, and SMTP configuration. Splitting the original file produced a new `tokens.py` scoring 0.59 (marginal), versus 0.89 (reject) for the original mixed-concern file — with zero behavior change. [Read the full case study →](case-studies/fastapi-template.md)
@@ -91,7 +94,7 @@ In a controlled benchmark (3 scenarios, 6 builds, scored by a separate reviewer 
 | **Input** | AST structure (69-dim vector) | Source text |
 | **Deterministic** | Yes — same code, same score, every time | No |
 | **Trainable on your corpus** | Yes — `eh train` on your best code | No |
-| **Hard CI gate** | Yes — exit codes, strict mode | Suggestions only |
+| **Hard CI gate** | Yes — with calibrated thresholds | Suggestions only |
 | **Tracks quality over time** | Yes — scores are comparable across runs | No stable metric |
 | **Catches structural decay** | Yes — entropy, compression, manifold distance | Guesses from text |
 | **Catches logic bugs** | No | Yes |
@@ -104,7 +107,7 @@ They're complementary. eigenhelm runs first — in the agent's inner loop, befor
 
 ## How it works
 
-eigenhelm extracts a 69-dimensional structural fingerprint from each file using tree-sitter and projects it into a PCA eigenspace trained on curated elite corpora. The score combines five dimensions:
+eigenhelm extracts a 69-dimensional structural fingerprint from each file using tree-sitter and projects it into a PCA eigenspace trained on high-quality open-source code. The score combines five dimensions:
 
 | Dimension | What it measures |
 |-----------|-----------------|
@@ -129,7 +132,7 @@ eigenhelm extracts a 69-dimensional structural fingerprint from each file using 
     - uses: metacogdev/eigenhelm@v0
       with:
         diff: origin/main...HEAD
-        strict: "true"
+        format: sarif
     ```
 
 === "Pre-commit"

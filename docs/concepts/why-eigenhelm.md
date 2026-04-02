@@ -33,7 +33,7 @@ The score comes from five dimensions:
 
 | Dimension | What it catches |
 |-----------|----------------|
-| **Manifold drift** | Code that is structurally unlike anything in elite corpora |
+| **Manifold drift** | Code that is structurally unlike anything in the training corpus |
 | **Manifold alignment** | Code that drifts along the wrong axes of variation |
 | **Token entropy** | Repetitive, low-information-density code (or chaotic, over-compressed code) |
 | **Compression structure** | Poor structural regularity — the opposite of elegant |
@@ -72,7 +72,7 @@ contextual reasoning, security analysis, documentation suggestions — add the m
 | **Input** | AST structure (69-dim vector) | Source text |
 | **Deterministic** | Yes — same code, same score, every time | No |
 | **Trainable on your corpus** | Yes — `eh train` on your best code | No (prompt tuning only) |
-| **Hard CI gate** | Yes — exit codes, strict mode, thresholds | Suggestions only |
+| **Hard CI gate** | Yes — with calibrated thresholds | Suggestions only |
 | **Tracks quality over time** | Yes — scores are comparable across runs | No stable metric |
 | **Agent-proof** | Yes — can't be talked past | Susceptible to plausible-sounding code |
 | **Catches logic bugs** | No | Yes |

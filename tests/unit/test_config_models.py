@@ -130,6 +130,24 @@ class TestProjectConfig:
         cfg = ProjectConfig(language_overrides={".jsx": "javascript"})
         assert cfg.language_overrides == {".jsx": "javascript"}
 
+    def test_exclude_defaults_empty(self):
+        cfg = ProjectConfig()
+        assert cfg.exclude == ()
+
+    def test_exclude_patterns(self):
+        cfg = ProjectConfig(exclude=("vendor/**", "*_pb2.py"))
+        assert cfg.exclude == ("vendor/**", "*_pb2.py")
+
+    def test_is_excluded_matches_glob(self):
+        cfg = ProjectConfig(exclude=("vendor/**", "*_pb2.py"))
+        assert cfg.is_excluded("vendor/lib/foo.py")
+        assert cfg.is_excluded("proto_pb2.py")
+        assert not cfg.is_excluded("src/main.py")
+
+    def test_is_excluded_empty_patterns(self):
+        cfg = ProjectConfig()
+        assert not cfg.is_excluded("anything.py")
+
     def test_frozen(self):
         cfg = ProjectConfig()
         with pytest.raises((AttributeError, TypeError)):

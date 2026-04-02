@@ -16,13 +16,13 @@ Source code
           ▼
 ┌─────────────────────┐
 │  PCA projection      │  Project into trained eigenspace
-│  (EigenspaceModel)   │  Measure drift + alignment against manifold
+│  (EigenspaceModel)   │  Measure drift + alignment against quality manifold
 └─────────┬───────────┘
           │
           ▼
 ┌─────────────────────┐
-│  Aesthetic scoring   │  5-dimension weighted score
-│  (AestheticCritic)   │  Entropy, Birkhoff, NCD, drift, alignment
+│  Structural scoring  │  5-dimension weighted score
+│  (StructuralCritic)  │  Entropy, Birkhoff, NCD, drift, alignment
 └─────────┬───────────┘
           │
           ▼
@@ -47,14 +47,14 @@ The WL hash captures structural patterns — repetitive code, unusual nesting, i
 
 ## Eigenspace projection
 
-The feature vector is projected into a PCA eigenspace trained on curated high-quality corpora. This projection yields two measurements:
+The feature vector is projected into a PCA eigenspace trained on high-quality open-source code. This projection yields two measurements:
 
 - **Manifold drift**: How far the code sits from the quality manifold (reconstruction error)
 - **Manifold alignment**: How well the code aligns with the principal quality directions
 
-Low drift + high alignment = code that structurally resembles elite examples.
+Low drift + high alignment = code that structurally resembles the best examples in the training corpus.
 
-## Aesthetic scoring
+## Structural scoring
 
 The final score combines five dimensions with preset weights (selected based on available data):
 
@@ -72,7 +72,7 @@ The score is normalized to [0.0, 1.0] and compared against calibrated thresholds
 
 Models are trained on curated corpora of high-quality code:
 
-1. Collect source files from elite repositories
+1. Collect source files from high-quality repositories
 2. Extract feature vectors for each file
 3. Fit PCA to learn the quality manifold
 4. Store exemplars for NCD comparison

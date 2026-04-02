@@ -69,14 +69,29 @@ def _load_excludes(dir_path: Path) -> set[str]:
     return excludes
 
 
-def _walk_directory(dir_path: Path, excludes: set[str]) -> list[tuple[Path, str]]:
+def _walk_directory(
+    dir_path: Path,
+    excludes: set[str],
+    config_excludes: tuple[str, ...] = (),
+) -> list[tuple[Path, str]]:
     """Recursively walk directory and find eligible source files."""
+    import fnmatch
+
     results: list[tuple[Path, str]] = []
     for root, dirs, files in os.walk(dir_path, followlinks=False):
         # Prune excluded directories
-        retained = [
-            d for d in dirs if d not in excludes and not d.endswith(".egg-info")
-        ]
+        retained = []
+        for d in dirs:
+            if d in excludes or d.endswith(".egg-info"):
+                continue
+            if config_excludes:
+                rel = str(Path(root, d).relative_to(dir_path))
+                if any(
+                    fnmatch.fnmatch(rel, pat) or fnmatch.fnmatch(d, pat)
+                    for pat in config_excludes
+                ):
+                    continue
+            retained.append(d)
         dirs.clear()
         dirs.extend(retained)
 
@@ -87,6 +102,14 @@ def _walk_directory(dir_path: Path, excludes: set[str]) -> list[tuple[Path, str]
             try:
                 if child.is_symlink() or not child.is_file():
                     continue
+                # Check config exclude patterns against relative path
+                if config_excludes:
+                    rel = str(child.relative_to(dir_path))
+                    if any(
+                        fnmatch.fnmatch(rel, pat) or fnmatch.fnmatch(filename, pat)
+                        for pat in config_excludes
+                    ):
+                        continue
                 lang = EXTENSION_TO_LANGUAGE.get(child.suffix)
                 if lang is not None:
                     results.append((child, lang))
@@ -98,6 +121,7 @@ def _walk_directory(dir_path: Path, excludes: set[str]) -> list[tuple[Path, str]
 def discover_files(
     paths: list[Path],
     language_overrides: dict[str, str] | None = None,
+    config_excludes: tuple[str, ...] = (),
 ) -> list[tuple[Path, str]]:
     """Discover eligible source files from given paths.
 
@@ -107,11 +131,20 @@ def discover_files(
         paths: File or directory paths to discover.
         language_overrides: Optional mapping of extension -> language key.
             Overrides LANGUAGE_MAP for matched extensions.
+        config_excludes: Glob patterns from .eigenhelm.toml exclude list.
     """
+    import fnmatch
+
     overrides = language_overrides or {}
     results: list[tuple[Path, str]] = []
     for p in paths:
         if p.is_file():
+            # Check config excludes against filename and path
+            if config_excludes and any(
+                fnmatch.fnmatch(p.name, pat) or fnmatch.fnmatch(str(p), pat)
+                for pat in config_excludes
+            ):
+                continue
             lang = overrides.get(p.suffix) or EXTENSION_TO_LANGUAGE.get(p.suffix)
             if lang:
                 results.append((p, lang))
@@ -119,7 +152,7 @@ def discover_files(
                 print(f"WARNING: Skipping {p} (unknown extension)", file=sys.stderr)
         elif p.is_dir():
             excludes = _load_excludes(p)
-            for fp, lang in _walk_directory(p, excludes):
+            for fp, lang in _walk_directory(p, excludes, config_excludes):
                 effective_lang = overrides.get(fp.suffix, lang)
                 results.append((fp, effective_lang))
 
@@ -396,7 +429,8 @@ def _evaluate_paths(
 ) -> list[tuple[Path | str, EvaluationResponse]]:
     """Discover and evaluate files from given paths."""
     language_overrides = config.language_overrides if config else {}
-    files = discover_files(paths, language_overrides)
+    config_excludes = config.exclude if config else ()
+    files = discover_files(paths, language_overrides, config_excludes)
     results: list[tuple[Path | str, EvaluationResponse]] = []
     from eigenhelm.declarations import analyze_declarations
     from eigenhelm.declarations.barrel import is_barrel_file

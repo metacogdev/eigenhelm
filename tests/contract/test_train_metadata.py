@@ -102,7 +102,7 @@ class TestCorpusClassFlag:
                     "--language",
                     "python",
                     "--corpus-class",
-                    "C",
+                    "X",
                 ]
             )
         assert exc.value.code == 2

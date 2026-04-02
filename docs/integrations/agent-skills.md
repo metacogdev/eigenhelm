@@ -48,7 +48,7 @@ The skill encodes five rules based on controlled testing:
 
 In controlled benchmarks, we tested two approaches:
 
-**Loop-until-accept** (old approach): An agent rewrote code repeatedly to chase a better score. It introduced a fatal algorithm bug while optimizing for aesthetics — the topological sort ran backwards because the agent refactored it to lower the WL hash penalty.
+**Loop-until-accept** (old approach): An agent rewrote code repeatedly to chase a better score. It introduced a fatal algorithm bug while optimizing for structure — the topological sort ran backwards because the agent refactored it to lower the WL hash penalty.
 
 **Skill contract** (current approach): The same agent, same spec, but following the rules above. It produced code rated 46% higher on design, robustness, and spec compliance by an independent reviewer — with zero correctness regressions.
 
@@ -75,7 +75,8 @@ The eigenhelm agent won all 3 scenarios: CLI tool, data pipeline library, and me
    - accept/marginal → done, move on
    - reject → read directives, apply obvious fixes
 5. If you changed anything: run tests again
-6. Done. Do not re-evaluate.
+6. Re-evaluate once. Accept the result regardless.
+7. Done. Two passes maximum.
 ```
 
 ## Directive reference

@@ -101,7 +101,7 @@ backend/app/api/routes/private.py
 
 **What the code looks like:** One Pydantic model, one route handler. That's the entire file.
 
-**Our interpretation:** This is a limitation of file-level scoring on very small modules. There isn't enough structural content for the WL hash to capture meaningful patterns. The high drift reflects distance from the training manifold, which is expected when a file contains so little code. eigenhelm is technically correct — this file is structurally unlike elite Python — but the observation isn't actionable.
+**Our interpretation:** This is a limitation of file-level scoring on very small modules. There isn't enough structural content for the WL hash to capture meaningful patterns. The high drift reflects distance from the training manifold, which is expected when a file contains so little code. eigenhelm is technically correct — this file is structurally unlike the training corpus — but the observation isn't actionable.
 
 ### `models.py` (score: 0.75, p14)
 

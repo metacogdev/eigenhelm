@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0](https://github.com/matchdav/eigenhelm/compare/v0.8.0...v0.9.0) (2026-04-02)
+
+
+### Features
+
+* add support for excluding files and directories from evaluation using glob patterns ([b037a4c](https://github.com/matchdav/eigenhelm/commit/b037a4cd9f6e2388e9cc952db02f0c1807fde200))
+
+
+### Documentation
+
+* improve clarity in README and integration guides, update scoring terminology and instructions ([5b5a1f6](https://github.com/matchdav/eigenhelm/commit/5b5a1f6e2101d5418c65d158579f97e8a18a6989))
+* update README and documentation for clarity and accuracy, emphasizing high-quality code metrics ([75f21c5](https://github.com/matchdav/eigenhelm/commit/75f21c5ce987db338b50a9893fe6e1bad2156767))
+
 ## [0.8.0](https://github.com/matchdav/eigenhelm/compare/v0.7.0...v0.8.0) (2026-03-31)
 
 

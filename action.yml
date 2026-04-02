@@ -36,6 +36,9 @@ inputs:
   version:
     description: "eigenhelm version to install (default: latest)"
     required: false
+  exclude:
+    description: "Glob patterns to exclude from evaluation (newline or comma-separated)"
+    required: false
   sarif-upload:
     description: "Upload SARIF results to GitHub Code Scanning"
     required: false
@@ -63,6 +66,13 @@ runs:
         else
           uv tool install eigenhelm
         fi
+
+    - name: Write exclude patterns
+      if: inputs.exclude != ''
+      shell: bash
+      run: |
+        # Append exclude patterns to .eigenhelmignore (preserving any existing entries)
+        echo "${{ inputs.exclude }}" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' >> .eigenhelmignore
 
     - name: Run evaluation
       id: evaluate

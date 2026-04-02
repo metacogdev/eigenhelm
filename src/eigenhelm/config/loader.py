@@ -14,7 +14,7 @@ from pathlib import Path
 from eigenhelm.config.models import PathRule, ProjectConfig, ThresholdConfig
 
 _KNOWN_TOP_LEVEL_KEYS = frozenset(
-    {"model", "language", "strict", "thresholds", "paths", "language_overrides"}
+    {"model", "language", "strict", "exclude", "thresholds", "paths", "language_overrides"}
 )
 
 
@@ -70,6 +70,12 @@ def load_config(path: Path) -> ProjectConfig:
     except (ValueError, TypeError) as exc:
         raise ValueError(f"Invalid [[paths]] entry in {path}: {exc}") from exc
 
+    # Parse exclude patterns
+    exclude_raw = data.get("exclude", [])
+    if not isinstance(exclude_raw, list):
+        raise ValueError(f"'exclude' must be a list of strings in {path}")
+    exclude = tuple(str(e) for e in exclude_raw)
+
     # Parse language_overrides
     language_overrides = dict(data.get("language_overrides", {}))
     for ext in language_overrides:
@@ -83,6 +89,7 @@ def load_config(path: Path) -> ProjectConfig:
             model=data.get("model"),
             language=data.get("language"),
             strict=bool(data.get("strict", False)),
+            exclude=exclude,
             thresholds=thresholds,
             paths=paths,
             language_overrides=language_overrides,

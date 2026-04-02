@@ -36,6 +36,43 @@ class TestDiscoverFiles:
         result = discover_files([f])
         assert len(result) == 0
 
+    def test_config_excludes_skip_files(self, tmp_path):
+        (tmp_path / "a.py").write_text("x = 1")
+        (tmp_path / "b_pb2.py").write_text("x = 1")
+        (tmp_path / "c.py").write_text("x = 1")
+        result = discover_files([tmp_path], config_excludes=("*_pb2.py",))
+        paths = [p.name for p, _ in result]
+        assert "a.py" in paths
+        assert "c.py" in paths
+        assert "b_pb2.py" not in paths
+
+    def test_config_excludes_skip_directories(self, tmp_path):
+        vendor = tmp_path / "vendor"
+        vendor.mkdir()
+        (vendor / "lib.py").write_text("x = 1")
+        (tmp_path / "main.py").write_text("x = 1")
+        result = discover_files([tmp_path], config_excludes=("vendor",))
+        paths = [p.name for p, _ in result]
+        assert "main.py" in paths
+        assert "lib.py" not in paths
+
+    def test_config_excludes_glob_pattern(self, tmp_path):
+        gen = tmp_path / "src" / "generated"
+        gen.mkdir(parents=True)
+        (gen / "out.py").write_text("x = 1")
+        src = tmp_path / "src"
+        (src / "app.py").write_text("x = 1")
+        result = discover_files([tmp_path], config_excludes=("src/generated/**",))
+        paths = [p.name for p, _ in result]
+        assert "app.py" in paths
+        assert "out.py" not in paths
+
+    def test_config_excludes_explicit_file_path(self, tmp_path):
+        f = tmp_path / "skip_pb2.py"
+        f.write_text("x = 1")
+        result = discover_files([f], config_excludes=("*_pb2.py",))
+        assert len(result) == 0
+
     def test_no_follow_symlinks(self, tmp_path):
         real_file = tmp_path / "real.py"
         real_file.write_text("x = 1")

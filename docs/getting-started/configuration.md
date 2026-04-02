@@ -22,6 +22,9 @@ Settings are resolved in priority order:
 # Default language override for all files
 # language = "python"
 
+# Glob patterns for files/directories to skip during evaluation
+# exclude = ["vendor/**", "*_pb2.py", "src/generated/**"]
+
 # Global accept/reject thresholds
 [thresholds]
 accept = 0.3
@@ -75,3 +78,31 @@ eh evaluate src/ --lenient
 ```
 
 In CI, `--strict` is recommended to prevent marginal code from merging. Note: `--strict` maps marginal to exit code 2 (same as reject), not exit code 1.
+
+## Excluding files
+
+### `.eigenhelm.toml`
+
+Add glob patterns to the `exclude` array:
+
+```toml
+exclude = ["vendor/**", "*_pb2.py", "src/generated/**"]
+```
+
+Patterns use `fnmatch` syntax and match against paths relative to the evaluated directory.
+
+### `.eigenhelmignore`
+
+Place a `.eigenhelmignore` file in the project root with one pattern per line:
+
+```gitignore
+# Generated protobuf code
+*_pb2.py
+
+# Vendored dependencies
+vendor/**
+```
+
+Lines starting with `#` are comments. Blank lines are ignored.
+
+Both methods can be combined — patterns from all sources are merged with the built-in defaults (`.git`, `__pycache__`, `node_modules`, `.venv`, `dist`, `build`).

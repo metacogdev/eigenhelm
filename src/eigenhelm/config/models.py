@@ -67,6 +67,7 @@ class ProjectConfig:
     model: path or name of .npz eigenspace model file.
     language: default language override for all files.
     strict: if True, treat warn decisions as reject.
+    exclude: glob patterns for files/directories to skip during evaluation.
     thresholds: global accept/reject thresholds.
     paths: ordered tuple of path rules; last-match-wins semantics.
     language_overrides: mapping of file extension -> language key (keys must start with '.').
@@ -75,6 +76,7 @@ class ProjectConfig:
     model: str | None = None
     language: str | None = None
     strict: bool = False
+    exclude: tuple[str, ...] = ()
     thresholds: ThresholdConfig = field(default_factory=ThresholdConfig)
     paths: tuple[PathRule, ...] = ()
     language_overrides: dict[str, str] = field(default_factory=dict)
@@ -85,6 +87,10 @@ class ProjectConfig:
                 raise ValueError(
                     f"language_overrides key must start with '.', got {ext!r}"
                 )
+
+    def is_excluded(self, file_path: str) -> bool:
+        """Return True if file_path matches any exclude pattern."""
+        return any(fnmatch.fnmatch(file_path, pat) for pat in self.exclude)
 
     def thresholds_for(self, file_path: str) -> ThresholdConfig:
         """Return the most specific ThresholdConfig for a file path.
