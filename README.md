@@ -104,6 +104,55 @@ In a controlled benchmark (3 scenarios, scored by a separate reviewer not involv
 
 ---
 
+## GitHub Action
+
+Evaluate code quality on every pull request.
+
+```yaml
+# .github/workflows/quality.yml
+on: pull_request
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: metacogdev/eigenhelm@v1
+        with:
+          paths: src/
+          sarif-upload: true
+```
+
+### Inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `paths` | `.` | Files or directories to evaluate |
+| `diff` | `auto` | Revision range. `auto` evaluates only changed files on PRs |
+| `fail-on` | `reject` | When to fail: `reject`, `warn`, or `never` |
+| `sarif-upload` | `false` | Upload results to GitHub Code Scanning |
+| `strict` | `false` | Treat marginal as reject |
+| `lenient` | `false` | Treat marginal as accept |
+| `model` | (bundled polyglot) | Path to custom `.npz` model file |
+| `format` | `human` | Output format: `human`, `json`, or `sarif` |
+
+### Outputs
+
+| Output | Description |
+|--------|-------------|
+| `score` | Mean aesthetic score across evaluated files (0.0–1.0; lower = more complex) |
+| `decision` | Overall decision: `accept`, `warn`, or `reject` |
+| `exit-code` | Raw exit code (0=accept, 1=warn, 2=reject, 3=error) |
+| `files-evaluated` | Number of files evaluated |
+| `sarif-file` | Path to SARIF output (when generated) |
+
+---
+
 ## CLI Reference
 
 All commands are available as `eigenhelm <command>` or `eh <command>`:
@@ -117,7 +166,7 @@ All commands are available as `eigenhelm <command>` or `eh <command>`:
 | `eh harness` | Run a statistical comparison harness across two code sets |
 | `eh benchmark` | Run real-world use case benchmarks |
 | `eh skill` | Install the agent skill file |
-| `eh model` | Manage eigenhelm models (list, pull, info) |
+| `eh model` | List, pull, and inspect models — including from the [remote registry](https://github.com/metacogdev/eigenhelm-models) |
 | `eh init` | Generate a starter `.eigenhelm.toml` configuration |
 | `eh corpus` | Manage training corpora (sync from manifest) |
 | `eh mcp` | Start the MCP stdio server |
@@ -160,23 +209,23 @@ uv run ruff check .
 ## Architecture
 
 ```
-eigenhelm/
+src/eigenhelm/
 ├── virtue_extractor.py   — Tree-sitter + Lizard → FeatureVector (69 dimensions)
-├── critic/               — StructuralCritic: 5-dim scoring (drift, alignment, entropy, compression, NCD)
+├── critic/               — 5-dim scoring (drift, alignment, entropy, compression, NCD)
 ├── declarations/         — Declaration-aware scoring (type defs, barrel files, data tables)
 ├── regions/              — Test/production code region detection
-├── eigenspace/           — EigenspaceModel: PCA projection, drift scoring
+├── eigenspace/           — PCA projection and drift scoring
 ├── attribution/          — Score attribution and directive generation
 ├── training/             — PCA training, calibration, exemplar selection
-├── helm/                 — DynamicHelm: threshold-calibrated evaluation + PID steering
-├── config/               — .eigenhelm.toml loader and models
-├── output/               — SARIF 2.1.0 and JSON formatters
-├── scoring/              — Per-repo scorecard (M1-M5, Q1-Q5)
-├── harness/              — Statistical evaluation harness (Mann-Whitney U)
-├── parsers/              — Language parsing (tree-sitter integration)
-├── mcp/                  — Model Context Protocol stdio server
+├── helm/                 — Threshold-calibrated evaluation and PID steering
+├── config/               — `.eigenhelm.toml` loader and defaults
+├── output/               — SARIF and JSON formatters
+├── scoring/              — Per-repo scorecard
+├── validation/           — Benchmark and validation workflows
+├── corpus/               — Corpus sync and manifest handling
 ├── registry/             — Model registry and resolution
-├── trained_models/       — Bundled .npz models
+├── mcp/                  — MCP stdio server
+├── trained_models/       — Bundled `.npz` models
 └── serve/                — HTTP evaluation server (requires `eigenhelm[serve]` extra)
 ```
 

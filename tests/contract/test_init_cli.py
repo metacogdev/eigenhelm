@@ -8,6 +8,7 @@ import pytest
 from click.testing import CliRunner
 
 from eigenhelm.cli.main import cli
+from eigenhelm.config import load_config
 
 pytestmark = pytest.mark.contract
 
@@ -31,8 +32,6 @@ class TestInitCLI:
     def test_generated_file_parseable_by_load_config(self, tmp_path):
         runner = CliRunner()
         runner.invoke(cli, ["init", "--output", str(tmp_path)])
-        from eigenhelm.config import load_config
-
         cfg = load_config(tmp_path / ".eigenhelm.toml")
         assert cfg.thresholds.accept == 0.3
         assert cfg.thresholds.reject == 0.7
@@ -85,3 +84,47 @@ class TestInitCLI:
         content = gitignore.read_text()
         assert "__pycache__/" in content
         assert ".eigenhelm/" in content
+
+    def test_template_documents_harness_path_patterns(self, tmp_path):
+        """Generated template must contain commented-out harness path rule examples."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["init", "--output", str(tmp_path)])
+        assert result.exit_code == 0, result.output
+        content = (tmp_path / ".eigenhelm.toml").read_text()
+        # All four canonical harness/test patterns must appear as comments.
+        for pattern in ("tests/**", "test/**", "validation/**", "harness/**"):
+            assert pattern in content, f"template missing harness pattern example: {pattern}"
+
+    def test_harness_path_rules_valid_when_uncommented(self, tmp_path):
+        """Uncommented harness [[paths]] blocks must parse as valid TOML loadable by load_config."""
+        toml = (
+            "[thresholds]\n"
+            "accept = 0.3\n"
+            "reject = 0.7\n"
+            "\n"
+            "[[paths]]\n"
+            'glob = "tests/**"\n'
+            "[paths.thresholds]\n"
+            "accept = 0.7\n"
+            "reject = 0.95\n"
+            "\n"
+            "[[paths]]\n"
+            'glob = "validation/**"\n'
+            "[paths.thresholds]\n"
+            "accept = 0.7\n"
+            "reject = 0.95\n"
+            "\n"
+            "[[paths]]\n"
+            'glob = "harness/**"\n'
+            "[paths.thresholds]\n"
+            "accept = 0.7\n"
+            "reject = 0.95\n"
+        )
+        cfg_file = tmp_path / ".eigenhelm.toml"
+        cfg_file.write_text(toml)
+        cfg = load_config(cfg_file)
+        assert len(cfg.paths) == 3
+        # Each harness rule must have relaxed accept/reject thresholds.
+        for rule in cfg.paths:
+            assert rule.thresholds.accept == 0.7
+            assert rule.thresholds.reject == 0.95

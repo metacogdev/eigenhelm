@@ -43,6 +43,35 @@ reject = 0.7
 # accept = 0.2
 # reject = 0.6
 
+# Example: relaxed thresholds for test/harness/validation infrastructure.
+# Statistical evaluation harnesses, test suites, and validation scripts are
+# inherently repetitive by design — the same evaluation pattern repeated
+# across corpora/languages.  Raising the accept/reject band prevents spurious
+# "reject" decisions on structurally repetitive-but-intentional code.
+# [[paths]]
+# glob = "tests/**"
+# [paths.thresholds]
+# accept = 0.7
+# reject = 0.95
+#
+# [[paths]]
+# glob = "test/**"
+# [paths.thresholds]
+# accept = 0.7
+# reject = 0.95
+#
+# [[paths]]
+# glob = "validation/**"
+# [paths.thresholds]
+# accept = 0.7
+# reject = 0.95
+#
+# [[paths]]
+# glob = "harness/**"
+# [paths.thresholds]
+# accept = 0.7
+# reject = 0.95
+
 # Optional: map file extensions to language keys.
 # Useful for non-standard extensions (e.g., .jsx -> javascript).
 # [language_overrides]

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.10.0](https://github.com/matchdav/eigenhelm/compare/v0.9.0...v0.10.0) (2026-04-28)
+
+
+### Features
+
+* GitHub Action — composite action, auto-diff, SARIF, fail-on policy ([#59](https://github.com/matchdav/eigenhelm/issues/59)) ([75c1ece](https://github.com/matchdav/eigenhelm/commit/75c1ece892f71c81269af1d093a31647e8ca23a4))
+* publish Docker image to GHCR on release ([#53](https://github.com/matchdav/eigenhelm/issues/53)) ([2eea564](https://github.com/matchdav/eigenhelm/commit/2eea564e0c93de49f1698e6490fc0362a3a8363f))
+* test coverage initiative — 82% to 95% (1219 → 1750 tests) ([9eedaa4](https://github.com/matchdav/eigenhelm/commit/9eedaa4b4af3136fa471f6715c57b72056b55a0d))
+
+
+### Bug Fixes
+
+* lint cleanup and test file rename after coverage merge ([94b00c8](https://github.com/matchdav/eigenhelm/commit/94b00c8d8433c659dc7c12ced442dbf09a796c40))
+
+
+### Documentation
+
+* add model registry references throughout ([399ba00](https://github.com/matchdav/eigenhelm/commit/399ba0068e5e85eb5a9f1fb92242639eff4d6847))
+* fix context rot in action version and architecture map ([#63](https://github.com/matchdav/eigenhelm/issues/63)) ([c615ef8](https://github.com/matchdav/eigenhelm/commit/c615ef8171288c58ba8ed62c618633273fc175f3))
+* update models/README.md schema and add GitHub Action section to public README ([387efac](https://github.com/matchdav/eigenhelm/commit/387efacb9e4334b2616e8b0280ffa4fc8e5687cb))
+
 ## [0.9.0](https://github.com/matchdav/eigenhelm/compare/v0.8.0...v0.9.0) (2026-04-02)
 
 

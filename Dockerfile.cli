@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Install uv (pinned for reproducibility)
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# Copy dependency manifests first (layer cache)
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
+
+# Install base package (includes the `eh` CLI)
+RUN uv pip install --system "."
+
+# Run as non-root
+RUN useradd -r -s /bin/false appuser && chown -R appuser:appuser /app
+USER appuser
+
+ENTRYPOINT ["eh"]
