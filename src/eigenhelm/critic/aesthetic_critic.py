@@ -16,9 +16,11 @@ from eigenhelm.critic import (
 )
 from eigenhelm.critic.birkhoff import birkhoff_measure
 from eigenhelm.critic.entropy import shannon_entropy
-from eigenhelm.critic.ncd import ncd_to_exemplars, ncd_to_exemplars_with_id
+from eigenhelm.critic.exemplars import bind_exemplars
+from eigenhelm.critic.ncd import ncd_to_nearest_binding
 
 if TYPE_CHECKING:
+    from eigenhelm.critic.exemplars import ExemplarBinding
     from eigenhelm.models import ProjectionResult
 
 
@@ -34,7 +36,15 @@ class AestheticCritic(IAestheticCritic):
         exemplars:             Decompressed exemplar byte strings for NCD. Default None.
         exemplar_ids:          Content hashes aligned 1:1 with exemplars. When provided,
                                the nearest exemplar identity is reported on Critique for
-                               NCD attribution. Must have the same length as exemplars.
+                               NCD attribution. Must have the same length as exemplars
+                               or a ValueError is raised at construction time (62).
+
+    Concurrency:
+        Once constructed, AestheticCritic state is immutable: the exemplar
+        collection is bound into a tuple of frozen records and stored in a
+        single attribute. ``evaluate()`` and ``score()`` may be called from
+        many threads concurrently as long as no caller reaches into private
+        attributes. See ``docs/concurrency.md`` for the full contract.
     """
 
     def __init__(
@@ -56,8 +66,12 @@ class AestheticCritic(IAestheticCritic):
         self.min_compression_bytes = min_compression_bytes
         self.reject_threshold = reject_threshold
         self.marginal_threshold = marginal_threshold
-        self._exemplars = exemplars
-        self._exemplar_ids = exemplar_ids
+        # 62: bind (bytes, identity) into a single immutable tuple so a single
+        # attribute read returns a self-consistent snapshot under concurrent use.
+        # bind_exemplars validates length alignment and raises ValueError early.
+        self._exemplars: tuple[ExemplarBinding, ...] | None = bind_exemplars(
+            exemplars, exemplar_ids
+        )
 
     # ------------------------------------------------------------------
     # US1: Information-theoretic metrics
@@ -266,25 +280,24 @@ class AestheticCritic(IAestheticCritic):
         metrics = self._compute_metrics(source, language)
         normalized = self._normalize_dimensions(metrics, projection)
 
-        # Compute NCD exemplar distance (010) and inject into normalized dict
+        # Compute NCD exemplar distance (010) and inject into normalized dict.
+        # 62: single atomic read of the bound exemplar tuple — reading bytes
+        # and identity through one immutable record prevents the two from
+        # desynchronizing if exemplar state is swapped on another thread.
         nearest_exemplar_id: str | None = None
-        if self._exemplars is not None:
+        exemplars = self._exemplars
+        if exemplars is not None:
             source_bytes = source.encode("utf-8")
-            if self._exemplar_ids is not None:
-                ncd_result = ncd_to_exemplars_with_id(
-                    source_bytes,
-                    self._exemplars,
-                    self._exemplar_ids,
-                    min_bytes=self.min_compression_bytes,
-                )
-                if ncd_result is not None:
-                    ncd_dist, nearest_exemplar_id = ncd_result
-                else:
-                    ncd_dist = None
+            ncd_result = ncd_to_nearest_binding(
+                source_bytes,
+                exemplars,
+                min_bytes=self.min_compression_bytes,
+            )
+            if ncd_result is not None:
+                ncd_dist, nearest_id = ncd_result
+                nearest_exemplar_id = nearest_id or None
             else:
-                ncd_dist = ncd_to_exemplars(
-                    source_bytes, self._exemplars, min_bytes=self.min_compression_bytes
-                )
+                ncd_dist = None
             normalized["ncd_exemplar_distance"] = (
                 ncd_dist if ncd_dist is not None else 0.0
             )

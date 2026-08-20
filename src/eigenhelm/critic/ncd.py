@@ -9,6 +9,11 @@ Reference: Cilibrasi & Vitanyi (2005), Li & Vitanyi (2008).
 from __future__ import annotations
 
 import zlib
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from eigenhelm.critic.exemplars import ExemplarBinding
 
 
 def ncd(x: bytes, y: bytes, *, level: int = 9) -> float:
@@ -61,6 +66,12 @@ def ncd_to_exemplars_with_id(
 
     Raises:
         ValueError: If exemplar_bytes and exemplar_ids have different lengths.
+
+    Concurrency:
+        Caller is responsible for passing aligned ``exemplar_bytes`` and
+        ``exemplar_ids``. When exemplars live on shared mutable state, prefer
+        :func:`ncd_to_nearest_binding` over this two-list interface — paired
+        identity records cannot desynchronize across threads.
     """
     if len(exemplar_bytes) != len(exemplar_ids):
         raise ValueError(
@@ -70,6 +81,47 @@ def ncd_to_exemplars_with_id(
     if len(source_bytes) < min_bytes or not exemplar_bytes:
         return None
 
-    distances = [ncd(source_bytes, e, level=level) for e in exemplar_bytes]
+    # Snapshot both sequences locally before measuring so a concurrent mutation
+    # of the caller's lists cannot pair the wrong (distance, id) at return time.
+    exemplars = tuple(exemplar_bytes)
+    ids = tuple(exemplar_ids)
+    if len(exemplars) != len(ids):
+        # Snapshot races (rare, but possible if the two lists are mutated
+        # between the length check above and the snapshot here).
+        raise ValueError(
+            "exemplar_bytes and exemplar_ids changed length during snapshot; "
+            "callers must not mutate exemplar state during evaluation"
+        )
+
+    distances = [ncd(source_bytes, e, level=level) for e in exemplars]
     min_idx = min(range(len(distances)), key=lambda i: distances[i])
-    return distances[min_idx], exemplar_ids[min_idx]
+    return distances[min_idx], ids[min_idx]
+
+
+def ncd_to_nearest_binding(
+    source_bytes: bytes,
+    exemplars: Sequence[ExemplarBinding],
+    *,
+    level: int = 9,
+    min_bytes: int = 50,
+) -> tuple[float, str] | None:
+    """Compute minimum NCD against bound exemplars and return (distance, identity).
+
+    The (content, identity) pair is read from a single immutable record per
+    exemplar, so the returned identity is guaranteed to belong to the nearest
+    exemplar even if the caller's exemplar collection is replaced concurrently.
+
+    Returns ``None`` when the source is shorter than ``min_bytes`` or the
+    exemplar sequence is empty.
+    """
+    if len(source_bytes) < min_bytes or not exemplars:
+        return None
+
+    best_dist = float("inf")
+    best_identity = ""
+    for binding in exemplars:
+        d = ncd(source_bytes, binding.content, level=level)
+        if d < best_dist:
+            best_dist = d
+            best_identity = binding.identity
+    return best_dist, best_identity

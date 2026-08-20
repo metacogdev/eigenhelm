@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.10.1](https://github.com/matchdav/eigenhelm/compare/v0.10.0...v0.10.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* bind exemplar bytes and identity to close concurrency hazard ([#62](https://github.com/matchdav/eigenhelm/issues/62)) ([#64](https://github.com/matchdav/eigenhelm/issues/64)) ([4e61af5](https://github.com/matchdav/eigenhelm/commit/4e61af547b83b03ca38102df4c5c87d5cb040801))
+* remove .squad references ([8910ec7](https://github.com/matchdav/eigenhelm/commit/8910ec7380c5be9fd98fbe013bdcde36648460bd))
+* stop the squad ([2867e82](https://github.com/matchdav/eigenhelm/commit/2867e82c27748236dabea4e01d6a3abf1ec02051))
+* stop the squad, part 2 ([18439f2](https://github.com/matchdav/eigenhelm/commit/18439f2e6346cd02d0b93e57e67a80e5afbaa2b4))
+* update action.yml for improved version handling and error reporting ([7c5c4c6](https://github.com/matchdav/eigenhelm/commit/7c5c4c6d8fced0f3fa293287231be8be9fcfa3cf))
+
 ## [0.10.0](https://github.com/matchdav/eigenhelm/compare/v0.9.0...v0.10.0) (2026-04-28)
 
 
