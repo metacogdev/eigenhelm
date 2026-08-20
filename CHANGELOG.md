@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.2](https://github.com/matchdav/eigenhelm/compare/v0.10.1...v0.10.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* **action:** accept (don't crash) when no evaluable files are in the range ([#71](https://github.com/matchdav/eigenhelm/issues/71)) ([f8b4b32](https://github.com/matchdav/eigenhelm/commit/f8b4b32af396bc98dfd230fff5d90686d4c9873e))
+* **action:** treat warn/reject as quality decisions, not crashes ([#66](https://github.com/matchdav/eigenhelm/issues/66)) ([#69](https://github.com/matchdav/eigenhelm/issues/69)) ([ebfd9c6](https://github.com/matchdav/eigenhelm/commit/ebfd9c64f175ed9ed96d2d9a0d264ea5bd43544d))
+
 ## [0.10.1](https://github.com/matchdav/eigenhelm/compare/v0.10.0...v0.10.1) (2026-08-20)
 
 

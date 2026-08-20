@@ -182,22 +182,62 @@ runs:
         elif [ "${FORMAT}" = "sarif" ]; then
           SARIF_FILE="${RUNNER_TEMP}/eigenhelm-results.sarif"
           SARIF_ERR="${RUNNER_TEMP}/eigenhelm-sarif.err"
-          if eh evaluate "${EH_ARGS[@]}" --format sarif "${PATH_ARGS[@]}" > "${SARIF_FILE}" 2>"${SARIF_ERR}"; then
-            if [ ! -s "${SARIF_FILE}" ]; then
-              echo "::error::eigenhelm produced an empty SARIF file"
-              cat "${SARIF_ERR}"
-              exit 3
-            fi
-          else
+          # Pass 2 re-renders Pass 1's decision in the requested format. Same
+          # EH_ARGS/PATH_ARGS, only --format differs, so the exit code matches
+          # EH_EXIT: warn(1)/reject(2) is an ordinary quality decision, not a
+          # generation failure. The fail-on policy block below decides whether
+          # to fail the step. Only a crash (3) or empty output is a real
+          # rendering failure. (#66)
+          set +e
+          eh evaluate "${EH_ARGS[@]}" --format sarif "${PATH_ARGS[@]}" > "${SARIF_FILE}" 2>"${SARIF_ERR}"
+          GEN_EXIT=$?
+          set -e
+          if [ "${GEN_EXIT}" -eq 3 ]; then
             echo "::error::eigenhelm failed to generate SARIF"
             cat "${SARIF_ERR}"
             exit 3
           fi
-          cat "${SARIF_FILE}"
-          echo "sarif-file=${SARIF_FILE}" >> "$GITHUB_OUTPUT"
+          if [ -s "${SARIF_FILE}" ]; then
+            cat "${SARIF_FILE}"
+            echo "sarif-file=${SARIF_FILE}" >> "$GITHUB_OUTPUT"
+          elif [ "${GEN_EXIT}" -eq 0 ]; then
+            # Clean exit, no output: no evaluable files in the selected range
+            # (paths/exclude filtered everything, or only unrecognized extensions
+            # changed -- e.g. release-please PRs touching only CHANGELOG.md /
+            # pyproject.toml). Nothing to gate; leave sarif-file unset.
+            echo "::notice::eigenhelm: no evaluable files in the selected range"
+          else
+            # warn(1)/reject(2) with no rendered SARIF is anomalous (eh always
+            # emits a report when it has files) -- treat as a generation failure.
+            echo "::error::eigenhelm failed to generate SARIF"
+            cat "${SARIF_ERR}"
+            exit 3
+          fi
         else
           HUMAN_ERR="${RUNNER_TEMP}/eigenhelm-human.err"
-          if ! eh evaluate "${EH_ARGS[@]}" --format human "${PATH_ARGS[@]}" 2>"${HUMAN_ERR}"; then
+          HUMAN_OUT="${RUNNER_TEMP}/eigenhelm-human.out"
+          # See sarif branch: warn(1)/reject(2) is not a generation failure. (#66)
+          set +e
+          eh evaluate "${EH_ARGS[@]}" --format human "${PATH_ARGS[@]}" > "${HUMAN_OUT}" 2>"${HUMAN_ERR}"
+          GEN_EXIT=$?
+          set -e
+          if [ "${GEN_EXIT}" -eq 3 ]; then
+            echo "::error::eigenhelm failed to generate human output"
+            cat "${HUMAN_ERR}"
+            exit 3
+          fi
+          if [ -s "${HUMAN_OUT}" ]; then
+            cat "${HUMAN_OUT}"
+          elif [ "${GEN_EXIT}" -eq 0 ]; then
+            # Clean exit, no output: no evaluable files in the selected range
+            # (paths/exclude filtered everything, or only unrecognized extensions
+            # changed -- e.g. release-please PRs touching only CHANGELOG.md /
+            # pyproject.toml). Nothing to gate; let the fail-on policy decide
+            # on EH_EXIT (0 here), so the step succeeds.
+            echo "::notice::eigenhelm: no evaluable files in the selected range"
+          else
+            # warn(1)/reject(2) with no rendered report is anomalous (eh always
+            # emits a report when it has files) -- treat as a generation failure.
             echo "::error::eigenhelm failed to generate human output"
             cat "${HUMAN_ERR}"
             exit 3
@@ -208,13 +248,16 @@ runs:
         if [ "${INPUT_SARIF_UPLOAD}" = "true" ] && [ "${FORMAT}" != "sarif" ]; then
           SARIF_FILE="${RUNNER_TEMP}/eigenhelm-results.sarif"
           SARIF_ERR="${RUNNER_TEMP}/eigenhelm-sarif.err"
-          if eh evaluate "${EH_ARGS[@]}" --format sarif "${PATH_ARGS[@]}" > "${SARIF_FILE}" 2>"${SARIF_ERR}"; then
-            if [ -s "${SARIF_FILE}" ]; then
-              echo "sarif-file=${SARIF_FILE}" >> "$GITHUB_OUTPUT"
-            else
-              echo "::warning::Skipping SARIF upload because eigenhelm produced an empty SARIF file"
-              cat "${SARIF_ERR}"
-            fi
+          # Same rationale as Pass 2: warn(1)/reject(2) still renders a valid
+          # SARIF file, so populate sarif-file and let the upload step run on
+          # the PRs the gate exists to catch. Only a crash (3) or empty output
+          # skips the upload -- non-fatal (::warning::), never exits. (#66)
+          set +e
+          eh evaluate "${EH_ARGS[@]}" --format sarif "${PATH_ARGS[@]}" > "${SARIF_FILE}" 2>"${SARIF_ERR}"
+          GEN_EXIT=$?
+          set -e
+          if [ "${GEN_EXIT}" -ne 3 ] && [ -s "${SARIF_FILE}" ]; then
+            echo "sarif-file=${SARIF_FILE}" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Skipping SARIF upload because eigenhelm failed to generate SARIF"
             cat "${SARIF_ERR}"
@@ -242,6 +285,13 @@ runs:
 
     - name: Upload SARIF to GitHub Code Scanning
       if: inputs.sarif-upload == 'true' && steps.evaluate.outputs.sarif-file != ''
+      # SARIF upload is best-effort telemetry, not a quality decision. A
+      # consumer repo may have `sarif-upload: true` without GitHub Code
+      # Scanning enabled (e.g. private repos, Enterprise without Advanced
+      # Security); the upload-sarif action then errors with "Code scanning
+      # is not enabled". That must not fail the whole job -- the
+      # accept/warn/reject decision above is what gates. (#66)
+      continue-on-error: true
       uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: ${{ steps.evaluate.outputs.sarif-file }}
