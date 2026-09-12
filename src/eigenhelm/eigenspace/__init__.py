@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from eigenhelm.models import FEATURE_DIM, EigenspaceModel
+from eigenhelm.models import FEATURE_DIM, EigenspaceModel, NPZ_KEYS
 
 
 def load_model(path: str | Path) -> EigenspaceModel:
@@ -35,20 +35,14 @@ def load_model(path: str | Path) -> EigenspaceModel:
         ValueError: If matrix dimensions are invalid.
     """
     path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError(f"Eigenspace model not found: {path}")
+    from eigenhelm._model_io import load_npz_model_arrays
 
-    data = np.load(path, allow_pickle=True)
-
-    required = ("projection_matrix", "mean", "std")
-    for key in required:
-        if key not in data:
-            raise KeyError(f"Missing key {key!r} in eigenspace model {path}")
+    data = load_npz_model_arrays(path)
 
     n_components = (
         int(data["n_components"])
         if "n_components" in data
-        else (data["projection_matrix"].shape[1])
+        else (data[NPZ_KEYS.PROJECTION_MATRIX].shape[1])
     )
     version = str(data["version"]) if "version" in data else "unknown"
     corpus_hash = str(data["corpus_hash"]) if "corpus_hash" in data else "unknown"
@@ -123,9 +117,9 @@ def load_model(path: str | Path) -> EigenspaceModel:
         )
 
     return EigenspaceModel(
-        projection_matrix=data["projection_matrix"].astype(np.float64),
-        mean=data["mean"].astype(np.float64),
-        std=data["std"].astype(np.float64),
+        projection_matrix=data[NPZ_KEYS.PROJECTION_MATRIX].astype(np.float64),
+        mean=data[NPZ_KEYS.MEAN].astype(np.float64),
+        std=data[NPZ_KEYS.STD].astype(np.float64),
         n_components=n_components,
         version=version,
         corpus_hash=corpus_hash,

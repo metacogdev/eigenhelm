@@ -5,6 +5,7 @@ All entities are frozen dataclasses following the project convention.
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 from dataclasses import dataclass
 
 
@@ -74,6 +75,6 @@ class AttributionResult:
 
     dimensions: tuple[DimensionAttribution, ...]
     directives: tuple[Directive, ...]
-    top_n: int = 3
-    directive_threshold: float = 0.3
+    top_n: int = DEFAULT_TOP_N
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD
     vocabulary_version: str = "v1"

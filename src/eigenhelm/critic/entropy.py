@@ -28,3 +28,15 @@ def shannon_entropy(source: str) -> float:
         p = count / total
         entropy -= p * math.log2(p)
     return entropy
+
+def normalize_entropy(entropy: float) -> float:
+    """Normalize entropy to a [0.0, 1.0] score.
+
+    Args:
+        entropy: Raw Shannon entropy in bits/byte.
+
+    Returns:
+        Normalized score where 0.0 is perfect entropy (8.0 bits/byte)
+        and 1.0 is zero entropy.
+    """
+    return 1.0 - (entropy / 8.0)

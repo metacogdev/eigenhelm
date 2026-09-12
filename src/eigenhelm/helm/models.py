@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
@@ -18,8 +19,10 @@ class EvaluationRequest:
     source: str
     language: str  # Canonical lowercase key from language_map.LANGUAGE_MAP
     file_path: str | None = None  # Passed through to VirtueExtractor.extract()
-    top_n: int = 3  # 017: top features per PCA dimension in attribution
-    directive_threshold: float = 0.3  # 017: minimum normalized score for directives
+    top_n: int = DEFAULT_TOP_N  # 017: top features per PCA dimension in attribution
+    directive_threshold: float = (
+        DEFAULT_DIRECTIVE_THRESHOLD  # 017: minimum normalized score for directives
+    )
 
     def __post_init__(self) -> None:
         if self.top_n < 1:

@@ -93,7 +93,9 @@ class TestInitCLI:
         content = (tmp_path / ".eigenhelm.toml").read_text()
         # All four canonical harness/test patterns must appear as comments.
         for pattern in ("tests/**", "test/**", "validation/**", "harness/**"):
-            assert pattern in content, f"template missing harness pattern example: {pattern}"
+            assert pattern in content, (
+                f"template missing harness pattern example: {pattern}"
+            )
 
     def test_harness_path_rules_valid_when_uncommented(self, tmp_path):
         """Uncommented harness [[paths]] blocks must parse as valid TOML loadable by load_config."""

@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+SIGNIFICANCE_ALPHA: float = 0.05
+
 
 @dataclass(frozen=True)
 class CorpusStats:
@@ -31,7 +33,7 @@ class HarnessReport:
 
     delta_mean_score = after.mean_score - before.mean_score
     Negative delta = improvement (lower scores = better aesthetics).
-    significant = p_value < 0.05
+    significant = p_value < SIGNIFICANCE_ALPHA
     improvement = significant AND delta_mean_score < 0.0
     """
 
@@ -67,7 +69,7 @@ def format_harness_human(report: HarnessReport) -> str:
         f"  Delta (after − before):  {report.delta_mean_score:+.2f}  {delta_symbol}",
         f"  Mann-Whitney U:           {report.u_statistic:.1f}",
         f"  p-value:                  {report.p_value:.4f}",
-        f"  Significant at α=0.05:    {sig_symbol}",
+        f"  Significant at α={SIGNIFICANCE_ALPHA}:    {sig_symbol}",
     ]
     return "\n".join(lines)
 

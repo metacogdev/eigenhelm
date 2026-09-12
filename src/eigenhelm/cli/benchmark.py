@@ -14,8 +14,8 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
+import sys
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -37,7 +37,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to TOML corpus manifest",
     )
-    parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
+    from eigenhelm.cli._common import add_model_argument
+
+    add_model_argument(parser)
     parser.add_argument(
         "--format",
         dest="output_format",
@@ -92,16 +94,15 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         # Load model
-        model_path = args.model
-        if model_path is None:
-            from eigenhelm.trained_models import default_model_path
+        from eigenhelm.config import find_config, load_config
+        from eigenhelm.cli._common import resolve_and_load_model
 
-            model_path = str(default_model_path())
+        config_path = find_config(Path.cwd())
+        config = load_config(config_path) if config_path else None
+        eigenspace, path = resolve_and_load_model(args.model, config)
 
-        from eigenhelm.eigenspace import load_model
         from eigenhelm.helm import DynamicHelm
 
-        eigenspace = load_model(model_path)
         helm = DynamicHelm(eigenspace=eigenspace)
 
         from eigenhelm.validation.usecase_benchmark import (
@@ -139,9 +140,12 @@ def main(argv: list[str] | None = None) -> int:
             for project_path in args.project:
                 project_list.append((project_path, None, project_path.name))
 
+        from eigenhelm.cli._common import resolve_model_path
+
+        resolved_model_path = resolve_model_path(args.model)
         benchmark = UseCaseBenchmark(
             helm=helm,
-            model_name=Path(model_path).name,
+            model_name=Path(resolved_model_path).name,
             model_version=eigenspace.version,
             corpus_version=corpus_version,
         )

@@ -30,6 +30,7 @@ from eigenhelm.registry.models import ModelEntry
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_entry(**overrides) -> dict:
     defaults = {
         "name": "test-model",
@@ -146,7 +147,7 @@ class TestListLocal:
         cache_dir.mkdir()
         (cache_dir / "custom-model.npz").write_bytes(b"fake npz")
 
-        with patch("eigenhelm.registry._CACHE_DIR", cache_dir):
+        with patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir):
             result = list_local()
 
         names = [m.name for m in result]
@@ -166,7 +167,7 @@ class TestListLocal:
         # Create a cached file with the same name as a bundled model
         (cache_dir / f"{bundled[0].name}.npz").write_bytes(b"fake npz")
 
-        with patch("eigenhelm.registry._CACHE_DIR", cache_dir):
+        with patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir):
             result = list_local()
 
         matching = [m for m in result if m.name == bundled[0].name]
@@ -178,8 +179,10 @@ class TestListLocal:
         cache_dir = tmp_path / "models"
         # No cache dir exists either
 
-        with patch("eigenhelm.registry._CACHE_DIR", cache_dir), \
-             patch("importlib.resources.files", side_effect=ModuleNotFoundError("nope")):
+        with (
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+            patch("importlib.resources.files", side_effect=ModuleNotFoundError("nope")),
+        ):
             result = list_local()
 
         assert result == ()
@@ -202,7 +205,9 @@ class TestPullModel:
     def test_model_not_found(self):
         manifest_resp = self._mock_manifest([{"name": "other-model"}])
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", return_value=manifest_resp):
+        with patch(
+            "eigenhelm.registry.urllib.request.urlopen", return_value=manifest_resp
+        ):
             with pytest.raises(RegistryError, match="not found in registry"):
                 pull_model("nonexistent", "https://example.com/registry.json")
 
@@ -220,18 +225,23 @@ class TestPullModel:
         cache_dir = tmp_path / "cache"
 
         call_count = [0]
+
         def mock_urlopen(url, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
                 return manifest_resp
             return dl_resp
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir), \
-             patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy:
-            # We need the tmp file to have the right hash after copyfileobj
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+            patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy,
+        ):            # We need the tmp file to have the right hash after copyfileobj
             def write_content(src, dst):
                 dst.write(content)
+
             mock_copy.side_effect = write_content
 
             result = pull_model("dl-model", "https://example.com/registry.json")
@@ -249,8 +259,12 @@ class TestPullModel:
         cached_file = cache_dir / "cached-model.npz"
         cached_file.write_bytes(content)
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", return_value=manifest_resp), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir):
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", return_value=manifest_resp
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+        ):
             result = pull_model("cached-model", "https://example.com/registry.json")
 
         assert result == cached_file
@@ -273,17 +287,23 @@ class TestPullModel:
         dl_resp.__exit__ = MagicMock(return_value=False)
 
         call_count = [0]
+
         def mock_urlopen(url, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
                 return manifest_resp
             return dl_resp
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir), \
-             patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy:
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+            patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy,
+        ):
             def write_content(src, dst):
                 dst.write(new_content)
+
             mock_copy.side_effect = write_content
 
             result = pull_model("stale-model", "https://example.com/registry.json")
@@ -295,6 +315,7 @@ class TestPullModel:
         manifest_resp = self._mock_manifest([entry_data])
 
         call_count = [0]
+
         def mock_urlopen(url, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -303,8 +324,12 @@ class TestPullModel:
 
         cache_dir = tmp_path / "cache"
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir):
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+        ):
             with pytest.raises(RegistryError, match="Download failed"):
                 pull_model("fail-model", "https://example.com/registry.json")
 
@@ -319,6 +344,7 @@ class TestPullModel:
         dl_resp.__exit__ = MagicMock(return_value=False)
 
         call_count = [0]
+
         def mock_urlopen(url, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -327,11 +353,16 @@ class TestPullModel:
 
         cache_dir = tmp_path / "cache"
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir), \
-             patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy:
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+            patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy,
+        ):
             def write_content(src, dst):
                 dst.write(bad_content)
+
             mock_copy.side_effect = write_content
 
             with pytest.raises(RegistryError, match="SHA256 mismatch"):
@@ -354,20 +385,28 @@ class TestPullModel:
         dl_resp.__exit__ = MagicMock(return_value=False)
 
         call_count = [0]
+
         def mock_urlopen(url, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
                 return manifest_resp
             return dl_resp
 
-        with patch("eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen), \
-             patch("eigenhelm.registry._CACHE_DIR", cache_dir), \
-             patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy:
+        with (
+            patch(
+                "eigenhelm.registry.urllib.request.urlopen", side_effect=mock_urlopen
+            ),
+            patch("eigenhelm.registry._get_cache_dir", return_value=cache_dir),
+            patch("eigenhelm.registry.shutil.copyfileobj") as mock_copy,
+        ):
             def write_content(src, dst):
                 dst.write(content)
+
             mock_copy.side_effect = write_content
 
-            result = pull_model("force-model", "https://example.com/registry.json", force=True)
+            result = pull_model(
+                "force-model", "https://example.com/registry.json", force=True
+            )
 
         assert result.name == "force-model.npz"
 

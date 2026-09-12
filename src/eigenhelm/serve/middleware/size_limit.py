@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from typing import Any
+from eigenhelm.serve import DEFAULT_MAX_BODY_BYTES
 
 
 async def _send_413(send_fn: Callable, max_bytes: int) -> None:
@@ -35,7 +36,7 @@ async def _send_413(send_fn: Callable, max_bytes: int) -> None:
 class ContentSizeLimitMiddleware:
     """Pure ASGI middleware enforcing request body size limits."""
 
-    def __init__(self, app: Any, max_bytes: int = 1_048_576) -> None:
+    def __init__(self, app: Any, max_bytes: int = DEFAULT_MAX_BODY_BYTES) -> None:
         self.app = app
         self.max_bytes = max_bytes
 

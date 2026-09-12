@@ -78,3 +78,39 @@ reject = 0.7
 # ".jsx" = "javascript"
 # ".tsx" = "typescript"
 """
+
+# Hardcoded fallback thresholds
+DEFAULT_ACCEPT_THRESHOLD = 0.4
+DEFAULT_REJECT_THRESHOLD = 0.6
+
+# AestheticCritic weighting profiles for different evaluation modes
+WEIGHT_PROFILES: dict[str, dict[str, float]] = {
+    "projection_and_exemplars": {
+        "manifold_drift": 0.30,
+        "manifold_alignment": 0.30,
+        "token_entropy": 0.15,
+        "compression_structure": 0.15,
+        "ncd_exemplar_distance": 0.10,
+    },
+    "projection_only": {
+        "manifold_drift": 0.35,
+        "manifold_alignment": 0.35,
+        "token_entropy": 0.15,
+        "compression_structure": 0.15,
+        "ncd_exemplar_distance": 0.0,
+    },
+    "exemplars_only": {
+        "manifold_drift": 0.0,
+        "manifold_alignment": 0.0,
+        "token_entropy": 0.30,
+        "compression_structure": 0.30,
+        "ncd_exemplar_distance": 0.40,
+    },
+    "fallback": {
+        "manifold_drift": 0.0,
+        "manifold_alignment": 0.0,
+        "token_entropy": 0.5,
+        "compression_structure": 0.5,
+        "ncd_exemplar_distance": 0.0,
+    },
+}

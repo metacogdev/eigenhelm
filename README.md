@@ -134,12 +134,15 @@ jobs:
 |-------|---------|-------------|
 | `paths` | `.` | Files or directories to evaluate |
 | `diff` | `auto` | Revision range. `auto` evaluates only changed files on PRs |
+| `classify` | `true` | Show accept/marginal/reject decision labels |
 | `fail-on` | `reject` | When to fail: `reject`, `warn`, or `never` |
 | `sarif-upload` | `false` | Upload results to GitHub Code Scanning |
 | `strict` | `false` | Treat marginal as reject |
 | `lenient` | `false` | Treat marginal as accept |
 | `model` | (bundled polyglot) | Path to custom `.npz` model file |
 | `format` | `human` | Output format: `human`, `json`, or `sarif` |
+| `version` | (latest) | eigenhelm version to install (e.g. `0.9.0`) |
+| `exclude` | (none) | Glob patterns to exclude from evaluation (newline or comma-separated) |
 
 ### Outputs
 
@@ -164,12 +167,12 @@ All commands are available as `eigenhelm <command>` or `eh <command>`:
 | `eh inspect` | Inspect a saved model's metadata |
 | `eh serve` | Run the evaluation HTTP server |
 | `eh harness` | Run a statistical comparison harness across two code sets |
-| `eh benchmark` | Run real-world use case benchmarks |
 | `eh skill` | Install the agent skill file |
 | `eh model` | List, pull, and inspect models — including from the [remote registry](https://github.com/metacogdev/eigenhelm-models) |
 | `eh init` | Generate a starter `.eigenhelm.toml` configuration |
 | `eh corpus` | Manage training corpora (sync from manifest) |
 | `eh mcp` | Start the MCP stdio server |
+| `eigenhelm-benchmark` | Run real-world use case benchmarks (standalone entry point, not an `eh` subcommand) |
 
 Run `eh --help` or `eh <command> --help` for details.
 
@@ -214,11 +217,15 @@ src/eigenhelm/
 ├── critic/               — 5-dim scoring (drift, alignment, entropy, compression, NCD)
 ├── declarations/         — Declaration-aware scoring (type defs, barrel files, data tables)
 ├── regions/              — Test/production code region detection
+├── parsers/              — Tree-sitter parser loading, language map
 ├── eigenspace/           — PCA projection and drift scoring
 ├── attribution/          — Score attribution and directive generation
 ├── training/             — PCA training, calibration, exemplar selection
 ├── helm/                 — Threshold-calibrated evaluation and PID steering
+├── harness/              — Statistical evaluation harness (Mann-Whitney U)
+├── metrics/              — Feature extraction (halstead, cyclomatic, wl_hash)
 ├── config/               — `.eigenhelm.toml` loader and defaults
+├── cli/                  — CLI commands (evaluate, train, inspect, serve, harness, skill, init, corpus, model, mcp)
 ├── output/               — SARIF and JSON formatters
 ├── scoring/              — Per-repo scorecard
 ├── validation/           — Benchmark and validation workflows

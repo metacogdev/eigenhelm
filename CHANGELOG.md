@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.0.0](https://github.com/matchdav/eigenhelm/compare/v0.10.2...v1.0.0) (2026-09-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* prepare v1.0.0 open-source release
+
+### Features
+
+* centralize limits, cache dir, and registry defaults ([#101](https://github.com/matchdav/eigenhelm/issues/101)) ([2df0eac](https://github.com/matchdav/eigenhelm/commit/2df0eac7c8bdac8913eed199b6cb29f562fe89cd))
+* centralize threshold constants and npz keys ([#99](https://github.com/matchdav/eigenhelm/issues/99)) ([6aca529](https://github.com/matchdav/eigenhelm/commit/6aca52963cef47276b167c0eee3ef281c775f5a5))
+* prepare v1.0.0 open-source release ([6348aa4](https://github.com/matchdav/eigenhelm/commit/6348aa4713757584ad5021f4e06873d80c171e7c))
+
+
+### Bug Fixes
+
+* **calibration:** restore meaningful Python self-evaluation ([#82](https://github.com/matchdav/eigenhelm/issues/82)) ([6a3a23d](https://github.com/matchdav/eigenhelm/commit/6a3a23d976c3ca97d053d7b7c73108e517a3342c))
+* **docs:** update agent instructions to use `gh` command for issue management ([1511a26](https://github.com/matchdav/eigenhelm/commit/1511a263d2db9c54120cf62123c5eb1db3ccc0be))
+* **evaluate:** CLI threshold flags override config file ([#96](https://github.com/matchdav/eigenhelm/issues/96)) ([924d985](https://github.com/matchdav/eigenhelm/commit/924d9857f427de751a24ff52551f614176c8deea))
+* **precommit:** prevent TypeError when thresholds block is omitted ([#95](https://github.com/matchdav/eigenhelm/issues/95)) ([dee7dab](https://github.com/matchdav/eigenhelm/commit/dee7dabe7c23f60825135f5699ab60d114e4eba5))
+* **scorecard:** treat missing NCD exemplar identically to unconfigured ([#97](https://github.com/matchdav/eigenhelm/issues/97)) ([bc0f605](https://github.com/matchdav/eigenhelm/commit/bc0f60575b083c84b42a2a5ea0c236f806140c34))
+* **scoring:** recover Q4 NCD value when active but outside top-N violations ([#72](https://github.com/matchdav/eigenhelm/issues/72)) ([b4e8795](https://github.com/matchdav/eigenhelm/commit/b4e8795f54815fbc6286868cb8f6c75d1979887c))
+
+
+### Documentation
+
+* document self-eval calibration findings ([#79](https://github.com/matchdav/eigenhelm/issues/79)) ([3bb19b7](https://github.com/matchdav/eigenhelm/commit/3bb19b723ef6fab027c07267a4047f5b915fe7de))
+* fix stale project structure, test counts, Class C status ([#84](https://github.com/matchdav/eigenhelm/issues/84)) ([f491a71](https://github.com/matchdav/eigenhelm/commit/f491a716ac81b2f76aa242538583b9bb939e71d0))
+* reconcile CLAUDE.md, README, and specs with shipped implementation ([#86](https://github.com/matchdav/eigenhelm/issues/86)) ([822d1ab](https://github.com/matchdav/eigenhelm/commit/822d1ab723adfc9702b58c791917398dbde3e5ec))
+
 ## [0.10.2](https://github.com/matchdav/eigenhelm/compare/v0.10.1...v0.10.2) (2026-08-20)
 
 

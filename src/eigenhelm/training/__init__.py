@@ -240,30 +240,25 @@ def inspect_model(path: Path) -> dict:
         FileNotFoundError: If path does not exist.
         KeyError: If required keys are missing from the .npz file.
     """
-    import numpy as np
 
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Model file not found: {path}")
 
-    data = np.load(path, allow_pickle=False)
+    from eigenhelm._model_io import load_npz_model_arrays
 
-    # These keys are required — raise KeyError if missing
-    required = (
-        "projection_matrix",
-        "mean",
-        "std",
-        "n_components",
-        "version",
-        "corpus_hash",
-    )
-    for key in required:
+    data = load_npz_model_arrays(path, allow_pickle=False)
+
+    # Note: load_npz_model_arrays guarantees projection_matrix, mean, std.
+    # training needs three more:
+    for key in ("n_components", "version", "corpus_hash"):
         if key not in data:
             raise KeyError(f"Required key missing from model file: {key!r}")
 
-    W = data["projection_matrix"]
-    mean = data["mean"]
-    std = data["std"]
+    from eigenhelm.models import NPZ_KEYS
+    W = data[NPZ_KEYS.PROJECTION_MATRIX]
+    mean = data[NPZ_KEYS.MEAN]
+    std = data[NPZ_KEYS.STD]
     n_components = int(data["n_components"])
     version = str(data["version"])
     corpus_hash = str(data["corpus_hash"])

@@ -191,7 +191,13 @@ class TestMcpServerInitAndList:
         tools = resp["result"]["tools"]
         assert len(tools) == len(TOOL_DEFINITIONS)
         tool_names = {t["name"] for t in tools}
-        expected = {"evaluate", "evaluate_batch", "model_list", "model_info", "model_switch"}
+        expected = {
+            "evaluate",
+            "evaluate_batch",
+            "model_list",
+            "model_info",
+            "model_switch",
+        }
         assert tool_names == expected
 
     def test_each_tool_has_input_schema(self):
@@ -205,9 +211,7 @@ class TestMcpServerInitAndList:
         from eigenhelm.mcp.server import McpServer
 
         server = McpServer()
-        resp = server.handle_message(
-            {"jsonrpc": "2.0", "id": 3, "method": "ping"}
-        )
+        resp = server.handle_message({"jsonrpc": "2.0", "id": 3, "method": "ping"})
         assert resp["result"] == {}
 
 
@@ -331,7 +335,9 @@ class TestMcpServerDispatch:
 
         server = McpServer()
         original = tools_mod.TOOL_HANDLERS["evaluate"]
-        tools_mod.TOOL_HANDLERS["evaluate"] = lambda state, args: (_ for _ in ()).throw(ValueError("bad input"))
+        tools_mod.TOOL_HANDLERS["evaluate"] = lambda state, args: (_ for _ in ()).throw(
+            ValueError("bad input")
+        )
         try:
             resp = server.handle_message(
                 {
@@ -450,7 +456,12 @@ class TestMcpEvaluateBatch:
         )
         data = json.loads(resp["result"]["content"][0]["text"])
         # Just verify the summary structure is correct regardless of actual scores
-        assert data["summary"]["accepted"] + data["summary"]["warned"] + data["summary"]["rejected"] == 1
+        assert (
+            data["summary"]["accepted"]
+            + data["summary"]["warned"]
+            + data["summary"]["rejected"]
+            == 1
+        )
 
 
 # ---------------------------------------------------------------------------

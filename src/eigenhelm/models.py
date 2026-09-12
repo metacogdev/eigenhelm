@@ -268,6 +268,8 @@ class ScoreDistribution:
     n_scores: int
 
     def __post_init__(self) -> None:
+        from eigenhelm._validators import _validate_unit_interval
+
         values = [
             self.min,
             self.p10,
@@ -277,15 +279,12 @@ class ScoreDistribution:
             self.p90,
             self.max,
         ]
+        names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
         for i, v in enumerate(values):
-            if not (0.0 <= v <= 1.0):
-                names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
-                raise ValueError(
-                    f"ScoreDistribution.{names[i]} must be in [0.0, 1.0], got {v}"
-                )
+            _validate_unit_interval(f"ScoreDistribution.{names[i]}", v)
+
         for i in range(len(values) - 1):
             if values[i] > values[i + 1]:
-                names = ["min", "p10", "p25", "median", "p75", "p90", "max"]
                 raise ValueError(
                     f"ScoreDistribution values must be monotonically non-decreasing: "
                     f"{names[i]}={values[i]} > {names[i + 1]}={values[i + 1]}"
@@ -312,14 +311,10 @@ class CalibrationThresholds:
     n_scores: int
 
     def __post_init__(self) -> None:
-        if not (0.0 <= self.accept <= 1.0):
-            raise ValueError(
-                f"CalibrationThresholds.accept must be in [0.0, 1.0], got {self.accept}"
-            )
-        if not (0.0 <= self.reject <= 1.0):
-            raise ValueError(
-                f"CalibrationThresholds.reject must be in [0.0, 1.0], got {self.reject}"
-            )
+        from eigenhelm._validators import _validate_unit_interval
+
+        _validate_unit_interval("CalibrationThresholds.accept", self.accept)
+        _validate_unit_interval("CalibrationThresholds.reject", self.reject)
         if self.accept >= self.reject:
             raise ValueError(
                 f"CalibrationThresholds.accept ({self.accept}) must be < "
@@ -333,3 +328,13 @@ class UnsupportedLanguageError(Exception):
     def __init__(self, language: str) -> None:
         self.language = language
         super().__init__(f"No grammar available for language: {language!r}")
+
+class NPZ_KEYS:
+    """Standardized keys for .npz eigenspace model serialization."""
+    PROJECTION_MATRIX = "projection_matrix"
+    MEAN = "mean"
+    STD = "std"
+    EXEMPLARS = "exemplars"
+    EXEMPLAR_IDS = "exemplar_ids"
+    CALIBRATED_ACCEPT = "calibrated_accept"
+    CALIBRATED_REJECT = "calibrated_reject"

@@ -129,4 +129,6 @@ interface Spaced {
         regions = detect(source)
         assert len(regions) == 1
         # Non-blank lines should exclude the blank ones
-        assert regions[0].declaration_line_count < (regions[0].end_line - regions[0].start_line + 1)
+        assert regions[0].declaration_line_count < (
+            regions[0].end_line - regions[0].start_line + 1
+        )

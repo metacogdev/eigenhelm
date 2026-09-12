@@ -45,9 +45,9 @@ class IDynamicHelm(ABC):
             Pre-loaded PCA eigenspace model. Caller MUST pre-load via
             eigenhelm.eigenspace.load_model(). DynamicHelm does NOT perform
             file I/O. When None, operates in low-confidence mode.
-        accept_threshold: float = 0.4
+        accept_threshold: float = DEFAULT_ACCEPT_THRESHOLD
             Loss below this → "accept" decision.
-        reject_threshold: float = 0.6
+        reject_threshold: float = DEFAULT_REJECT_THRESHOLD
             Loss above this → "reject" decision.
             Must be > accept_threshold (hysteresis).
         pid_config: PIDConfig = PIDConfig()

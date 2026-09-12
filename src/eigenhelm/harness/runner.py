@@ -14,6 +14,7 @@ from pathlib import Path
 from scipy.stats import mannwhitneyu
 
 from eigenhelm.harness.report import CorpusStats, HarnessReport
+from eigenhelm.harness.report import SIGNIFICANCE_ALPHA
 from eigenhelm.helm import DynamicHelm
 from eigenhelm.helm.models import EvaluationRequest
 from eigenhelm.models import EigenspaceModel
@@ -128,7 +129,7 @@ def run_harness(
     u_stat = float(u_stat)
     p_val = float(p_val)
     delta = after_stats.mean_score - before_stats.mean_score
-    significant = p_val < 0.05
+    significant = p_val < SIGNIFICANCE_ALPHA
     improvement = significant and delta < 0.0
 
     return HarnessReport(

@@ -12,17 +12,23 @@ from eigenhelm.regions.models import RegionSpan, RegionType, TestBoundary
 
 class TestTestBoundaryValidation:
     def test_valid_boundary(self):
-        b = TestBoundary(start_line=1, end_line=10, language="python", pattern="test_class")
+        b = TestBoundary(
+            start_line=1, end_line=10, language="python", pattern="test_class"
+        )
         assert b.start_line == 1
         assert b.end_line == 10
 
     def test_equal_lines(self):
-        b = TestBoundary(start_line=5, end_line=5, language="rust", pattern="cfg_test_module")
+        b = TestBoundary(
+            start_line=5, end_line=5, language="rust", pattern="cfg_test_module"
+        )
         assert b.start_line == b.end_line
 
     def test_start_after_end_raises(self):
         with pytest.raises(ValueError, match="start_line.*must be <= end_line"):
-            TestBoundary(start_line=10, end_line=5, language="python", pattern="test_class")
+            TestBoundary(
+                start_line=10, end_line=5, language="python", pattern="test_class"
+            )
 
 
 class TestRegionSpanValidation:

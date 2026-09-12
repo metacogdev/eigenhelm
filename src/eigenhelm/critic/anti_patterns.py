@@ -30,8 +30,9 @@ _DEFAULT_DIFFICULTY_THRESHOLD = 30.0
 
 
 def _wl_histogram_entropy(fv_values: np.ndarray) -> float:
-    """Compute Shannon entropy of the WL histogram bins (indices 5:69)."""
-    hist = fv_values[5:69]
+    """Compute Shannon entropy of the WL histogram bins (indices 5:FEATURE_DIM)."""
+    from eigenhelm.models import FEATURE_DIM
+    hist = fv_values[5:FEATURE_DIM]
     # Normalize to probabilities (should already sum to ~1.0)
     total = hist.sum()
     if total <= 0:

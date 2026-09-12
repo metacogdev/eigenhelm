@@ -9,6 +9,7 @@ Public API:
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
@@ -55,8 +56,8 @@ def compute_attribution(
     nearest_exemplar_id: str | None = None,
     source: str | None = None,
     file_path: str | None = None,
-    top_n: int = 3,
-    directive_threshold: float = 0.3,
+    top_n: int = DEFAULT_TOP_N,
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD,
     declaration_dominant: bool = False,
 ) -> AttributionResult:
     """Compute full attribution for an evaluation result.

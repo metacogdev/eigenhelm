@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from eigenhelm.declarations.models import DeclarationAnalysis, DeclarationRegion, DeclarationType
+from eigenhelm.declarations.models import (
+    DeclarationAnalysis,
+    DeclarationRegion,
+    DeclarationType,
+)
 
 
 class TestDeclarationRegionValidation:

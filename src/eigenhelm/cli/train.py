@@ -1,6 +1,7 @@
 """eigenhelm-train: Train a PCA eigenspace model from a code corpus."""
 
 from __future__ import annotations
+from eigenhelm.cli._shared import format_score_distribution
 
 import argparse
 import sys
@@ -60,11 +61,7 @@ def format_training_report(
 
     if result.score_distribution is not None:
         sd = result.score_distribution
-        lines.append(
-            f"  Score dist:   min={sd.min:.3f}  p10={sd.p10:.3f}  "
-            f"p25={sd.p25:.3f}  median={sd.median:.3f}  "
-            f"p75={sd.p75:.3f}  p90={sd.p90:.3f}  max={sd.max:.3f}"
-        )
+        lines.append(f"  Score dist:   {format_score_distribution(sd, precision=3)}")
         if model.calibrated_accept is not None and model.calibrated_reject is not None:
             lines.append(
                 f"  Thresholds:   accept < {model.calibrated_accept:.4f} (p25)  "
@@ -103,6 +100,12 @@ def main(argv: list[str] | None = None) -> None:
         type=Path,
         metavar="PATH",
         help="Output .npz file path",
+    )
+    parser.add_argument(
+        "--min-files",
+        type=int,
+        default=10,
+        help="Minimum number of files required to train (default: 10, differs from library default of 1)",
     )
     parser.add_argument(
         "--n-components",
@@ -166,7 +169,7 @@ def main(argv: list[str] | None = None) -> None:
             version=args.version,
             language=lang,
             corpus_class=args.corpus_class,
-            min_files=10,
+            min_files=args.min_files,
         )
     except (FileNotFoundError, ValueError) as exc:
         print(f"eigenhelm-train: error: {exc}", file=sys.stderr)

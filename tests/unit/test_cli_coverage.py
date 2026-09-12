@@ -15,10 +15,10 @@ from click.testing import CliRunner
 
 from eigenhelm.cli.main import cli
 
-
 # ---------------------------------------------------------------------------
 # model.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestModelListLocal:
     def test_list_local_with_models(self):
@@ -230,6 +230,7 @@ class TestModelFmtSize:
 # model group --help
 # ---------------------------------------------------------------------------
 
+
 class TestModelHelp:
     def test_model_help(self):
         runner = CliRunner()
@@ -241,6 +242,7 @@ class TestModelHelp:
 # ---------------------------------------------------------------------------
 # benchmark.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestBenchmarkCLI:
     def test_help_exits_zero(self):
@@ -279,17 +281,28 @@ class TestBenchmarkCLI:
         from eigenhelm.cli.benchmark import _build_parser
 
         parser = _build_parser()
-        args = parser.parse_args([
-            "--project", "/tmp/proj",
-            "--model", "model.npz",
-            "--format", "json",
-            "--output", "report.json",
-            "--good-corpus", "/tmp/good",
-            "--bad-corpus", "/tmp/bad",
-            "--replay", "/tmp/repo",
-            "--commits", "100",
-            "--compare", "baseline.json",
-        ])
+        args = parser.parse_args(
+            [
+                "--project",
+                "/tmp/proj",
+                "--model",
+                "model.npz",
+                "--format",
+                "json",
+                "--output",
+                "report.json",
+                "--good-corpus",
+                "/tmp/good",
+                "--bad-corpus",
+                "/tmp/bad",
+                "--replay",
+                "/tmp/repo",
+                "--commits",
+                "100",
+                "--compare",
+                "baseline.json",
+            ]
+        )
         assert args.model == "model.npz"
         assert args.output_format == "json"
         assert args.output == Path("report.json")
@@ -310,10 +323,15 @@ class TestBenchmarkCLI:
         mock_report.n_files = 0
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.helm.DynamicHelm"),
-            patch("eigenhelm.validation.usecase_benchmark.UseCaseBenchmark") as mock_bench_cls,
+            patch(
+                "eigenhelm.validation.usecase_benchmark.UseCaseBenchmark"
+            ) as mock_bench_cls,
         ):
             mock_bench = mock_bench_cls.return_value
             mock_bench.run.return_value = mock_report
@@ -325,7 +343,7 @@ class TestBenchmarkCLI:
         from eigenhelm.cli.benchmark import main
 
         with patch(
-            "eigenhelm.trained_models.default_model_path",
+            "eigenhelm.cli._common.get_bundled_model_path",
             side_effect=RuntimeError("boom"),
         ):
             result = main(["--project", "/tmp/proj"])
@@ -343,10 +361,15 @@ class TestBenchmarkCLI:
         mock_report.render.return_value = "Report output"
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.helm.DynamicHelm"),
-            patch("eigenhelm.validation.usecase_benchmark.UseCaseBenchmark") as mock_bench_cls,
+            patch(
+                "eigenhelm.validation.usecase_benchmark.UseCaseBenchmark"
+            ) as mock_bench_cls,
         ):
             mock_bench = mock_bench_cls.return_value
             mock_bench.run.return_value = mock_report
@@ -365,10 +388,15 @@ class TestBenchmarkCLI:
         mock_report.to_json.return_value = '{"files": 3}'
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.helm.DynamicHelm"),
-            patch("eigenhelm.validation.usecase_benchmark.UseCaseBenchmark") as mock_bench_cls,
+            patch(
+                "eigenhelm.validation.usecase_benchmark.UseCaseBenchmark"
+            ) as mock_bench_cls,
         ):
             mock_bench = mock_bench_cls.return_value
             mock_bench.run.return_value = mock_report
@@ -387,9 +415,13 @@ class TestBenchmarkCLI:
         mock_report.render.return_value = "ok"
 
         with (
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace) as mock_load,
+            patch(
+                "eigenhelm.cli._common.load_model", return_value=mock_eigenspace
+            ) as mock_load,
             patch("eigenhelm.helm.DynamicHelm"),
-            patch("eigenhelm.validation.usecase_benchmark.UseCaseBenchmark") as mock_bench_cls,
+            patch(
+                "eigenhelm.validation.usecase_benchmark.UseCaseBenchmark"
+            ) as mock_bench_cls,
         ):
             mock_bench = mock_bench_cls.return_value
             mock_bench.run.return_value = mock_report
@@ -411,10 +443,15 @@ class TestBenchmarkCLI:
         out_file = tmp_path / "report.json"
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.helm.DynamicHelm"),
-            patch("eigenhelm.validation.usecase_benchmark.UseCaseBenchmark") as mock_bench_cls,
+            patch(
+                "eigenhelm.validation.usecase_benchmark.UseCaseBenchmark"
+            ) as mock_bench_cls,
         ):
             mock_bench = mock_bench_cls.return_value
             mock_bench.run.return_value = mock_report
@@ -426,6 +463,7 @@ class TestBenchmarkCLI:
 # ---------------------------------------------------------------------------
 # corpus.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestCorpusCLI:
     def test_help(self):
@@ -508,6 +546,7 @@ class TestCorpusCLI:
         @dataclass
         class FakeManifest:
             targets: list = None
+
             def __post_init__(self):
                 if self.targets is None:
                     self.targets = []
@@ -519,12 +558,16 @@ class TestCorpusCLI:
             failed: tuple = ()
             total_files: int = 0
             files_by_target: dict = None
+
             def __post_init__(self):
                 if self.files_by_target is None:
                     self.files_by_target = {}
 
         with (
-            patch("eigenhelm.corpus.manifest.load_any_manifest", return_value=FakeManifest()),
+            patch(
+                "eigenhelm.corpus.manifest.load_any_manifest",
+                return_value=FakeManifest(),
+            ),
             patch("eigenhelm.corpus.sync.sync_manifest", return_value=FakeResult()),
             pytest.raises(SystemExit) as exc_info,
         ):
@@ -631,7 +674,9 @@ class TestCorpusCLI:
                     self.failed_manifests = []
 
         with (
-            patch("eigenhelm.corpus.manifest.load_any_manifest", return_value=fake_comp),
+            patch(
+                "eigenhelm.corpus.manifest.load_any_manifest", return_value=fake_comp
+            ),
             patch("eigenhelm.corpus.sync.sync_composition", return_value=FakeBulk()),
             pytest.raises(SystemExit) as exc_info,
         ):
@@ -651,7 +696,9 @@ class TestCorpusCLI:
         fake_comp.sources = ["source1"]
 
         with (
-            patch("eigenhelm.corpus.manifest.load_any_manifest", return_value=fake_comp),
+            patch(
+                "eigenhelm.corpus.manifest.load_any_manifest", return_value=fake_comp
+            ),
             patch(
                 "eigenhelm.corpus.sync.sync_composition",
                 side_effect=FileNotFoundError("child.toml not found"),
@@ -665,6 +712,7 @@ class TestCorpusCLI:
 # ---------------------------------------------------------------------------
 # skill.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestSkillCLI:
     def test_skill_print_stdout(self):
@@ -711,7 +759,9 @@ class TestSkillCLI:
 
         runner = CliRunner()
         with patch("eigenhelm.cli.skill._load_skill", return_value="# New\n"):
-            result = runner.invoke(cli, ["skill", "--install", "--force", str(tmp_path)])
+            result = runner.invoke(
+                cli, ["skill", "--install", "--force", str(tmp_path)]
+            )
         assert result.exit_code == 0
         assert "New" in existing.read_text()
 
@@ -738,6 +788,7 @@ class TestSkillCLI:
 # ---------------------------------------------------------------------------
 # mcp.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestMcpCLI:
     def test_help(self):
@@ -781,6 +832,7 @@ class TestMcpCLI:
 # serve.py tests
 # ---------------------------------------------------------------------------
 
+
 class TestServeCLI:
     def test_help(self):
         from eigenhelm.cli.serve import main
@@ -799,8 +851,11 @@ class TestServeCLI:
         mock_app = MagicMock()
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.serve.create_app", return_value=mock_app),
             patch("uvicorn.run") as mock_uvicorn_run,
         ):
@@ -811,9 +866,12 @@ class TestServeCLI:
         from eigenhelm.cli.serve import main
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
             patch(
-                "eigenhelm.eigenspace.load_model",
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch(
+                "eigenhelm.cli._common.load_model",
                 side_effect=FileNotFoundError("model not found"),
             ),
         ):
@@ -830,20 +888,27 @@ class TestServeCLI:
         mock_eigenspace.corpus_hash = "abc123"
 
         with (
-            patch("eigenhelm.trained_models.default_model_path", return_value=Path("/fake/model.npz")),
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch(
+                "eigenhelm.trained_models.default_model_path",
+                return_value=Path("/fake/model.npz"),
+            ),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.serve.create_app", return_value=MagicMock()),
             patch("uvicorn.run") as mock_run,
         ):
             main(["--host", "127.0.0.1", "--port", "9090"])
         mock_run.assert_called_once()
         call_kwargs = mock_run.call_args
-        assert call_kwargs.kwargs["host"] == "127.0.0.1" or call_kwargs[1].get("host") == "127.0.0.1"
+        assert (
+            call_kwargs.kwargs["host"] == "127.0.0.1"
+            or call_kwargs[1].get("host") == "127.0.0.1"
+        )
 
 
 # ---------------------------------------------------------------------------
 # harness.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestHarnessCLI:
     def test_help(self):
@@ -895,9 +960,7 @@ class TestHarnessCLI:
                 return_value='{"result": "ok"}',
             ),
         ):
-            result = main(
-                ["--before", str(before), "--after", str(after), "--json"]
-            )
+            result = main(["--before", str(before), "--after", str(after), "--json"])
         assert result == 0
 
     def test_harness_with_model(self, tmp_path):
@@ -912,18 +975,23 @@ class TestHarnessCLI:
         mock_eigenspace = MagicMock()
 
         with (
-            patch("eigenhelm.eigenspace.load_model", return_value=mock_eigenspace),
+            patch("eigenhelm.cli._common.load_model", return_value=mock_eigenspace),
             patch("eigenhelm.harness.runner.run_harness", return_value=mock_report),
             patch(
                 "eigenhelm.cli.harness.format_harness_human",
                 return_value="ok",
             ),
         ):
-            result = main([
-                "--before", str(before),
-                "--after", str(after),
-                "--model", "/tmp/model.npz",
-            ])
+            result = main(
+                [
+                    "--before",
+                    str(before),
+                    "--after",
+                    str(after),
+                    "--model",
+                    "/tmp/model.npz",
+                ]
+            )
         assert result == 0
 
     def test_harness_value_error(self, tmp_path):
@@ -933,10 +1001,14 @@ class TestHarnessCLI:
             "eigenhelm.harness.runner.run_harness",
             side_effect=ValueError("Empty corpus"),
         ):
-            result = main([
-                "--before", str(tmp_path),
-                "--after", str(tmp_path),
-            ])
+            result = main(
+                [
+                    "--before",
+                    str(tmp_path),
+                    "--after",
+                    str(tmp_path),
+                ]
+            )
         assert result == 1
 
     def test_harness_runtime_error(self, tmp_path):
@@ -946,16 +1018,21 @@ class TestHarnessCLI:
             "eigenhelm.harness.runner.run_harness",
             side_effect=RuntimeError("unexpected"),
         ):
-            result = main([
-                "--before", str(tmp_path),
-                "--after", str(tmp_path),
-            ])
+            result = main(
+                [
+                    "--before",
+                    str(tmp_path),
+                    "--after",
+                    str(tmp_path),
+                ]
+            )
         assert result == 2
 
 
 # ---------------------------------------------------------------------------
 # inspect.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestInspectCLI:
     def test_help(self):
@@ -967,6 +1044,7 @@ class TestInspectCLI:
 
     def test_inspect_human_output(self, tmp_path):
         import numpy as np
+
         from eigenhelm.cli.inspect import main
 
         model_path = tmp_path / "model.npz"
@@ -978,7 +1056,9 @@ class TestInspectCLI:
             "corpus_hash": "abc123",
             "projection_shape": (69, 10),
             "cumulative_variance": 0.95,
-            "explained_variance_ratio": np.array([0.3, 0.2, 0.15, 0.1, 0.05, 0.05, 0.03, 0.03, 0.02, 0.02]),
+            "explained_variance_ratio": np.array(
+                [0.3, 0.2, 0.15, 0.1, 0.05, 0.05, 0.03, 0.03, 0.02, 0.02]
+            ),
             "mean_range": (0.1, 5.0),
             "std_range": (0.5, 2.0),
             "sigma_drift": 1.5,
@@ -1007,6 +1087,7 @@ class TestInspectCLI:
 
     def test_inspect_json_output(self, tmp_path):
         import numpy as np
+
         from eigenhelm.cli.inspect import main
 
         model_path = tmp_path / "model.npz"
@@ -1030,8 +1111,13 @@ class TestInspectCLI:
             "calibrated_accept": 0.35,
             "calibrated_reject": 0.65,
             "score_distribution": {
-                "min": 0.05, "p10": 0.2, "p25": 0.35,
-                "median": 0.5, "p75": 0.65, "p90": 0.8, "max": 0.95,
+                "min": 0.05,
+                "p10": 0.2,
+                "p25": 0.35,
+                "median": 0.5,
+                "p75": 0.65,
+                "p90": 0.8,
+                "max": 0.95,
             },
         }
 
@@ -1109,6 +1195,7 @@ class TestInspectCLI:
 # precommit.py tests
 # ---------------------------------------------------------------------------
 
+
 class TestPrecommitCLI:
     def test_help_exits_zero(self):
         from eigenhelm.cli.precommit import main
@@ -1121,7 +1208,10 @@ class TestPrecommitCLI:
         from eigenhelm.cli.precommit import main
 
         with (
-            patch("eigenhelm.cli.precommit._load_project_config", return_value=(None, None, False, "")),
+            patch(
+                "eigenhelm.cli.precommit._load_project_config",
+                return_value=(None, None, False, ""),
+            ),
             patch("eigenhelm.cli.precommit._get_staged_files", return_value=[]),
         ):
             result = main([])
@@ -1131,7 +1221,10 @@ class TestPrecommitCLI:
         from eigenhelm.cli.precommit import main
 
         with (
-            patch("eigenhelm.cli.precommit._load_project_config", return_value=(None, None, False, "")),
+            patch(
+                "eigenhelm.cli.precommit._load_project_config",
+                return_value=(None, None, False, ""),
+            ),
             patch("eigenhelm.cli.precommit._get_staged_files", return_value=[]),
         ):
             result = main(["--lenient"])
@@ -1141,7 +1234,10 @@ class TestPrecommitCLI:
         from eigenhelm.cli.precommit import main
 
         with (
-            patch("eigenhelm.cli.precommit._load_project_config", return_value=(None, None, False, "")),
+            patch(
+                "eigenhelm.cli.precommit._load_project_config",
+                return_value=(None, None, False, ""),
+            ),
             patch("eigenhelm.cli.precommit._get_staged_files", return_value=[]),
         ):
             result = main(["--strict"])
@@ -1151,10 +1247,43 @@ class TestPrecommitCLI:
         from eigenhelm.cli.precommit import main
 
         with (
-            patch("eigenhelm.cli.precommit._load_project_config", return_value=(None, None, False, "")),
+            patch(
+                "eigenhelm.cli.precommit._load_project_config",
+                return_value=(None, None, False, ""),
+            ),
             patch("eigenhelm.cli.precommit._get_staged_files", return_value=[]),
         ):
             result = main(["--scorecard"])
+        assert result == 0
+
+    def test_missing_thresholds_block_does_not_crash(self):
+        from eigenhelm.cli.precommit import main
+        from eigenhelm.config.models import ProjectConfig
+        from eigenhelm.helm.models import EvaluationResponse
+
+        config = ProjectConfig()  # defaults to accept=None, reject=None
+
+        with (
+            patch(
+                "eigenhelm.cli.precommit._load_project_config",
+                return_value=(config, None, False, "hash"),
+            ),
+            patch(
+                "eigenhelm.cli.precommit._get_staged_files",
+                return_value=[__import__("pathlib").Path("foo.py")],
+            ),
+            patch("pathlib.Path.read_bytes", return_value=b"x = 1"),
+            patch(
+                "eigenhelm.cli.precommit.DynamicHelm.evaluate",
+                return_value=EvaluationResponse(
+                    score=0.5,
+                    decision="warn",
+                    structural_confidence="high",
+                    critique=MagicMock(),
+                ),
+            ),
+        ):
+            result = main([])
         assert result == 0
 
     def test_runtime_error_returns_2(self):
@@ -1171,6 +1300,7 @@ class TestPrecommitCLI:
 # ---------------------------------------------------------------------------
 # train.py tests
 # ---------------------------------------------------------------------------
+
 
 class TestTrainCLI:
     def test_help(self):
@@ -1292,11 +1422,15 @@ class TestTrainCLI:
         from eigenhelm.cli.train import main
 
         with pytest.raises(SystemExit) as exc_info:
-            main([
-                str(tmp_path),
-                "-o", str(tmp_path / "out.npz"),
-                "--language", "klingon",
-            ])
+            main(
+                [
+                    str(tmp_path),
+                    "-o",
+                    str(tmp_path / "out.npz"),
+                    "--language",
+                    "klingon",
+                ]
+            )
         assert exc_info.value.code == 2
 
     def test_train_file_not_found(self, tmp_path):
@@ -1307,11 +1441,15 @@ class TestTrainCLI:
             side_effect=FileNotFoundError("corpus not found"),
         ):
             with pytest.raises(SystemExit) as exc_info:
-                main([
-                    str(tmp_path),
-                    "-o", str(tmp_path / "out.npz"),
-                    "--language", "python",
-                ])
+                main(
+                    [
+                        str(tmp_path),
+                        "-o",
+                        str(tmp_path / "out.npz"),
+                        "--language",
+                        "python",
+                    ]
+                )
             assert exc_info.value.code == 1
 
     def test_train_runtime_error(self, tmp_path):
@@ -1322,11 +1460,15 @@ class TestTrainCLI:
             side_effect=RuntimeError("extraction failed"),
         ):
             with pytest.raises(SystemExit) as exc_info:
-                main([
-                    str(tmp_path),
-                    "-o", str(tmp_path / "out.npz"),
-                    "--language", "python",
-                ])
+                main(
+                    [
+                        str(tmp_path),
+                        "-o",
+                        str(tmp_path / "out.npz"),
+                        "--language",
+                        "python",
+                    ]
+                )
             assert exc_info.value.code == 2
 
     def test_train_save_file_exists(self, tmp_path):
@@ -1341,11 +1483,15 @@ class TestTrainCLI:
             ),
         ):
             with pytest.raises(SystemExit) as exc_info:
-                main([
-                    str(tmp_path),
-                    "-o", str(tmp_path / "out.npz"),
-                    "--language", "python",
-                ])
+                main(
+                    [
+                        str(tmp_path),
+                        "-o",
+                        str(tmp_path / "out.npz"),
+                        "--language",
+                        "python",
+                    ]
+                )
             assert exc_info.value.code == 1
 
     def test_train_save_runtime_error(self, tmp_path):
@@ -1360,17 +1506,22 @@ class TestTrainCLI:
             ),
         ):
             with pytest.raises(SystemExit) as exc_info:
-                main([
-                    str(tmp_path),
-                    "-o", str(tmp_path / "out.npz"),
-                    "--language", "python",
-                ])
+                main(
+                    [
+                        str(tmp_path),
+                        "-o",
+                        str(tmp_path / "out.npz"),
+                        "--language",
+                        "python",
+                    ]
+                )
             assert exc_info.value.code == 2
 
 
 # ---------------------------------------------------------------------------
 # main.py passthrough tests
 # ---------------------------------------------------------------------------
+
 
 class TestPassthrough:
     def test_evaluate_help(self):

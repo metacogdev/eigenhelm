@@ -8,18 +8,24 @@ to avoid re-evaluating unchanged files.
 from __future__ import annotations
 
 import argparse
+from eigenhelm.cli._common import add_strict_lenient_args
 import hashlib
 import subprocess
 import sys
 from pathlib import Path
 
-from eigenhelm.config import find_config, load_config
-from eigenhelm.helm import DynamicHelm
-from eigenhelm.helm.models import EvaluationRequest, EvaluationResponse
-from eigenhelm.parsers.language_map import LANGUAGE_MAP
+from eigenhelm.cli._shared import _apply_thresholds
 
 # Re-exported for backwards compatibility (tests and external callers import these from here)
-from eigenhelm.cli.precommit_cache import CacheEntry, EvaluationCache, _CACHE_FILE  # noqa: F401
+from eigenhelm.cli.precommit_cache import (
+    _CACHE_FILE,
+    CacheEntry,
+    EvaluationCache,
+)
+from eigenhelm.config import find_config, load_config
+from eigenhelm.helm import DynamicHelm
+from eigenhelm.helm.models import EvaluationRequest
+from eigenhelm.parsers.language_map import LANGUAGE_MAP
 
 _RECOGNIZED_EXTENSIONS: frozenset[str] = frozenset(
     ext for _, (_, ext) in LANGUAGE_MAP.items()
@@ -61,23 +67,6 @@ def _get_staged_files() -> list[Path]:
         if p.suffix in _RECOGNIZED_EXTENSIONS and p.is_file():
             paths.append(p)
     return paths
-
-
-def _apply_thresholds(response: EvaluationResponse, thresholds) -> EvaluationResponse:
-    """Re-derive decision from score using config thresholds."""
-    from dataclasses import replace
-
-    score = response.score
-    if score >= thresholds.reject:
-        new_decision = "reject"
-    elif score <= thresholds.accept:
-        new_decision = "accept"
-    else:
-        new_decision = "warn"
-
-    if new_decision == response.decision:
-        return response
-    return replace(response, decision=new_decision)
 
 
 def _load_project_config() -> tuple[object | None, Path | None, bool, str]:
@@ -183,19 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="eigenhelm-check",
         description="eigenhelm pre-commit hook — evaluate staged files",
     )
-    strict_group = parser.add_mutually_exclusive_group()
-    strict_group.add_argument(
-        "--strict",
-        action="store_true",
-        default=False,
-        help="Treat warn as reject (block commit on warn).",
-    )
-    strict_group.add_argument(
-        "--lenient",
-        action="store_true",
-        default=False,
-        help="Treat warn as accept (override config strict).",
-    )
+    add_strict_lenient_args(parser)
     parser.add_argument(
         "--scorecard",
         action="store_true",
@@ -219,14 +196,9 @@ def main(argv: list[str] | None = None) -> int:
 
         lang_overrides = config.language_overrides if config else {}
 
-        eigenspace = None
-        if config is not None and config.model:
-            try:
-                from eigenhelm.eigenspace import load_model
+        from eigenhelm.cli._common import resolve_and_load_model
 
-                eigenspace = load_model(config.model)
-            except Exception:
-                pass
+        eigenspace, _ = resolve_and_load_model(None, config)
 
         helm = DynamicHelm(eigenspace=eigenspace)
 
@@ -263,6 +235,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.scorecard and scorecard_critiques:
             from eigenhelm.scoring.scorecard import (
                 build_scorecard,
+            )
+            from eigenhelm.scoring.scorecard import (
                 render_human as render_scorecard_human,
             )
 

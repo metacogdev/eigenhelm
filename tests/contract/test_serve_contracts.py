@@ -60,9 +60,7 @@ class TestSizeLimitMiddleware:
         middleware = ContentSizeLimitMiddleware(dummy_app, max_bytes=100)
         scope = {"type": "websocket"}
 
-        asyncio.new_event_loop().run_until_complete(
-            middleware(scope, None, None)
-        )
+        asyncio.new_event_loop().run_until_complete(middleware(scope, None, None))
         assert calls == ["websocket"]
 
 
@@ -98,9 +96,7 @@ class TestTimeoutMiddleware:
         middleware = TimeoutMiddleware(dummy_app, timeout_seconds=1.0)
         scope = {"type": "websocket"}
 
-        asyncio.new_event_loop().run_until_complete(
-            middleware(scope, None, None)
-        )
+        asyncio.new_event_loop().run_until_complete(middleware(scope, None, None))
         assert calls == ["websocket"]
 
     def test_non_v1_path_not_subject_to_timeout(self):
@@ -117,9 +113,7 @@ class TestTimeoutMiddleware:
         middleware = TimeoutMiddleware(dummy_app, timeout_seconds=0.001)
         scope = {"type": "http", "path": "/health"}
 
-        asyncio.new_event_loop().run_until_complete(
-            middleware(scope, None, None)
-        )
+        asyncio.new_event_loop().run_until_complete(middleware(scope, None, None))
         assert calls == ["called"]
 
     def test_v1_timeout_returns_504(self):
@@ -150,6 +144,7 @@ class TestTimeoutMiddleware:
         assert sent_messages[0]["type"] == "http.response.start"
         assert sent_messages[0]["status"] == 504
         import json
+
         body = json.loads(sent_messages[1]["body"])
         assert body["error"] == "evaluation_timeout"
 
@@ -373,10 +368,16 @@ class TestBatchSummaryDecision:
 
         results = [
             EvaluateResponse(
-                decision="accept", score=0.8, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.8,
+                structural_confidence="high",
+                violations=[],
             ),
             EvaluateResponse(
-                decision="accept", score=0.7, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.7,
+                structural_confidence="high",
+                violations=[],
             ),
         ]
         summary = _compute_summary(results)
@@ -392,7 +393,10 @@ class TestBatchSummaryDecision:
 
         results = [
             EvaluateResponse(
-                decision="accept", score=0.8, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.8,
+                structural_confidence="high",
+                violations=[],
             ),
             EvaluateResponse(
                 decision="warn", score=0.5, structural_confidence="high", violations=[]
@@ -407,13 +411,19 @@ class TestBatchSummaryDecision:
 
         results = [
             EvaluateResponse(
-                decision="accept", score=0.8, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.8,
+                structural_confidence="high",
+                violations=[],
             ),
             EvaluateResponse(
                 decision="warn", score=0.5, structural_confidence="high", violations=[]
             ),
             EvaluateResponse(
-                decision="reject", score=0.2, structural_confidence="high", violations=[]
+                decision="reject",
+                score=0.2,
+                structural_confidence="high",
+                violations=[],
             ),
         ]
         summary = _compute_summary(results)
@@ -426,10 +436,16 @@ class TestBatchSummaryDecision:
 
         results = [
             EvaluateResponse(
-                decision="accept", score=0.6, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.6,
+                structural_confidence="high",
+                violations=[],
             ),
             EvaluateResponse(
-                decision="accept", score=0.8, structural_confidence="high", violations=[]
+                decision="accept",
+                score=0.8,
+                structural_confidence="high",
+                violations=[],
             ),
         ]
         summary = _compute_summary(results)

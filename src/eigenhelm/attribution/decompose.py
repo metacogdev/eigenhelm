@@ -7,6 +7,7 @@ information-theoretic dimensions (entropy, compression, NCD).
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
     from eigenhelm.critic import AestheticMetrics
     from eigenhelm.models import EigenspaceModel, FeatureVector, ProjectionResult
 
-NDIM = 69
 
 
 def _build_feature_contributions(
@@ -61,7 +61,7 @@ def decompose_drift(
     projection: ProjectionResult,
     model: EigenspaceModel,
     feature_vector: FeatureVector,
-    top_n: int = 3,
+    top_n: int = DEFAULT_TOP_N,
 ) -> DimensionAttribution:
     """Decompose manifold_drift into per-feature reconstruction error contributions.
 
@@ -94,7 +94,7 @@ def decompose_alignment(
     projection: ProjectionResult,
     model: EigenspaceModel,
     feature_vector: FeatureVector,
-    top_n: int = 3,
+    top_n: int = DEFAULT_TOP_N,
 ) -> DimensionAttribution:
     """Decompose manifold_alignment via coordinate-weighted back-projection.
 

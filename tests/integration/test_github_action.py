@@ -216,9 +216,7 @@ class TestGitHubActionHappyPaths:
         from eigenhelm.cli.evaluate import main
 
         clean_file = tmp_path / "utils.py"
-        clean_file.write_text(
-            (FIXTURES_DIR / "python_quicksort.py").read_text()
-        )
+        clean_file.write_text((FIXTURES_DIR / "python_quicksort.py").read_text())
 
         with (
             patch(
@@ -297,12 +295,19 @@ class TestGitHubActionHappyPaths:
         """
         from eigenhelm.cli.evaluate import main
 
-        files = [(tmp_path / f"f{i}.py", score) for i, score in enumerate([0.2, 0.5, 0.8])]
+        files = [
+            (tmp_path / f"f{i}.py", score) for i, score in enumerate([0.2, 0.5, 0.8])
+        ]
         for path, _ in files:
             path.write_text("x = 1\n")
 
         fake_results = [
-            (str(path), _make_accept_response(score) if score < 0.4 else _make_warn_response(score))
+            (
+                str(path),
+                _make_accept_response(score)
+                if score < 0.4
+                else _make_warn_response(score),
+            )
             for path, score in files
         ]
         # Ensure decisions match score thresholds
@@ -441,7 +446,9 @@ class TestGitHubActionFailureCases:
           - Score 0.85 (reject-quality) with fail-on-reject: false → exit 0
           - SARIF still contains level: error (the annotation appears, but doesn't block)
         """
-        pytest.skip("fail-on-reject: false has no CLI equivalent yet — see TODO in skip reason")
+        pytest.skip(
+            "fail-on-reject: false has no CLI equivalent yet — see TODO in skip reason"
+        )
 
     def test_empty_diff_no_supported_files_exits_zero(self, tmp_path):
         """PR touching only non-source files (docs, config) exits 0 with no SARIF output.
@@ -654,7 +661,9 @@ class TestGitHubActionIntegrationScenarios:
 
         sarif = json.loads(capsys.readouterr().out)
         results = sarif["runs"][0]["results"]
-        score_results = [r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score"]
+        score_results = [
+            r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score"
+        ]
         assert len(score_results) == 1
         assert score_results[0]["level"] == "error", (
             "Reject decision must map to SARIF 'error' level for PR blocking"
@@ -681,7 +690,9 @@ class TestGitHubActionIntegrationScenarios:
 
         sarif = json.loads(capsys.readouterr().out)
         results = sarif["runs"][0]["results"]
-        score_results = [r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score"]
+        score_results = [
+            r for r in results if r["ruleId"] == "eigenhelm/aesthetic-score"
+        ]
         assert len(score_results) == 1
         assert score_results[0]["level"] == "note", (
             "Accept decision must map to SARIF 'note' level (non-blocking)"
@@ -758,7 +769,9 @@ class TestGitHubActionIntegrationScenarios:
         Run in a real GitHub Actions workflow to validate end-to-end.
         Assert exit 0 and valid SARIF on stdout.
         """
-        pytest.skip("requires composite action runtime — run in a real GitHub Actions job to validate")
+        pytest.skip(
+            "requires composite action runtime — run in a real GitHub Actions job to validate"
+        )
 
     @pytest.mark.skip(
         reason=(

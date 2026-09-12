@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 from eigenhelm.parsers.language_map import LANGUAGE_MAP
@@ -44,6 +46,36 @@ _GENERATED_DIRS: frozenset[str] = frozenset({"generated", "proto", "_generated",
 # Regex for generated file markers (checked in first 10 lines)
 _GENERATED_MARKERS = re.compile(r"^\s*#\s*(?:Generated\s+by|@generated)", re.IGNORECASE)
 
+_SKIP_DIRS: frozenset[str] = frozenset(
+    {
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "node_modules",
+        ".pytest_cache",
+        "dist",
+        "build",
+    }
+)
+
+_SUPPORTED_EXTENSIONS: frozenset[str] = (
+    frozenset(_EXT_TO_LANG.keys()) | {".py"} | _CONFIG_EXTENSIONS
+)
+
+
+@dataclass(frozen=True)
+class _CategorizationContext:
+    path: Path
+    path_str: str
+    name: str
+    parts: frozenset[str]
+    content: str | None
+    overrides: dict[str, FileCategory] | None
+
+
+_CategoryRule = Callable[[_CategorizationContext], FileCategory | None]
+
 
 def categorize_file(
     file_path: str | Path,
@@ -61,56 +93,81 @@ def categorize_file(
         FileCategory classification.
     """
     path = Path(file_path)
-    path_str = str(path)
-
-    # 1. Override lookup
-    if overrides and path_str in overrides:
-        return overrides[path_str]
-
-    # 2. Config file extensions (not source code)
-    if path.suffix in _CONFIG_EXTENSIONS:
-        return FileCategory.SCHEMA
-
-    # 3. Filename patterns
-    name = path.name
-
-    # Test files by name
-    if name.startswith("test_") or name.endswith("_test.py"):
-        return FileCategory.TEST
-
-    # Init files — need content analysis to distinguish re-export from logic
-    if name == "__init__.py":
-        return _categorize_init(content)
-
-    # 4. Directory location
-    parts = set(path.parts)
-
-    if parts & _TEST_DIRS:
-        return FileCategory.TEST
-
-    if parts & _GENERATED_DIRS:
-        return FileCategory.GENERATED
-
-    # 5. Content analysis (needs content)
-    if content is not None:
-        # Generated file markers
-        first_lines = "\n".join(content.split("\n")[:10])
-        if _GENERATED_MARKERS.search(first_lines):
-            return FileCategory.GENERATED
-
-        # Schema directory + schema-like content (class-heavy or no standalone functions)
-        if parts & _SCHEMA_DIRS and _is_schema_content(content):
-            return FileCategory.SCHEMA
-
-    elif parts & _SCHEMA_DIRS:
-        # No content available but in a schema directory — assume schema
-        return FileCategory.SCHEMA
-
-    # 6. Default: implementation
-    if path.suffix in _EXT_TO_LANG or path.suffix == ".py":
-        return FileCategory.IMPLEMENTATION
-
+    context = _CategorizationContext(
+        path=path,
+        path_str=str(path),
+        name=path.name,
+        parts=frozenset(path.parts),
+        content=content,
+        overrides=overrides,
+    )
+    for rule in _CATEGORY_RULES:
+        category = rule(context)
+        if category is not None:
+            return category
     return FileCategory.UNKNOWN
+
+
+def _override_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.overrides and context.path_str in context.overrides:
+        return context.overrides[context.path_str]
+    return None
+
+
+def _config_extension_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.path.suffix in _CONFIG_EXTENSIONS:
+        return FileCategory.SCHEMA
+    return None
+
+
+def _filename_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.name.startswith("test_") or context.name.endswith("_test.py"):
+        return FileCategory.TEST
+    if context.name == "__init__.py":
+        return _categorize_init(context.content)
+    return None
+
+
+def _directory_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.parts & _TEST_DIRS:
+        return FileCategory.TEST
+    if context.parts & _GENERATED_DIRS:
+        return FileCategory.GENERATED
+    return None
+
+
+def _content_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.content is None:
+        return _missing_content_schema_rule(context)
+    if _has_generated_marker(context.content):
+        return FileCategory.GENERATED
+    if context.parts & _SCHEMA_DIRS and _is_schema_content(context.content):
+        return FileCategory.SCHEMA
+    return None
+
+
+def _missing_content_schema_rule(
+    context: _CategorizationContext,
+) -> FileCategory | None:
+    if context.parts & _SCHEMA_DIRS:
+        return FileCategory.SCHEMA
+    return None
+
+
+def _source_extension_rule(context: _CategorizationContext) -> FileCategory | None:
+    if context.path.suffix in _EXT_TO_LANG or context.path.suffix == ".py":
+        return FileCategory.IMPLEMENTATION
+    return None
+
+
+_CATEGORY_RULES: tuple[_CategoryRule, ...] = (
+    _override_rule,
+    _config_extension_rule,
+    _filename_rule,
+    _directory_rule,
+    _content_rule,
+    _source_extension_rule,
+)
 
 
 def _categorize_init(content: str | None) -> FileCategory:
@@ -118,25 +175,32 @@ def _categorize_init(content: str | None) -> FileCategory:
     if content is None:
         return FileCategory.INIT  # assume re-export without content
 
-    lines = [
-        ln.strip()
-        for ln in content.splitlines()
-        if ln.strip() and not ln.strip().startswith("#")
-    ]
+    lines = _meaningful_lines(content)
     if not lines:
         return FileCategory.INIT
 
     # Short files that are mostly imports → INIT
-    if len(lines) < 50:
-        import_lines = sum(
-            1
-            for ln in lines
-            if ln.startswith(("import ", "from ")) or ln.startswith("__all__")
-        )
-        if import_lines / len(lines) > 0.5:
-            return FileCategory.INIT
+    if len(lines) < 50 and _mostly_init_imports(lines):
+        return FileCategory.INIT
 
     return FileCategory.IMPLEMENTATION
+
+
+def _meaningful_lines(content: str) -> list[str]:
+    return [
+        ln.strip()
+        for ln in content.splitlines()
+        if ln.strip() and not ln.strip().startswith("#")
+    ]
+
+
+def _mostly_init_imports(lines: list[str]) -> bool:
+    import_lines = sum(
+        1
+        for ln in lines
+        if ln.startswith(("import ", "from ")) or ln.startswith("__all__")
+    )
+    return import_lines / len(lines) > 0.5
 
 
 def _is_schema_content(content: str) -> bool:
@@ -145,32 +209,39 @@ def _is_schema_content(content: str) -> bool:
     Schema files typically have classes/type aliases but few standalone
     function definitions with logic.
     """
-    lines = [
-        ln
-        for ln in content.splitlines()
-        if ln.strip() and not ln.strip().startswith("#")
-    ]
+    lines = _meaningful_lines(content)
     if not lines:
         return True  # empty file in schema dir → schema
 
-    # Count structural indicators
-    class_lines = sum(1 for ln in lines if ln.strip().startswith("class "))
-    type_lines = sum(1 for ln in lines if ln.strip().startswith("type "))
-    def_lines = sum(
-        1
-        for ln in lines
-        if ln.strip().startswith("def ") and not ln.strip().startswith("def __")
+    class_lines, type_lines, def_lines = _schema_indicators(lines)
+    return _has_schema_shape(class_lines, type_lines, def_lines) or _short_without_defs(
+        lines, def_lines
     )
 
-    # Has classes or type aliases, and few standalone function defs → schema
-    if (class_lines + type_lines) > 0 and def_lines <= (class_lines + type_lines):
-        return True
 
-    # Short file with no function defs → likely config/schema
-    if len(lines) < 20 and def_lines == 0:
-        return True
+def _schema_indicators(lines: list[str]) -> tuple[int, int, int]:
+    class_lines = sum(1 for ln in lines if ln.startswith("class "))
+    type_lines = sum(1 for ln in lines if ln.startswith("type "))
+    def_lines = sum(1 for ln in lines if _is_standalone_def(ln))
+    return class_lines, type_lines, def_lines
 
-    return False
+
+def _is_standalone_def(line: str) -> bool:
+    return line.startswith("def ") and not line.startswith("def __")
+
+
+def _has_schema_shape(class_lines: int, type_lines: int, def_lines: int) -> bool:
+    structural_lines = class_lines + type_lines
+    return structural_lines > 0 and def_lines <= structural_lines
+
+
+def _short_without_defs(lines: list[str], def_lines: int) -> bool:
+    return len(lines) < 20 and def_lines == 0
+
+
+def _has_generated_marker(content: str) -> bool:
+    first_lines = "\n".join(content.split("\n")[:10])
+    return _GENERATED_MARKERS.search(first_lines) is not None
 
 
 def categorize_directory(
@@ -187,37 +258,15 @@ def categorize_directory(
         Mapping of file paths to their categories.
     """
     results: dict[Path, FileCategory] = {}
-    supported_exts = set(_EXT_TO_LANG.keys()) | {".py"} | _CONFIG_EXTENSIONS
-
     for root, dirs, files in os.walk(dir_path, followlinks=False):
-        # Prune common non-source directories
-        dirs[:] = [
-            d
-            for d in dirs
-            if d
-            not in {
-                ".git",
-                "__pycache__",
-                ".venv",
-                "venv",
-                "node_modules",
-                ".pytest_cache",
-                "dist",
-                "build",
-            }
-            and not d.endswith(".egg-info")
-        ]
+        _prune_non_source_dirs(dirs)
 
         for filename in files:
             child = Path(root) / filename
-            if child.suffix not in supported_exts:
+            if not _is_categorizable_file(child):
                 continue
-            if child.is_symlink():
-                continue
-
-            try:
-                content = child.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
+            content = _read_text(child)
+            if content is None:
                 continue
 
             rel_path = child.relative_to(dir_path)
@@ -227,3 +276,18 @@ def categorize_directory(
             results[rel_path] = category
 
     return results
+
+
+def _prune_non_source_dirs(dirs: list[str]) -> None:
+    dirs[:] = [d for d in dirs if d not in _SKIP_DIRS and not d.endswith(".egg-info")]
+
+
+def _is_categorizable_file(child: Path) -> bool:
+    return child.suffix in _SUPPORTED_EXTENSIONS and not child.is_symlink()
+
+
+def _read_text(child: Path) -> str | None:
+    try:
+        return child.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return None

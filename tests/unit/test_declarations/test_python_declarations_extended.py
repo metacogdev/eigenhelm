@@ -782,7 +782,9 @@ class TestMultipleRegions:
         """)
         regions = detect(src)
         assert len(regions) == 2
-        assert all(r.declaration_type == DeclarationType.ENUM_DECLARATION for r in regions)
+        assert all(
+            r.declaration_type == DeclarationType.ENUM_DECLARATION for r in regions
+        )
 
     def test_mixed_declarations(self) -> None:
         src = textwrap.dedent("""\
@@ -969,7 +971,9 @@ class TestInternalFunctionsDirectly:
 
         assert _is_annotation_or_field(FakeNode()) is True
 
-    def test_is_annotation_or_field_expression_statement_with_assignment_typed(self) -> None:
+    def test_is_annotation_or_field_expression_statement_with_assignment_typed(
+        self,
+    ) -> None:
         """_is_annotation_or_field for expression_statement wrapping typed assignment."""
         from eigenhelm.declarations.python import _is_annotation_or_field
 

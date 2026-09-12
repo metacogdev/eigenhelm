@@ -17,7 +17,10 @@ from eigenhelm.validation.usecase_benchmark import (
     UseCaseBenchmark,
     _compute_distribution,
     _compute_dimension_discrimination,
+    _commit_replay_result,
+    _dimension_metric,
     _discover_source_files,
+    _regression_change,
     _signal_quality_label,
     add_attribution_target,
     add_fp_fn_targets,
@@ -43,9 +46,7 @@ class TestSyncCorpus:
     def test_clone_new_project(self, tmp_path: Path) -> None:
         manifest = tmp_path / "manifest.toml"
         manifest.write_text(
-            '[[projects]]\n'
-            'name = "proj-a"\n'
-            'url = "https://example.com/proj-a.git"\n'
+            '[[projects]]\nname = "proj-a"\nurl = "https://example.com/proj-a.git"\n'
         )
         target_dir = tmp_path / "repos"
 
@@ -64,9 +65,7 @@ class TestSyncCorpus:
     def test_skip_existing_project(self, tmp_path: Path) -> None:
         manifest = tmp_path / "manifest.toml"
         manifest.write_text(
-            '[[projects]]\n'
-            'name = "proj-a"\n'
-            'url = "https://example.com/proj-a.git"\n'
+            '[[projects]]\nname = "proj-a"\nurl = "https://example.com/proj-a.git"\n'
         )
         target_dir = tmp_path / "repos"
         (target_dir / "proj-a").mkdir(parents=True)
@@ -81,7 +80,7 @@ class TestSyncCorpus:
     def test_clone_with_commit(self, tmp_path: Path) -> None:
         manifest = tmp_path / "manifest.toml"
         manifest.write_text(
-            '[[projects]]\n'
+            "[[projects]]\n"
             'name = "proj-b"\n'
             'url = "https://example.com/proj-b.git"\n'
             'commit = "abc123"\n'
@@ -223,8 +222,11 @@ class TestComputeDimensionDiscrimination:
     def test_single_category_too_few(self) -> None:
         evals = [
             FileEvaluation(
-                file_path="a.py", project="p", category=FileCategory.IMPLEMENTATION,
-                score=0.5, decision="accept",
+                file_path="a.py",
+                project="p",
+                category=FileCategory.IMPLEMENTATION,
+                score=0.5,
+                decision="accept",
                 dim_scores={"manifold_drift": 0.3},
             )
         ]
@@ -235,9 +237,11 @@ class TestComputeDimensionDiscrimination:
     def test_implementation_category(self) -> None:
         evals = [
             FileEvaluation(
-                file_path=f"f{i}.py", project="p",
+                file_path=f"f{i}.py",
+                project="p",
                 category=FileCategory.IMPLEMENTATION,
-                score=0.3 + i * 0.1, decision="accept",
+                score=0.3 + i * 0.1,
+                decision="accept",
                 dim_scores={"manifold_drift": 0.2 + i * 0.1, "token_entropy": 0.5},
             )
             for i in range(3)
@@ -247,13 +251,33 @@ class TestComputeDimensionDiscrimination:
         dims = [r.dimension for r in results]
         assert "manifold_drift" in dims
 
+    def test_dimension_metric_helper(self) -> None:
+        evals = [
+            FileEvaluation(
+                file_path=f"f{i}.py",
+                project="p",
+                category=FileCategory.TEST,
+                score=0.3 + i * 0.1,
+                decision="accept",
+                dim_scores={"token_entropy": 0.2 + i * 0.1},
+            )
+            for i in range(3)
+        ]
+        metric = _dimension_metric(evals, "token_entropy", FileCategory.TEST)
+        assert metric.dimension == "token_entropy"
+        assert metric.category == FileCategory.TEST
+        assert metric.cohens_d is None
+        assert metric.mean == pytest.approx(0.3)
+
     def test_cohens_d_computed_for_large_impl_set(self) -> None:
         """With >= 10 implementation files, Cohen's d should be computed."""
         evals = [
             FileEvaluation(
-                file_path=f"f{i}.py", project="p",
+                file_path=f"f{i}.py",
+                project="p",
                 category=FileCategory.IMPLEMENTATION,
-                score=i * 0.05, decision="accept",
+                score=i * 0.05,
+                decision="accept",
                 dim_scores={
                     "manifold_drift": i * 0.1,
                     "manifold_alignment": 0.5,
@@ -272,14 +296,38 @@ class TestComputeDimensionDiscrimination:
 
     def test_multiple_categories(self) -> None:
         evals = [
-            FileEvaluation("a.py", "p", FileCategory.IMPLEMENTATION, 0.5, "accept",
-                           dim_scores={"manifold_drift": 0.3}),
-            FileEvaluation("b.py", "p", FileCategory.IMPLEMENTATION, 0.6, "accept",
-                           dim_scores={"manifold_drift": 0.4}),
-            FileEvaluation("t1.py", "p", FileCategory.TEST, 0.7, "accept",
-                           dim_scores={"manifold_drift": 0.5}),
-            FileEvaluation("t2.py", "p", FileCategory.TEST, 0.8, "accept",
-                           dim_scores={"manifold_drift": 0.6}),
+            FileEvaluation(
+                "a.py",
+                "p",
+                FileCategory.IMPLEMENTATION,
+                0.5,
+                "accept",
+                dim_scores={"manifold_drift": 0.3},
+            ),
+            FileEvaluation(
+                "b.py",
+                "p",
+                FileCategory.IMPLEMENTATION,
+                0.6,
+                "accept",
+                dim_scores={"manifold_drift": 0.4},
+            ),
+            FileEvaluation(
+                "t1.py",
+                "p",
+                FileCategory.TEST,
+                0.7,
+                "accept",
+                dim_scores={"manifold_drift": 0.5},
+            ),
+            FileEvaluation(
+                "t2.py",
+                "p",
+                FileCategory.TEST,
+                0.8,
+                "accept",
+                dim_scores={"manifold_drift": 0.6},
+            ),
         ]
         results = _compute_dimension_discrimination(evals)
         categories = {r.category for r in results}
@@ -392,19 +440,25 @@ class TestAddAttributionTarget:
         target_names = {t.name for t in updated.targets}
         assert "sc_006_attribution_precision" in target_names
         assert updated.attribution_precision == 0.75
-        sc006 = next(t for t in updated.targets if t.name == "sc_006_attribution_precision")
+        sc006 = next(
+            t for t in updated.targets if t.name == "sc_006_attribution_precision"
+        )
         assert sc006.met  # 0.75 >= 0.60
 
     def test_fails_when_below_threshold(self) -> None:
         report = BenchmarkReport()
         updated = add_attribution_target(report, 0.40)
-        sc006 = next(t for t in updated.targets if t.name == "sc_006_attribution_precision")
+        sc006 = next(
+            t for t in updated.targets if t.name == "sc_006_attribution_precision"
+        )
         assert not sc006.met
 
     def test_none_precision(self) -> None:
         report = BenchmarkReport()
         updated = add_attribution_target(report, None)
-        sc006 = next(t for t in updated.targets if t.name == "sc_006_attribution_precision")
+        sc006 = next(
+            t for t in updated.targets if t.name == "sc_006_attribution_precision"
+        )
         assert not sc006.met
 
 
@@ -436,6 +490,18 @@ class TestComputeNoiseRate:
             CommitReplayResult("jkl", 4, 0, 0, False),
         ]
         assert compute_noise_rate(replays) == pytest.approx(0.5)
+
+    def test_commit_replay_result_helper(self) -> None:
+        evaluations = [
+            FileEvaluation("test_a.py", "example", FileCategory.TEST, 0.7, "reject"),
+            FileEvaluation(
+                "main.py", "example", FileCategory.IMPLEMENTATION, 0.2, "accept"
+            ),
+        ]
+        result = _commit_replay_result("abc", evaluations)
+        assert result.n_flagged == 1
+        assert result.n_false_positive == 1
+        assert result.all_noise is True
 
 
 class TestCompareReports:
@@ -479,6 +545,11 @@ class TestCompareReports:
         # 50% increase flagged
         assert len(alerts) == 1
         assert "regressed by" in alerts[0].message
+
+    def test_regression_change_helper_lower_is_better(self) -> None:
+        baseline_t = QualityTarget("sc_004", "desc", 0.10, 0.20, "lower_is_better")
+        current_t = QualityTarget("sc_004", "desc", 0.15, 0.20, "lower_is_better")
+        assert _regression_change(current_t, baseline_t) == pytest.approx(0.5)
 
     def test_no_regression_under_10pct(self) -> None:
         baseline_t = QualityTarget("sc_001", "desc", 1000.0, 500.0, "higher_is_better")

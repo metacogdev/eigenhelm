@@ -115,7 +115,9 @@ var routes = []Route{
 }
 """
         regions = detect(source)
-        table = [r for r in regions if r.declaration_type == DeclarationType.CONST_TABLE]
+        table = [
+            r for r in regions if r.declaration_type == DeclarationType.CONST_TABLE
+        ]
         assert len(table) == 1
         assert table[0].node_name == "routes"
 

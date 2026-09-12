@@ -157,3 +157,62 @@ class TestFormatResultsJson:
         assert "structural_confidence" in r
         assert "violations" in r
         assert "file_path" in r
+
+
+class TestEvaluateThresholdPrecedence:
+    def test_cli_thresholds_override_config(self, tmp_path, monkeypatch):
+        from eigenhelm.cli.evaluate import main
+        from eigenhelm.config import ProjectConfig, ThresholdConfig
+        from eigenhelm.helm import EvaluationRequest, EvaluationResponse
+
+        # Fake a config that specifies an accept threshold of 0.99
+        fake_config = ProjectConfig(
+            model=None,
+            strict=False,
+            language=None,
+            exclude=(),
+            language_overrides={},
+            thresholds=ThresholdConfig(accept=0.99, reject=None),
+        )
+
+        # Mock config loading
+        def mock_load():
+            return fake_config, tmp_path / ".eigenhelm.toml"
+
+        monkeypatch.setattr("eigenhelm.cli.evaluate._load_project_config", mock_load)
+
+        # Create a mock file
+        f = tmp_path / "sample.py"
+        f.write_text("x = 1")
+
+        # We want to assert that the CLI flag threshold is used, not 0.99.
+        # If CLI flag is 0.0, and the file gets a score of e.g. 0.62,
+        # it is > 0.0, so it shouldn't be accepted by the CLI threshold.
+        # But if the 0.99 config threshold wins, it WILL be accepted.
+
+        # Let's mock DynamicHelm to always return score 0.62 and initial decision "reject"
+        # Since 0.62 > reject_threshold (0.0001).
+
+        class MockHelm:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def evaluate(self, req: EvaluationRequest):
+                return EvaluationResponse(
+                    decision="reject",
+                    score=0.62,
+                    structural_confidence="high",
+                    critique=None,
+                )
+
+        monkeypatch.setattr("eigenhelm.cli.evaluate.DynamicHelm", MockHelm)
+
+        # Run main with CLI threshold
+        args = ["--accept-threshold", "0.0", "--reject-threshold", "0.0001", str(f)]
+
+        # Capture output or check exit code
+        # Exit code: 0 (accept), 1 (warn), 2 (reject), 3 (error)
+        # If CLI wins, it should exit with 2 (reject) because score 0.62 > 0.0001
+        # If config wins, it would exit with 0 (accept) because score 0.62 < 0.99
+        exit_code = main(args)
+        assert exit_code == 2, "CLI thresholds should override config file thresholds"

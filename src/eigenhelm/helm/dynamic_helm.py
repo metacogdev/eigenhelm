@@ -18,6 +18,8 @@ from eigenhelm.helm.models import (
     SteeringSession,
 )
 from eigenhelm.helm.pid import PIDController
+from eigenhelm.config.defaults import DEFAULT_ACCEPT_THRESHOLD, DEFAULT_REJECT_THRESHOLD
+
 from eigenhelm.virtue_extractor import VirtueExtractor
 
 if TYPE_CHECKING:
@@ -46,12 +48,9 @@ def _warn_partial_parse(lang: str) -> str:
     return f"Partial parse for language '{lang}'; structural metrics may be degraded"
 
 
+
 class DynamicHelm:
     """Stage 3 concrete implementation of IDynamicHelm."""
-
-    # Hardcoded fallback thresholds (pre-015 behavior)
-    _DEFAULT_ACCEPT = 0.4
-    _DEFAULT_REJECT = 0.6
 
     def __init__(
         self,
@@ -66,16 +65,16 @@ class DynamicHelm:
         elif eigenspace is not None and eigenspace.calibrated_accept is not None:
             resolved_accept = eigenspace.calibrated_accept
         else:
-            resolved_accept = self._DEFAULT_ACCEPT
+            resolved_accept = DEFAULT_ACCEPT_THRESHOLD
 
         if reject_threshold is not None:
             resolved_reject = reject_threshold
         elif eigenspace is not None and eigenspace.calibrated_reject is not None:
             resolved_reject = eigenspace.calibrated_reject
         else:
-            resolved_reject = self._DEFAULT_REJECT
+            resolved_reject = DEFAULT_REJECT_THRESHOLD
 
-        if resolved_reject <= resolved_accept:
+        if resolved_accept >= resolved_reject:
             raise ValueError(
                 f"reject_threshold ({resolved_reject}) must be > "
                 f"accept_threshold ({resolved_accept})"

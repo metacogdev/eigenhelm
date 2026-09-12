@@ -28,6 +28,7 @@ def _make_critique(
             value=score_value,
             structural_confidence="low",
             weights={"shannon_entropy": 0.5, "birkhoff_measure": 0.5},
+            normalized_values={"token_entropy": 1.0 - (entropy / 8.0)},
         ),
         quality_assessment="accept",
         violations=violations or [],
@@ -115,6 +116,7 @@ class TestMandatoryChecks:
                 raw_bytes=500,
                 compressed_bytes=300,
             ),
+            nearest_exemplar_id="ex1",
         )
         entry = build_entry("test.py", critique)
         # NCD raw = 0.70, threshold < 0.5 → should FAIL
@@ -152,9 +154,87 @@ class TestQualitativeScores:
         entry = build_entry("test.py", _make_critique(score_value=0.35))
         assert abs(entry.qualitative_scores["Q5_overall_aesthetic"] - 0.35) < 1e-6
 
-    def test_all_five_scores_present(self) -> None:
+    def test_q4_ncd_missing_from_topn_but_active_uses_contribution(self) -> None:
+        # NCD is active (weight > 0) but absent from top-N violations (>=3 other
+        # dimensions rank worse). Must recover the raw value from contributions,
+        # not report a misleading 0.0. (#68)
+        critique = Critique(
+            score=AestheticScore(
+                value=0.4,
+                structural_confidence="low",
+                weights={
+                    "token_entropy": 0.30,
+                    "compression_structure": 0.30,
+                    "ncd_exemplar_distance": 0.40,
+                },
+                contributions={
+                    "token_entropy": 0.12,
+                    "compression_structure": 0.12,
+                    "ncd_exemplar_distance": 0.28,  # 0.28 / 0.40 = 0.70 raw NCD
+                },
+            ),
+            quality_assessment="marginal",
+            violations=[],  # NCD not in top-N
+            metrics=AestheticMetrics(
+                entropy=4.0,
+                compression_ratio=0.6,
+                birkhoff_measure=0.4,
+                raw_bytes=500,
+                compressed_bytes=300,
+            ),
+            nearest_exemplar_id="ex1",
+        )
+        entry = build_entry("test.py", critique)
+        assert abs(entry.qualitative_scores["Q4_ncd_exemplar"] - 0.70) < 1e-6
+
+    def test_q4_ncd_in_topn_uses_violation_raw_value(self) -> None:
+        # When NCD IS in the top-N violations, Q4 uses the violation's raw_value
+        # directly (the fallback must not override it).
+        critique = Critique(
+            score=AestheticScore(
+                value=0.5,
+                structural_confidence="low",
+                weights={
+                    "token_entropy": 0.30,
+                    "ncd_exemplar_distance": 0.40,
+                    "compression_structure": 0.30,
+                },
+                contributions={
+                    "token_entropy": 0.12,
+                    "ncd_exemplar_distance": 0.28,
+                    "compression_structure": 0.12,
+                },
+            ),
+            quality_assessment="marginal",
+            violations=[
+                Violation(
+                    dimension="ncd_exemplar_distance",
+                    raw_value=0.55,
+                    normalized_value=0.55,
+                    contribution=0.5,
+                    weighted_contribution=0.22,
+                ),
+            ],
+            metrics=AestheticMetrics(
+                entropy=4.0,
+                compression_ratio=0.6,
+                birkhoff_measure=0.4,
+                raw_bytes=500,
+                compressed_bytes=300,
+            ),
+            nearest_exemplar_id="ex1",
+        )
+        entry = build_entry("test.py", critique)
+        assert abs(entry.qualitative_scores["Q4_ncd_exemplar"] - 0.55) < 1e-6
+
+    def test_q4_ncd_not_active_omitted(self) -> None:
+        # NCD weight is 0 (no exemplars) -> genuinely unavailable -> omitted.
         entry = build_entry("test.py", _make_critique())
-        assert len(entry.qualitative_scores) == 5
+        assert "Q4_ncd_exemplar" not in entry.qualitative_scores
+
+    def test_four_scores_present_by_default(self) -> None:
+        entry = build_entry("test.py", _make_critique())
+        assert len(entry.qualitative_scores) == 4
         assert all(k.startswith("Q") for k in entry.qualitative_scores)
 
 
@@ -231,3 +311,34 @@ class TestRenderers:
         assert "entries" in parsed
         assert "summary" in parsed
         assert parsed["entries"][0]["file_path"] == "test.py"
+
+    def test_ncd_not_computed_omitted(self):
+        """When nearest_exemplar_id is None, NCD should be omitted from Q4 instead of 0.0."""
+        from eigenhelm.critic import Critique, AestheticScore, AestheticMetrics
+
+        crit = Critique(
+            score=AestheticScore(
+                value=0.5,
+                structural_confidence="high",
+                weights={"ncd_exemplar_distance": 0.1},
+                contributions={"ncd_exemplar_distance": 0.0},
+            ),
+            quality_assessment="marginal",
+            violations=[],
+            metrics=AestheticMetrics(
+                entropy=4.0,
+                compression_ratio=0.5,
+                birkhoff_measure=0.3,
+                raw_bytes=10,
+                compressed_bytes=5,
+            ),
+            nearest_exemplar_id=None,
+        )
+
+        from eigenhelm.scoring.scorecard import _compute_qualitative, _check_mandatory
+
+        qual = _compute_qualitative(crit)
+        assert "Q4_ncd_exemplar" not in qual
+
+        m_checks = _check_mandatory(crit)
+        assert m_checks.get("M5_ncd_exemplar") is True

@@ -14,7 +14,15 @@ from pathlib import Path
 from eigenhelm.config.models import PathRule, ProjectConfig, ThresholdConfig
 
 _KNOWN_TOP_LEVEL_KEYS = frozenset(
-    {"model", "language", "strict", "exclude", "thresholds", "paths", "language_overrides"}
+    {
+        "model",
+        "language",
+        "strict",
+        "exclude",
+        "thresholds",
+        "paths",
+        "language_overrides",
+    }
 )
 
 
@@ -84,6 +92,23 @@ def load_config(path: Path) -> ProjectConfig:
                 f"language_overrides key must start with '.', got {ext!r} in {path}"
             )
 
+
+    # Parse registry
+    registry_data = data.get("registry", {})
+    from eigenhelm.config.models import RegistryConfig, ServeConfig
+    registry = RegistryConfig(
+        url=registry_data.get("url"),
+        cache_dir=registry_data.get("cache_dir")
+    )
+
+    # Parse serve
+    serve_data = data.get("serve", {})
+    serve = ServeConfig(
+        max_body_bytes=serve_data.get("max_body_bytes"),
+        max_batch_bytes=serve_data.get("max_batch_bytes"),
+        timeout_seconds=serve_data.get("timeout_seconds")
+    )
+
     try:
         return ProjectConfig(
             model=data.get("model"),
@@ -93,6 +118,8 @@ def load_config(path: Path) -> ProjectConfig:
             thresholds=thresholds,
             paths=paths,
             language_overrides=language_overrides,
+            registry=registry,
+            serve=serve,
         )
     except (ValueError, TypeError) as exc:
         raise ValueError(f"Invalid config in {path}: {exc}") from exc

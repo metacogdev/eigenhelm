@@ -5,6 +5,7 @@ Thin serialization wrappers around the pipeline types — no business logic here
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 from pydantic import BaseModel, Field
 
 
@@ -14,7 +15,9 @@ class EvaluateRequest(BaseModel):
     source: str
     language: str
     file_path: str | None = None
-    top_n: int = Field(default=3, ge=1)  # 017: top features per PCA dimension
+    top_n: int = Field(
+        default=DEFAULT_TOP_N, ge=1
+    )  # 017: top features per PCA dimension
     directive_threshold: float = Field(
         default=0.3, ge=0.0, le=1.0
     )  # 017: minimum score for directives
@@ -98,8 +101,8 @@ class AttributionResultOut(BaseModel):
 
     dimensions: list[DimensionAttributionOut]
     directives: list[DirectiveOut] = Field(default_factory=list)
-    top_n: int = 3
-    directive_threshold: float = 0.3
+    top_n: int = DEFAULT_TOP_N
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD
     vocabulary_version: str = "v1"
 
 
@@ -144,8 +147,10 @@ class FileEvalUnit(BaseModel):
     source: str
     language: str
     file_path: str | None = None
-    top_n: int = Field(default=3, ge=1)
-    directive_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
+    top_n: int = Field(default=DEFAULT_TOP_N, ge=1)
+    directive_threshold: float = Field(
+        default=DEFAULT_DIRECTIVE_THRESHOLD, ge=0.0, le=1.0
+    )
 
 
 class BatchRequest(BaseModel):

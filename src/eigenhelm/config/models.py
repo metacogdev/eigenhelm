@@ -26,18 +26,17 @@ class ThresholdConfig:
     reject: float | None = None
 
     def __post_init__(self) -> None:
-        if self.accept is not None and not (0.0 <= self.accept <= 1.0):
-            raise ValueError(f"accept must be in [0.0, 1.0], got {self.accept}")
-        if self.reject is not None and not (0.0 <= self.reject <= 1.0):
-            raise ValueError(f"reject must be in [0.0, 1.0], got {self.reject}")
-        if (
-            self.accept is not None
-            and self.reject is not None
-            and self.accept >= self.reject
-        ):
-            raise ValueError(
-                f"accept must be < reject, got accept={self.accept}, reject={self.reject}"
-            )
+        from eigenhelm._validators import _validate_unit_interval
+
+        if self.accept is not None:
+            _validate_unit_interval("accept", self.accept)
+        if self.reject is not None:
+            _validate_unit_interval("reject", self.reject)
+        if self.accept is not None and self.reject is not None:
+            if self.accept >= self.reject:
+                raise ValueError(
+                    f"accept must be < reject, got accept={self.accept}, reject={self.reject}"
+                )
 
 
 @dataclass(frozen=True)
@@ -61,6 +60,19 @@ class PathRule:
 
 
 @dataclass(frozen=True)
+class RegistryConfig:
+    url: str | None = None
+    cache_dir: str | None = None
+
+
+@dataclass(frozen=True)
+class ServeConfig:
+    max_body_bytes: int | None = None
+    max_batch_bytes: int | None = None
+    timeout_seconds: int | None = None
+
+
+@dataclass(frozen=True)
 class ProjectConfig:
     """Complete parsed .eigenhelm.toml.
 
@@ -80,6 +92,8 @@ class ProjectConfig:
     thresholds: ThresholdConfig = field(default_factory=ThresholdConfig)
     paths: tuple[PathRule, ...] = ()
     language_overrides: dict[str, str] = field(default_factory=dict)
+    registry: RegistryConfig = field(default_factory=RegistryConfig)
+    serve: ServeConfig = field(default_factory=ServeConfig)
 
     def __post_init__(self) -> None:
         for ext in self.language_overrides:

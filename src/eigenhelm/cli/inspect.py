@@ -1,6 +1,7 @@
 """eigenhelm-inspect: Inspect a trained .npz eigenspace model."""
 
 from __future__ import annotations
+from eigenhelm.cli._shared import format_score_distribution
 
 import argparse
 import json
@@ -117,10 +118,7 @@ def main(argv: list[str] | None = None) -> None:
         score_dist = info.get("score_distribution")
         if score_dist is not None:
             lines.append(
-                f"  Score dist:   min={score_dist['min']:.3f}  "
-                f"p10={score_dist['p10']:.3f}  p25={score_dist['p25']:.3f}  "
-                f"median={score_dist['median']:.3f}  p75={score_dist['p75']:.3f}  "
-                f"p90={score_dist['p90']:.3f}  max={score_dist['max']:.3f}"
+                f"  Score dist:   {format_score_distribution(score_dist, precision=3)}"
             )
 
         print("\n".join(lines))

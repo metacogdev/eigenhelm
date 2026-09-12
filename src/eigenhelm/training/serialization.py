@@ -35,10 +35,11 @@ def save_model(result: TrainingResult, path: Path, *, force: bool = False) -> No
         )
     model = result.model
 
+    from eigenhelm.models import NPZ_KEYS
     arrays: dict[str, np.ndarray] = {
-        "projection_matrix": model.projection_matrix,
-        "mean": model.mean,
-        "std": model.std,
+        NPZ_KEYS.PROJECTION_MATRIX: model.projection_matrix,
+        NPZ_KEYS.MEAN: model.mean,
+        NPZ_KEYS.STD: model.std,
         "n_components": np.array(model.n_components),
         "version": np.array(model.version),
         "corpus_hash": np.array(model.corpus_hash),

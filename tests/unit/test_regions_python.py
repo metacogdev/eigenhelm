@@ -140,6 +140,7 @@ class TestParseFailure:
                 pass
             # patch at the actual module where it's defined
             from eigenhelm.parsers import tree_sitter
+
             orig = tree_sitter.parse_source
             tree_sitter.parse_source = lambda *a, **k: None
             try:

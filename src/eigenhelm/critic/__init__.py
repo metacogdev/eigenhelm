@@ -11,6 +11,7 @@ Exports:
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
@@ -95,10 +96,10 @@ class Critique:
     """Full structured output from IAestheticCritic.evaluate().
 
     score              — scalar loss + metadata
-    quality_assessment — "accept" (< 0.4) | "marginal" [0.4, 0.6) | "reject" (≥ 0.6)
+    quality_assessment — "accept" (< DEFAULT_ACCEPT_THRESHOLD) | "marginal" [DEFAULT_ACCEPT_THRESHOLD, DEFAULT_REJECT_THRESHOLD) | "reject" (≥ DEFAULT_REJECT_THRESHOLD)
     violations         — top-N dimensions by contribution, sorted desc
     metrics            — raw information-theoretic values for transparency
-    top_n              — number of violations returned (default: 3)
+    top_n              — number of violations returned (default: DEFAULT_TOP_N)
     anti_patterns      — named anti-pattern violations (empty list if none detected)
     """
 
@@ -106,7 +107,7 @@ class Critique:
     quality_assessment: Literal["accept", "marginal", "reject"]
     violations: list[Violation]
     metrics: AestheticMetrics
-    top_n: int = 3
+    top_n: int = DEFAULT_TOP_N
     anti_patterns: list[AntiPatternViolation] = field(default_factory=list)
     nearest_exemplar_id: str | None = None  # 017: nearest NCD exemplar identity
 
@@ -129,8 +130,8 @@ class IAestheticCritic(ABC):
         min_compression_bytes: int = 50
             Sources shorter than this receive compression_ratio=None and
             zero compression/Birkhoff penalty (satisfies SC-004).
-        reject_threshold: float = 0.6
-        marginal_threshold: float = 0.4
+        reject_threshold: float = DEFAULT_REJECT_THRESHOLD
+        marginal_threshold: float = DEFAULT_ACCEPT_THRESHOLD
     """
 
     @abstractmethod
@@ -139,7 +140,7 @@ class IAestheticCritic(ABC):
         source: str,
         language: str,
         projection: ProjectionResult | None = None,
-        top_n: int = 3,
+        top_n: int = DEFAULT_TOP_N,
         feature_vector: np.ndarray | None = None,
     ) -> Critique:
         """Evaluate source code and return a full structured Critique.

@@ -32,3 +32,6 @@ DIMENSION_NAMES: tuple[str, ...] = (
     "compression_structure",
     "ncd_exemplar_distance",
 )
+
+DEFAULT_TOP_N: int = 3
+DEFAULT_DIRECTIVE_THRESHOLD: float = 0.3

@@ -22,12 +22,14 @@ commands is `general-polyglot-v1.npz`.
 
 **Corpus classes:** A = single-language high-quality corpus; B = multi-language or pattern-focused corpus.
 
-**`baseline.npz`** is identical to `lang-python.npz` (same training corpus, same `corpus_hash`).
-It is retained as a stable reference for tests and CI fixtures. Use `lang-python.npz` for
-production Python-only evaluation; `general-polyglot-v1.npz` is the default for everything else.
+**`baseline.npz`** preserves the earlier `lang-python` 0.2.0 artifact as a stable reference
+for tests and CI fixtures. It shares the same pinned training corpus and `corpus_hash` with
+the refreshed model. Use `lang-python.npz` for production Python-only evaluation;
+`general-polyglot-v1.npz` is the default for everything else.
 
-All models ship with version `0.2.0`, include 015-calibration thresholds, and have score
-distribution statistics embedded for percentile-relative feedback.
+The refreshed `lang-python.npz` aligns with manifest version `1.0.0`; the remaining fleet
+artifacts retain version `0.2.0`. All include 015-calibration thresholds and score distribution
+statistics for percentile-relative feedback.
 
 ---
 
@@ -82,10 +84,10 @@ All `.npz` files contain the following keys (27 total):
 
 | Key | Shape | dtype | Description |
 |-----|-------|-------|-------------|
-| `exemplar_vectors` | `(n_exemplars, k)` | float64 | Projected exemplar feature vectors |
-| `exemplar_labels` | `(n_exemplars,)` | str | Source file paths / identifiers |
-| `exemplar_blob` | `(1,)` | bytes | Serialized exemplar metadata blob |
-| `exemplar_offsets` | `(n_exemplars+1,)` | int64 | Byte offsets into `exemplar_blob` |
+| `exemplar_blob` | `(total_bytes,)` | uint8 | Concatenated zlib-compressed source bytes for every exemplar |
+| `exemplar_offsets` | `(n_exemplars+1,)` | int64 | Byte offsets into `exemplar_blob` delimiting each exemplar's compressed content |
+| `exemplar_hashes` | `(n_exemplars,)` | str | SHA-256 of each exemplar's original (uncompressed) source |
+| `exemplar_clusters` | `(n_exemplars,)` | int64 | PCA cluster membership index for each exemplar |
 
 ---
 

@@ -14,10 +14,13 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi import Request
+from eigenhelm.serve import DEFAULT_MAX_BODY_BYTES
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from eigenhelm.config.defaults import DEFAULT_ACCEPT_THRESHOLD, DEFAULT_REJECT_THRESHOLD
 from eigenhelm.helm import DynamicHelm
 from eigenhelm.serve.middleware.size_limit import ContentSizeLimitMiddleware
 from eigenhelm.serve.middleware.timeout import TimeoutMiddleware
@@ -30,8 +33,8 @@ if TYPE_CHECKING:
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifespan context manager — creates DynamicHelm on startup, clears on shutdown."""
     eigenspace = getattr(app.state, "_eigenspace", None)
-    accept_threshold = getattr(app.state, "_accept_threshold", 0.4)
-    reject_threshold = getattr(app.state, "_reject_threshold", 0.6)
+    accept_threshold = getattr(app.state, "_accept_threshold", DEFAULT_ACCEPT_THRESHOLD)
+    reject_threshold = getattr(app.state, "_reject_threshold", DEFAULT_REJECT_THRESHOLD)
 
     app.state._helm = DynamicHelm(
         eigenspace=eigenspace,
@@ -45,9 +48,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app(
     eigenspace: EigenspaceModel | None = None,
-    accept_threshold: float = 0.4,
-    reject_threshold: float = 0.6,
-    max_body_bytes: int = 1_048_576,
+    accept_threshold: float = DEFAULT_ACCEPT_THRESHOLD,
+    reject_threshold: float = DEFAULT_REJECT_THRESHOLD,
+    max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
     max_batch_bytes: int = 10_485_760,
     timeout_seconds: float = 30.0,
 ) -> FastAPI:

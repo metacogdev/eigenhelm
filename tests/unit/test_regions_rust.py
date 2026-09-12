@@ -105,6 +105,7 @@ class TestParseFailure:
 
     def test_returns_empty_on_parse_failure(self):
         from eigenhelm.parsers import tree_sitter
+
         orig = tree_sitter.parse_source
         tree_sitter.parse_source = lambda *a, **k: None
         try:

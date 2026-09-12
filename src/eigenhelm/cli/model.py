@@ -1,6 +1,7 @@
 """eigenhelm model CLI — discover, download, and manage models."""
 
 from __future__ import annotations
+from eigenhelm.cli._shared import format_score_distribution
 
 import sys
 
@@ -74,10 +75,7 @@ def info(name: str) -> None:
         click.echo(f"Reject thresh:  {m.calibrated_reject:.3f}")
     if m.score_distribution:
         d = m.score_distribution
-        click.echo(
-            f"Score dist:     min={d.min:.2f} p25={d.p25:.2f} "
-            f"median={d.median:.2f} p75={d.p75:.2f} max={d.max:.2f}"
-        )
+        click.echo(f"Score dist:     {format_score_distribution(d, precision=3)}")
 
 
 def _list_local() -> None:

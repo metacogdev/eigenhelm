@@ -159,7 +159,13 @@ class TestScoreDistributionNScores:
         """Line 294."""
         with pytest.raises(ValueError, match="n_scores"):
             ScoreDistribution(
-                min=0.1, p10=0.2, p25=0.3, median=0.5, p75=0.7, p90=0.8, max=0.9,
+                min=0.1,
+                p10=0.2,
+                p25=0.3,
+                median=0.5,
+                p75=0.7,
+                p90=0.8,
+                max=0.9,
                 n_scores=0,
             )
 
@@ -171,8 +177,10 @@ class TestCalibrationThresholdsRejectOutOfRange:
         """Line 320."""
         with pytest.raises(ValueError, match="reject"):
             CalibrationThresholds(
-                accept=0.3, reject=1.5,
-                source_percentiles=(25.0, 75.0), n_scores=100,
+                accept=0.3,
+                reject=1.5,
+                source_percentiles=(25.0, 75.0),
+                n_scores=100,
             )
 
 
@@ -290,7 +298,12 @@ class TestScorecardViolationExtraction:
 
     def test_violations_populate_metrics(self) -> None:
         """Line 68: violation dimensions are set via setdefault."""
-        from eigenhelm.critic import AestheticMetrics, AestheticScore, Critique, Violation
+        from eigenhelm.critic import (
+            AestheticMetrics,
+            AestheticScore,
+            Critique,
+            Violation,
+        )
         from eigenhelm.scoring.scorecard import build_entry
 
         critique = Critique(
@@ -328,7 +341,12 @@ class TestScorecardViolationExtraction:
 
     def test_ncd_in_violations_used_for_q4(self) -> None:
         """Lines 112-114: Q4 NCD reads from violations."""
-        from eigenhelm.critic import AestheticMetrics, AestheticScore, Critique, Violation
+        from eigenhelm.critic import (
+            AestheticMetrics,
+            AestheticScore,
+            Critique,
+            Violation,
+        )
         from eigenhelm.scoring.scorecard import build_entry
 
         critique = Critique(
@@ -353,6 +371,7 @@ class TestScorecardViolationExtraction:
                 raw_bytes=500,
                 compressed_bytes=300,
             ),
+            nearest_exemplar_id="ex1",
         )
         entry = build_entry("test.py", critique)
         assert abs(entry.qualitative_scores["Q4_ncd_exemplar"] - 0.42) < 1e-6
@@ -457,9 +476,7 @@ class TestNcdEdgeCases:
         source = b"def foo(): return 42\n" * 5
         ex1 = b"def bar(): return 99\n" * 5
         ex2 = source  # identical
-        result = ncd_to_exemplars_with_id(
-            source, [ex1, ex2], ["far", "near"]
-        )
+        result = ncd_to_exemplars_with_id(source, [ex1, ex2], ["far", "near"])
         assert result is not None
         dist, eid = result
         assert eid == "near"
@@ -700,7 +717,9 @@ class TestTrainingPipelineEdgeCases:
         bad_file = corpus / "bad.py"
         bad_file.write_text("def f(): return 1\n")
         good_file = corpus / "good.py"
-        good_file.write_text("def g(x):\n    if x > 0:\n        return x\n    return -x\n")
+        good_file.write_text(
+            "def g(x):\n    if x > 0:\n        return x\n    return -x\n"
+        )
 
         # Patch VirtueExtractor.extract to raise for bad.py
         from eigenhelm.virtue_extractor import VirtueExtractor
@@ -792,7 +811,9 @@ class TestDynamicHelmEdgeCases:
         helm = DynamicHelm(eigenspace=model)
 
         # Create a feature vector with partial_parse=True
-        cu = CodeUnit(source="x=1", language="python", name="f", start_line=1, end_line=1)
+        cu = CodeUnit(
+            source="x=1", language="python", name="f", start_line=1, end_line=1
+        )
         fv = FeatureVector(
             values=np.random.default_rng(0).standard_normal(FEATURE_DIM),
             code_unit=cu,
@@ -826,9 +847,7 @@ class TestDynamicHelmEdgeCases:
         from eigenhelm.regions.models import RegionSpan, RegionType
 
         helm = DynamicHelm()
-        spans = (
-            RegionSpan(label=RegionType.PRODUCTION, start_line=1, end_line=1),
-        )
+        spans = (RegionSpan(label=RegionType.PRODUCTION, start_line=1, end_line=1),)
         # Source is just whitespace on the line
         result = helm.score_regions("   \n", "python", spans)
         # Empty region source should be skipped
@@ -894,6 +913,7 @@ class TestWlHashEdgeCases:
         # by making pop() return nothing immediately
         class EmptyNode:
             """A node that appears to have no children and tricks DFS."""
+
             def __init__(self):
                 self.type = "root"
                 self.children = []

@@ -7,6 +7,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 
 
@@ -30,36 +31,78 @@ def main(argv: list[str] | None = None) -> None:
         "--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)"
     )
     parser.add_argument("--port", type=int, default=8080, help="Port (default: 8080)")
-    parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
+    from eigenhelm.config import find_config, load_config
+    from eigenhelm.cli._common import add_model_argument
+
+    add_model_argument(parser)
     parser.add_argument(
         "--timeout-graceful-shutdown",
         type=int,
         default=30,
         help="Seconds to wait for in-flight requests on SIGTERM (default: 30)",
     )
+    parser.add_argument(
+        "--max-body-bytes",
+        type=int,
+        default=None,
+        help="Max request body size in bytes.",
+    )
+    parser.add_argument(
+        "--max-batch-bytes",
+        type=int,
+        default=None,
+        help="Max batch size in bytes.",
+    )
+    parser.add_argument(
+        "--request-timeout",
+        type=float,
+        default=None,
+        help="Request timeout in seconds.",
+    )
     args = parser.parse_args(argv)
 
-    model_source = args.model
-    if model_source is None:
-        from eigenhelm.trained_models import default_model_path
-
-        model_source = str(default_model_path())
-
-    eigenspace = None
     try:
-        from eigenhelm.eigenspace import load_model
+        from eigenhelm.config import find_config, load_config
+        from eigenhelm.cli._common import resolve_and_load_model
 
-        eigenspace = load_model(model_source)
+        config_path = find_config(Path.cwd())
+        config = load_config(config_path) if config_path else None
+        eigenspace, path = resolve_and_load_model(args.model, config)
+
         print(
-            f"INFO: Loading eigenspace model from {model_source} "
+            f"INFO: Loading eigenspace model "
             f"(version={eigenspace.version}, corpus_hash={eigenspace.corpus_hash})",
             file=sys.stderr,
         )
-    except (FileNotFoundError, OSError) as exc:
+    except Exception as exc:
         print(f"ERROR: Failed to load model: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    app = create_app(eigenspace=eigenspace)
+    # Resolve limits (CLI > config > default)
+    from eigenhelm.serve import DEFAULT_MAX_BODY_BYTES
+
+    max_body_bytes = args.max_body_bytes or (
+        config.serve.max_body_bytes
+        if config and config.serve.max_body_bytes
+        else DEFAULT_MAX_BODY_BYTES
+    )
+    max_batch_bytes = args.max_batch_bytes or (
+        config.serve.max_batch_bytes
+        if config and config.serve.max_batch_bytes
+        else 10_485_760
+    )
+    timeout_seconds = args.request_timeout or (
+        config.serve.timeout_seconds
+        if config and config.serve.timeout_seconds
+        else 30.0
+    )
+
+    app = create_app(
+        eigenspace=eigenspace,
+        max_body_bytes=max_body_bytes,
+        max_batch_bytes=max_batch_bytes,
+        timeout_seconds=timeout_seconds,
+    )
     model_status = "loaded" if eigenspace else "none"
     print(
         f"INFO: eigenhelm-serve starting on {args.host}:{args.port} (model={model_status})",

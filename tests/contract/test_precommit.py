@@ -65,6 +65,12 @@ class TestEvaluationCache:
 
 
 class TestPrecommitMain:
+    @pytest.fixture(autouse=True)
+    def _isolate_project_config(self):
+        """Keep contract decisions independent of the repository running tests."""
+        with patch("eigenhelm.cli.precommit.find_config", return_value=None):
+            yield
+
     def _setup_staged_file(self, tmp_path, filename="test.py", content="x = 1\n"):
         f = tmp_path / filename
         f.write_text(content)

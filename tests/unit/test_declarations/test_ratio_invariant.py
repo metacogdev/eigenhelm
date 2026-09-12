@@ -15,7 +15,7 @@ from eigenhelm.declarations import analyze_declarations
 
 # The shape that crashed in the wild (cloister-observer/src/config.rs): a
 # serde config struct where doc-comment lines outnumber code lines.
-_DOC_HEAVY_RUST = '''\
+_DOC_HEAVY_RUST = """\
 use serde::Deserialize;
 
 /// Which mode the observer runs in.
@@ -48,7 +48,7 @@ pub struct ObserverConfig {
     /// Ignored in log mode.
     pub upstream: Option<String>,
 }
-'''
+"""
 
 
 class TestRatioInvariant:

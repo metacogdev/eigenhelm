@@ -6,6 +6,7 @@ Tool schemas follow the MCP tools/list response format.
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -147,8 +148,10 @@ def execute_evaluate(state: ServerState, args: dict[str, Any]) -> list[dict[str,
         source=source,
         language=language,
         file_path=args.get("file_path"),
-        top_n=args.get("top_n", 3),
-        directive_threshold=args.get("directive_threshold", 0.3),
+        top_n=args.get("top_n", DEFAULT_TOP_N),
+        directive_threshold=args.get(
+            "directive_threshold", DEFAULT_DIRECTIVE_THRESHOLD
+        ),
     )
     response = state.helm.evaluate(request)
     return [
@@ -171,8 +174,10 @@ def execute_evaluate_batch(
             source=entry["source"],
             language=entry["language"],
             file_path=entry.get("file_path"),
-            top_n=entry.get("top_n", 3),
-            directive_threshold=entry.get("directive_threshold", 0.3),
+            top_n=entry.get("top_n", DEFAULT_TOP_N),
+            directive_threshold=entry.get(
+                "directive_threshold", DEFAULT_DIRECTIVE_THRESHOLD
+            ),
         )
         response = state.helm.evaluate(request)
         results.append(_response_to_dict(response, entry.get("file_path")))

@@ -34,7 +34,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--after", required=True, type=Path, help="After corpus directory"
     )
-    parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
+    from eigenhelm.cli._common import add_model_argument
+
+    add_model_argument(parser)
     parser.add_argument(
         "--json", dest="json_output", action="store_true", help="JSON output"
     )
@@ -43,9 +45,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         eigenspace = None
         if args.model:
-            from eigenhelm.eigenspace import load_model
+            from eigenhelm.cli._common import resolve_and_load_model
 
-            eigenspace = load_model(args.model)
+            eigenspace, _ = resolve_and_load_model(args.model)
 
         from eigenhelm.harness.runner import run_harness
 

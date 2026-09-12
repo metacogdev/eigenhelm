@@ -75,7 +75,10 @@ def _check_mandatory(
     # NCD fallback: derive from contributions when NCD was computed but fell
     # out of top-N violations. contributions[dim] = normalized * weight, and
     # for NCD the normalized value equals the raw NCD distance.
-    if "ncd_exemplar_distance" not in metrics:
+    if critique.nearest_exemplar_id is None:
+        if "ncd_exemplar_distance" in metrics:
+            del metrics["ncd_exemplar_distance"]
+    elif "ncd_exemplar_distance" not in metrics:
         w = critique.score.weights.get("ncd_exemplar_distance", 0.0)
         contrib = critique.score.contributions.get("ncd_exemplar_distance")
         if w > 0.0 and contrib is not None:
@@ -103,24 +106,36 @@ def _compute_qualitative(
 ) -> dict[str, float]:
     """Compute Q1-Q5 qualitative scores from a Critique."""
     birkhoff = critique.metrics.birkhoff_measure
-    entropy = critique.metrics.entropy
     overall = critique.score.value
 
-    # Look up NCD from violations
-    ncd_val = 0.0
-    for v in critique.violations:
-        if v.dimension == "ncd_exemplar_distance":
-            ncd_val = v.raw_value if v.raw_value is not None else 0.0
-            break
+    # Look up NCD: from top-N violations when present, else recover from
+    # contributions when NCD was active but ranked outside top-N -- the same
+    # fallback _check_mandatory's M5 uses -- so an active-but-low-rank NCD
+    # reports its real value instead of a misleading 0.0. Defaults to 0.0
+    # only when NCD was not computed at all (no exemplars / weight 0). (#68)
+    ncd_val: float | None = None
+    if critique.nearest_exemplar_id is not None:
+        for v in critique.violations:
+            if v.dimension == "ncd_exemplar_distance":
+                ncd_val = v.raw_value if v.raw_value is not None else 0.0
+                break
+        else:
+            w = critique.score.weights.get("ncd_exemplar_distance", 0.0)
+            contrib = critique.score.contributions.get("ncd_exemplar_distance")
+            if w > 0.0 and contrib is not None:
+                ncd_val = contrib / w
+            else:
+                ncd_val = 0.0
 
-    return {
+    qual_scores: dict[str, float] = {
         "Q1_birkhoff": birkhoff if birkhoff is not None else 0.0,
         "Q2_compression_structure": birkhoff if birkhoff is not None else 0.0,
-        "Q3_token_entropy": 1.0
-        - min((entropy if entropy is not None else 0.0) / 8.0, 1.0),
-        "Q4_ncd_exemplar": ncd_val,
+        "Q3_token_entropy": critique.score.normalized_values.get("token_entropy", 1.0),
         "Q5_overall_aesthetic": overall,
     }
+    if ncd_val is not None:
+        qual_scores["Q4_ncd_exemplar"] = ncd_val
+    return qual_scores
 
 
 def build_entry(file_path: str, critique: Critique) -> ScorecardEntry:
@@ -161,9 +176,11 @@ def build_summary(entries: list[ScorecardEntry]) -> ScorecardSummary:
     ]
     distributions: dict[str, dict[str, float]] = {}
     for qk in q_keys:
-        vals = [e.qualitative_scores.get(qk, 0.0) for e in entries]
+        vals = [e.qualitative_scores[qk] for e in entries if qk in e.qualitative_scores]
+        if not vals:
+            continue
         distributions[qk] = {
-            "mean": sum(vals) / n,
+            "mean": sum(vals) / len(vals),
             "min": min(vals),
             "max": max(vals),
         }

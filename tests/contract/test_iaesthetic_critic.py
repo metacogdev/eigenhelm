@@ -226,6 +226,13 @@ class TestEmptySource:
         c = critic.evaluate("", "unknown_lang")
         assert isinstance(c, Critique)
 
+    def test_empty_critique_preserves_invariants(self, critic):
+        c = critic.evaluate("", "python", top_n=5)
+        assert c.score.value == 0.0
+        assert c.quality_assessment == "accept"
+        assert c.violations == []
+        assert c.top_n == 5
+
 
 # ---------------------------------------------------------------------------
 # Invariant 9: birkhoff_measure ∈ [0.0, 1.0]

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 
 from eigenhelm.validation.categorize import (
     _categorize_init,
@@ -21,6 +22,12 @@ from eigenhelm.validation.categorize import (
     categorize_file,
 )
 from eigenhelm.validation.discrimination import _cohens_d
+from eigenhelm.validation.diversity import (
+    _compute_rank_metrics,
+    _diversity_warnings,
+    _standardize,
+    _validate_inputs,
+)
 from eigenhelm.validation.usecase_models import (
     BenchmarkReport,
     CategoryDistribution,
@@ -49,9 +56,7 @@ class TestCategorizeInitEdgeCases:
 
     def test_mostly_imports(self) -> None:
         content = "\n".join(
-            ["from .foo import bar"] * 8
-            + ['__all__ = ["bar"]']
-            + ["x = 1"]
+            ["from .foo import bar"] * 8 + ['__all__ = ["bar"]'] + ["x = 1"]
         )
         assert _categorize_init(content) == FileCategory.INIT
 
@@ -73,9 +78,7 @@ class TestIsSchemaContent:
         assert _is_schema_content(content) is True
 
     def test_many_defs_no_classes(self) -> None:
-        content = "\n".join(
-            [f"def func_{i}():\n    pass\n" for i in range(5)]
-        )
+        content = "\n".join([f"def func_{i}():\n    pass\n" for i in range(5)])
         assert _is_schema_content(content) is False
 
 
@@ -97,7 +100,10 @@ class TestCategorizeFileEdgeCases:
         content = "\n".join(
             [f"def func_{i}(x):\n    return x + {i}\n" for i in range(10)]
         )
-        assert categorize_file("models/logic.py", content=content) == FileCategory.IMPLEMENTATION
+        assert (
+            categorize_file("models/logic.py", content=content)
+            == FileCategory.IMPLEMENTATION
+        )
 
 
 class TestCategorizeDirectory:
@@ -130,6 +136,44 @@ class TestCategorizeDirectory:
         overrides = {"special.py": FileCategory.GENERATED}
         results = categorize_directory(tmp_path, overrides=overrides)
         assert results[Path("special.py")] == FileCategory.GENERATED
+
+
+class TestDiversityHelpers:
+    """Cover extracted diversity-analysis helpers."""
+
+    def test_validate_inputs_returns_sorted_repos(self) -> None:
+        X = np.ones((4, 69))
+        labels = ["repo_b", "repo_a", "repo_b", "repo_a"]
+        assert _validate_inputs(X, labels) == ["repo_a", "repo_b"]
+
+    def test_standardize_handles_dead_features(self) -> None:
+        X = np.ones((4, 69))
+        X[:, 0] = [0.0, 1.0, 2.0, 3.0]
+        X_std, stds = _standardize(X)
+        assert X_std[:, 1].tolist() == [0.0, 0.0, 0.0, 0.0]
+        assert stds[1] == 0.0
+
+    def test_compute_rank_metrics_zero_matrix(self) -> None:
+        metrics = _compute_rank_metrics(np.zeros((4, 69)))
+        assert metrics.effective_rank == 0.0
+        assert metrics.explained_variance_top3 == [0.0, 0.0, 0.0]
+
+    def test_compute_rank_metrics_pads_top3_for_tiny_matrix(self) -> None:
+        X = np.zeros((2, 69))
+        X[:, 0] = [0.0, 1.0]
+        metrics = _compute_rank_metrics(X)
+        assert len(metrics.explained_variance_top3) == 3
+        assert metrics.explained_variance_top3[2] == 0.0
+
+    def test_diversity_warnings_helper(self) -> None:
+        warnings = _diversity_warnings(
+            effective_rank=1.0,
+            min_centroid_distance=0.0,
+            between_repo_variance_ratio=0.0,
+            dead_features=11,
+            sample_balance=0.05,
+        )
+        assert len(warnings) == 5
 
 
 class TestCohensDEdgeCases:
@@ -168,7 +212,9 @@ class TestBenchmarkReportSaveAndRender:
     """Cover BenchmarkReport.save and render paths."""
 
     def test_save(self, tmp_path: Path) -> None:
-        report = BenchmarkReport(date="2024-01-01", model="test", n_files=5, n_projects=1)
+        report = BenchmarkReport(
+            date="2024-01-01", model="test", n_files=5, n_projects=1
+        )
         path = tmp_path / "report.json"
         report.save(path)
         data = json.loads(path.read_text())
@@ -191,9 +237,7 @@ class TestBenchmarkReportSaveAndRender:
             n_files=10,
             n_projects=1,
             dimension_discrimination=(dd,),
-            targets=(
-                QualityTarget("sc_001", "desc", 10.0, 500.0, "higher_is_better"),
-            ),
+            targets=(QualityTarget("sc_001", "desc", 10.0, 500.0, "higher_is_better"),),
         )
         text = report.render()
         assert "Dimension Discrimination" in text
@@ -217,7 +261,9 @@ class TestBenchmarkReportSaveAndRender:
         assert "N/A" in text
 
     def test_to_dict_roundtrip(self) -> None:
-        cat = CategoryDistribution(FileCategory.TEST, 5, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+        cat = CategoryDistribution(
+            FileCategory.TEST, 5, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7
+        )
         report = BenchmarkReport(
             categories=(cat,),
             fp_rate=0.1,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from eigenhelm.cli._common import add_model_argument
 import sys
 
 
@@ -12,11 +13,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="eigenhelm-mcp",
         description="Start the eigenhelm MCP server (stdio transport).",
     )
-    parser.add_argument(
-        "--model",
-        default=None,
-        help="Path to .npz eigenspace model (default: project config or bundled model).",
-    )
+    add_model_argument(parser)
     args = parser.parse_args(argv)
 
     try:

@@ -1,5 +1,7 @@
 """Stage 5 — FastAPI sidecar application for agent integration."""
 
-from eigenhelm.serve.app import create_app
+DEFAULT_MAX_BODY_BYTES: int = 1_048_576
 
-__all__ = ["create_app"]
+from eigenhelm.serve.app import create_app  # noqa: E402
+
+__all__ = ["create_app", "DEFAULT_MAX_BODY_BYTES"]

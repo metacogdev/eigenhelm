@@ -22,12 +22,15 @@ Deprecated flags:
 
 from __future__ import annotations
 
+from eigenhelm.attribution.constants import DEFAULT_TOP_N, DEFAULT_DIRECTIVE_THRESHOLD
 import argparse
+from eigenhelm.cli._common import add_strict_lenient_args
 import importlib.metadata
 import os
 import sys
 from pathlib import Path
 
+from eigenhelm.cli._shared import _apply_thresholds
 from eigenhelm.helm import DynamicHelm
 from eigenhelm.helm.models import EvaluationRequest, EvaluationResponse
 from eigenhelm.parsers.language_map import LANGUAGE_MAP
@@ -362,49 +365,13 @@ def compute_exit_code(
     return 0
 
 
-def _apply_thresholds(
-    response: EvaluationResponse,
-    thresholds,
-) -> EvaluationResponse:
-    """Re-derive decision from score using config thresholds.
-
-    Only overrides the decision if at least one config threshold is explicitly set.
-    Uses strict boundary semantics matching DynamicHelm: score > reject → reject,
-    score < accept → accept, otherwise warn.
-    """
-    from dataclasses import replace
-
-    accept = thresholds.accept
-    reject = thresholds.reject
-
-    # If neither threshold is explicitly configured, no override needed.
-    if accept is None and reject is None:
-        return response
-
-    score = response.score
-
-    # Apply only the explicitly-set thresholds.
-    if reject is not None and score > reject:
-        new_decision = "reject"
-    elif accept is not None and score < accept:
-        new_decision = "accept"
-    elif accept is not None and reject is not None:
-        # Both set — score is in between, so warn.
-        new_decision = "warn"
-    else:
-        # Only one threshold set and score didn't cross it — leave decision as-is.
-        return response
-
-    if new_decision == response.decision:
-        return response
-    return replace(response, decision=new_decision)
-
-
 def _evaluate_stdin(
     helm: DynamicHelm,
     language: str,
-    top_n: int = 3,
-    directive_threshold: float = 0.3,
+    top_n: int = DEFAULT_TOP_N,
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD,
+    cli_accept: float | None = None,
+    cli_reject: float | None = None,
 ) -> list[tuple[Path | str, EvaluationResponse]]:
     """Read from stdin and evaluate."""
     source = sys.stdin.read()
@@ -424,8 +391,12 @@ def _evaluate_paths(
     helm: DynamicHelm,
     paths: list[Path],
     config=None,
-    top_n: int = 3,
-    directive_threshold: float = 0.3,
+    top_n: int = DEFAULT_TOP_N,
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD,
+    cli_accept: float | None = None,
+    cli_reject: float | None = None,
+    model_accept: float | None = None,
+    model_reject: float | None = None,
 ) -> list[tuple[Path | str, EvaluationResponse]]:
     """Discover and evaluate files from given paths."""
     language_overrides = config.language_overrides if config else {}
@@ -457,9 +428,15 @@ def _evaluate_paths(
                 directive_threshold=directive_threshold,
             )
         )
-        if config is not None:
-            thresholds = config.thresholds_for(str(path))
-            resp = _apply_thresholds(resp, thresholds)
+        thresholds = config.thresholds_for(str(path)) if config is not None else None
+        resp = _apply_thresholds(
+            resp,
+            thresholds,
+            cli_accept=cli_accept,
+            cli_reject=cli_reject,
+            model_accept=model_accept,
+            model_reject=model_reject,
+        )
         # 019: Attach region decomposition if test code detected
         resp = _attach_regions(resp, source, lang, helm)
         results.append((path, resp))
@@ -470,8 +447,12 @@ def _evaluate_diff_paths(
     helm: DynamicHelm,
     revision_range: str,
     config=None,
-    top_n: int = 3,
-    directive_threshold: float = 0.3,
+    top_n: int = DEFAULT_TOP_N,
+    directive_threshold: float = DEFAULT_DIRECTIVE_THRESHOLD,
+    cli_accept: float | None = None,
+    cli_reject: float | None = None,
+    model_accept: float | None = None,
+    model_reject: float | None = None,
 ) -> list[tuple[Path | str, EvaluationResponse]]:
     """Evaluate only files changed in a git revision range."""
     from eigenhelm.diff import discover_changed_files
@@ -485,6 +466,10 @@ def _evaluate_diff_paths(
         config=config,
         top_n=top_n,
         directive_threshold=directive_threshold,
+        cli_accept=cli_accept,
+        cli_reject=cli_reject,
+        model_accept=model_accept,
+        model_reject=model_reject,
     )
 
 
@@ -539,7 +524,9 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Language (required for stdin mode when no paths given)",
     )
-    parser.add_argument("--model", default=None, help="Path to .npz eigenspace model")
+    from eigenhelm.cli._common import add_model_argument
+
+    add_model_argument(parser)
     parser.add_argument(
         "--json",
         dest="json_output",
@@ -558,19 +545,7 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Generate per-repository scorecard (M1-M5 mandatory, Q1-Q5 qualitative)",
     )
-    strict_group = parser.add_mutually_exclusive_group()
-    strict_group.add_argument(
-        "--strict",
-        action="store_true",
-        default=False,
-        help="Treat warn decisions as reject (exit code 2).",
-    )
-    strict_group.add_argument(
-        "--lenient",
-        action="store_true",
-        default=False,
-        help="Treat warn decisions as accept (exit code 0).",
-    )
+    add_strict_lenient_args(parser)
     parser.add_argument(
         "--diff",
         dest="diff_range",
@@ -627,14 +602,14 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="top_n",
         type=int,
         default=None,
-        help="Number of top features per PCA dimension in attribution (default: 3).",
+        help=f"Number of top features per PCA dimension in attribution (default: {DEFAULT_TOP_N}).",
     )
     parser.add_argument(
         "--directive-threshold",
         dest="directive_threshold",
         type=float,
         default=None,
-        help="Minimum normalized score to generate directives (default: 0.3).",
+        help=f"Minimum normalized score to generate directives (default: {DEFAULT_DIRECTIVE_THRESHOLD}).",
     )
     return parser
 
@@ -683,7 +658,11 @@ def _render_output(
     if args.scorecard:
         from eigenhelm.scoring.scorecard import (
             build_scorecard,
+        )
+        from eigenhelm.scoring.scorecard import (
             render_human as render_scorecard_human,
+        )
+        from eigenhelm.scoring.scorecard import (
             render_json as render_scorecard_json,
         )
 
@@ -720,6 +699,8 @@ def _dispatch_evaluation(
     helm: DynamicHelm,
     config,
     language: str | None,
+    model_accept: float | None = None,
+    model_reject: float | None = None,
 ) -> list[tuple[Path | str, EvaluationResponse]] | int:
     """Run the appropriate evaluation path. Returns results or error exit code."""
     top_n = getattr(args, "top_n", None)
@@ -729,6 +710,10 @@ def _dispatch_evaluation(
         "directive_threshold": directive_threshold
         if directive_threshold is not None
         else 0.3,
+        "cli_accept": args.accept_threshold,
+        "cli_reject": args.reject_threshold,
+        "model_accept": model_accept,
+        "model_reject": model_reject,
     }
 
     if not args.paths and args.diff_range is None:
@@ -763,34 +748,43 @@ def main(argv: list[str] | None = None) -> int:
     try:
         config, _ = _load_project_config()
 
-        model_path = args.model
-        if model_path is None and config is not None and config.model:
-            model_path = config.model
-        if model_path is None:
-            # Fall back to bundled default model
-            from eigenhelm.trained_models import default_model_path
+        from eigenhelm.cli._common import resolve_and_load_model
 
-            model_path = str(default_model_path())
+        eigenspace, _ = resolve_and_load_model(args.model, config)
+
         language = args.language
         if language is None and config is not None and config.language:
             language = config.language
         strict = args.strict or (config is not None and config.strict)
 
-        eigenspace = None
-        if model_path:
-            from eigenhelm.eigenspace import load_model
-
-            eigenspace = load_model(model_path)
-
         # 015: Threshold hierarchy — CLI flags override model calibration.
-        # DynamicHelm resolves: explicit args > model calibration > hardcoded 0.4/0.6.
-        # Config file thresholds are applied post-evaluation via _apply_thresholds().
+        # DynamicHelm gets None to use model defaults for short-circuiting.
+        # Full hierarchy is applied per-file in _apply_thresholds.
         helm = DynamicHelm(
             eigenspace=eigenspace,
-            accept_threshold=args.accept_threshold,
-            reject_threshold=args.reject_threshold,
+            accept_threshold=None,
+            reject_threshold=None,
         )
-        results = _dispatch_evaluation(args, helm, config, language)
+
+        model_accept = (
+            eigenspace.calibrated_accept
+            if eigenspace and eigenspace.calibrated_accept is not None
+            else 0.4
+        )
+        model_reject = (
+            eigenspace.calibrated_reject
+            if eigenspace and eigenspace.calibrated_reject is not None
+            else 0.6
+        )
+
+        results = _dispatch_evaluation(
+            args,
+            helm,
+            config,
+            language,
+            model_accept=model_accept,
+            model_reject=model_reject,
+        )
         if isinstance(results, int):
             return results
         if not results:
